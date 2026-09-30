@@ -208,26 +208,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* ==================== TAB 1: BỐ CỤC ==================== */}
         {activeTab === 'layout' && (
           <div className="space-y-4">
-            {/* ⭐ 4 MẪU CƠ BẢN 3:4 ĐƯỢC ƯU TIÊN THEO YÊU CẦU */}
+            {/* ⭐ 5 MẪU CƠ BẢN 3:4 ĐƯỢC ƯU TIÊN THEO YÊU CẦU */}
             <div className="p-3 rounded-xl bg-gradient-to-br from-amber-500/15 via-neutral-900 to-neutral-950 border border-amber-500/40 space-y-2.5 shadow-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
                   <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span>4 MẪU 3:4 BÁO CHÍ (ƯU TIÊN)</span>
+                  <span>5 MẪU 3:4 BÁO CHÍ (ƯU TIÊN)</span>
                 </div>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-semibold border border-amber-400/30">
                   Tỷ lệ 3:4
                 </span>
               </div>
               <p className="text-[11px] text-neutral-300 leading-relaxed">
-                Đã dựng sẵn 4 mẫu báo chí / tạp chí 3:4 với hiệu ứng chữ nổi bật và dải bóng mờ đen:
+                Đã dựng sẵn 5 mẫu báo chí / tạp chí 3:4 với hiệu ứng chữ nổi bật, bóng mờ và so sánh:
               </p>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-0.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-0.5">
                 {COLLAGE_LAYOUTS.filter((l) => l.category === 'featured-3-4').map((layoutItem, idx) => {
                   const isSelected = currentLayout.id === layoutItem.id;
                   const isBlend = !!layoutItem.isBlendedOverlap;
                   const isCircle = !!layoutItem.isCircleAccent;
+                  const isComp = !!layoutItem.isComparison;
                   return (
                     <button
                       key={layoutItem.id}
@@ -235,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onSelectLayout(layoutItem);
                         onUpdateConfig({
                           aspectRatio: '3:4',
-                          gap: layoutItem.id === 'layout-3-4-news-triple' ? 6 : 0,
+                          gap: layoutItem.defaultGap ?? 0,
                           padding: 0,
                           borderRadius: 0,
                         });
@@ -260,6 +261,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             {/* Circular accent representation */}
                             <div className="absolute right-1 top-1.5 w-4 h-4 rounded-full border-2 border-white bg-amber-400 shadow-md flex items-center justify-center text-[7px] font-bold text-neutral-900 z-10">
                               ●
+                            </div>
+                          </>
+                        ) : isComp ? (
+                          <>
+                            {/* 2 comparison columns */}
+                            <div className="absolute inset-y-0 left-0 w-[49%] bg-amber-500/40 rounded-[1px] border-r border-neutral-950" />
+                            <div className="absolute inset-y-0 right-0 w-[49%] bg-amber-500/30 rounded-[1px]" />
+                            <div className="absolute top-1 left-1 px-1 py-0.2 bg-black/85 rounded text-[6px] font-black text-amber-300">
+                              THEN
+                            </div>
+                            <div className="absolute top-1 right-1 px-1 py-0.2 bg-black/85 rounded text-[6px] font-black text-white">
+                              NOW
                             </div>
                           </>
                         ) : (
@@ -290,7 +303,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             ? 'Mẫu 2: 1 Ảnh'
                             : idx === 2
                             ? 'Mẫu 3: Chồng Mờ'
-                            : 'Mẫu 4: 1 Ảnh + Tròn'}
+                            : idx === 3
+                            ? 'Mẫu 4: 1+Tròn'
+                            : 'Mẫu 5: Then&Now'}
                         </span>
                         <span className="text-[9px] text-neutral-400 truncate">
                           {idx === 0
@@ -299,7 +314,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             ? 'Toàn khung'
                             : idx === 2
                             ? '2 ảnh mờ mờ'
-                            : 'Điểm nhấn tròn'}
+                            : idx === 3
+                            ? 'Điểm nhấn tròn'
+                            : 'So sánh Trước Sau'}
                         </span>
                       </div>
                     </button>
@@ -307,6 +324,193 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 })}
               </div>
             </div>
+
+            {/* ⭐ BỘ ĐIỀU CHỈNH MẪU THEN & NOW (SO SÁNH 2 ẢNH) */}
+            {currentLayout.isComparison && (
+              <div className="p-3 rounded-xl bg-neutral-900/90 border border-amber-500/40 space-y-3 shadow-md">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>TÙY CHỈNH SO SÁNH (THEN & NOW)</span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-semibold border border-amber-400/30">
+                    Mẫu 5
+                  </span>
+                </div>
+
+                {/* Nhãn 2 ảnh */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[11px] font-semibold text-neutral-300 block mb-1">
+                      Nhãn ảnh trái (THEN)
+                    </label>
+                    <input
+                      type="text"
+                      value={config.comparison?.leftLabel || ''}
+                      onChange={(e) =>
+                        onUpdateConfig({
+                          comparison: {
+                            ...(config.comparison || {
+                              enabled: true,
+                              leftLabel: 'THEN',
+                              rightLabel: 'NOW',
+                              showLabels: true,
+                              labelPosition: 'top',
+                            }),
+                            leftLabel: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="THEN / QUÁ KHỨ"
+                      className="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-2 py-1 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-neutral-300 block mb-1">
+                      Nhãn ảnh phải (NOW)
+                    </label>
+                    <input
+                      type="text"
+                      value={config.comparison?.rightLabel || ''}
+                      onChange={(e) =>
+                        onUpdateConfig({
+                          comparison: {
+                            ...(config.comparison || {
+                              enabled: true,
+                              leftLabel: 'THEN',
+                              rightLabel: 'NOW',
+                              showLabels: true,
+                              labelPosition: 'top',
+                            }),
+                            rightLabel: e.target.value,
+                          },
+                        })
+                      }
+                      placeholder="NOW / HIỆN TẠI"
+                      className="w-full bg-neutral-950 border border-neutral-700 rounded-lg px-2 py-1 text-xs text-white font-bold focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Vị trí nhãn */}
+                <div>
+                  <label className="text-[11px] font-semibold text-neutral-300 block mb-1.5">
+                    Vị trí đặt nhãn
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { label: 'Phía trên ảnh (Top)', pos: 'top' as const },
+                      { label: 'Chân ảnh (Bottom)', pos: 'bottom' as const },
+                    ].map((item) => (
+                      <button
+                        key={item.pos}
+                        onClick={() =>
+                          onUpdateConfig({
+                            comparison: {
+                              ...(config.comparison || {
+                                enabled: true,
+                                leftLabel: 'THEN',
+                                rightLabel: 'NOW',
+                                showLabels: true,
+                                labelPosition: 'top',
+                              }),
+                              labelPosition: item.pos,
+                            },
+                          })
+                        }
+                        className={`py-1.5 px-2 text-xs rounded-lg border font-medium transition-all ${
+                          (config.comparison?.labelPosition || 'top') === item.pos
+                            ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                            : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-800'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tùy chọn hiển thị */}
+                <div className="flex items-center justify-between pt-1 border-t border-neutral-800">
+                  <span className="text-[11px] font-semibold text-neutral-300">Hiện nhãn THEN / NOW</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={config.comparison?.showLabels !== false}
+                      onChange={(e) =>
+                        onUpdateConfig({
+                          comparison: {
+                            ...(config.comparison || {
+                              enabled: true,
+                              leftLabel: 'THEN',
+                              rightLabel: 'NOW',
+                              showLabels: true,
+                              labelPosition: 'top',
+                            }),
+                            showLabels: e.target.checked,
+                          },
+                        })
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-8 h-4 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500"></div>
+                  </label>
+                </div>
+
+                {/* Huy hiệu VS ở giữa */}
+                <div className="flex items-center justify-between pt-1 border-t border-neutral-800">
+                  <span className="text-[11px] font-semibold text-neutral-300">Huy hiệu "VS" ở giữa</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!config.comparison?.showVsBadge}
+                      onChange={(e) =>
+                        onUpdateConfig({
+                          comparison: {
+                            ...(config.comparison || {
+                              enabled: true,
+                              leftLabel: 'THEN',
+                              rightLabel: 'NOW',
+                              showLabels: true,
+                              labelPosition: 'top',
+                            }),
+                            showVsBadge: e.target.checked,
+                          },
+                        })
+                      }
+                      className="sr-only peer"
+                    />
+                    <div className="w-8 h-4 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500"></div>
+                  </label>
+                </div>
+
+                {/* Khoảng cách viền giữa 2 ảnh */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-neutral-300">
+                      Khoảng cách chia đôi 2 ảnh
+                    </label>
+                    <span className="text-[10px] text-amber-400 font-semibold">{config.gap ?? 6}px</span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[0, 4, 6, 12].map((g) => (
+                      <button
+                        key={g}
+                        onClick={() => onUpdateConfig({ gap: g })}
+                        className={`py-1 px-1 text-[10px] rounded-lg border font-medium transition-all ${
+                          (config.gap ?? 6) === g
+                            ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                            : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-800'
+                        }`}
+                      >
+                        {g === 0 ? 'Dính liền' : `${g}px`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ⭐ BỘ ĐIỀU CHỈNH ẢNH TRÒN ĐIỂM NHẤN (Khi đang chọn Mẫu 4) */}
             {currentLayout.isCircleAccent && onUpdateLayoutSlot && (
@@ -560,7 +764,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block mb-2">
                 2 Phong Cách Chuẩn Theo Mẫu Bạn Gửi
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <button
                   onClick={() => {
                     onUpdateConfig({
@@ -628,6 +832,49 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <span className="text-xs font-bold text-amber-300">⚡ Mẫu Johnny Depp</span>
                   <span className="text-[10px] text-neutral-400 font-sans uppercase font-bold tracking-tight">
                     Chữ in hoa Anton, kèm huy hiệu & nút Follow
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    onUpdateConfig({
+                      aspectRatio: '3:4',
+                      comparison: {
+                        enabled: true,
+                        leftLabel: 'THEN',
+                        rightLabel: 'NOW',
+                        showLabels: true,
+                        labelPosition: 'top',
+                        showVsBadge: false,
+                        centerDivider: 'gap',
+                      },
+                      newsPoster: {
+                        enabled: true,
+                        style: 'bold-headline',
+                        headline: 'THEN & NOW: THE INCREDIBLE TRANSFORMATION OVER THE YEARS',
+                        highlightWords: 'THEN & NOW, INCREDIBLE TRANSFORMATION, YEARS',
+                        headlineColor: '#FFFFFF',
+                        highlightColor: '#FACC15',
+                        fontSize: 34,
+                        gradientHeight: 38,
+                        gradientOpacity: 0.94,
+                        showTopBadge: true,
+                        topBadgeText: 'HM MEDIA',
+                        showFollowButton: true,
+                        followButtonText: 'FOLLOW US',
+                        showDiamondDivider: true,
+                      },
+                    });
+                  }}
+                  className={`p-2.5 rounded-xl border text-left flex flex-col gap-1.5 transition-all cursor-pointer ${
+                    config.comparison?.enabled && config.newsPoster?.enabled
+                      ? 'border-amber-400 bg-amber-500/15 ring-1 ring-amber-400 shadow'
+                      : 'border-neutral-800 bg-neutral-900 hover:border-neutral-700'
+                  }`}
+                >
+                  <span className="text-xs font-bold text-amber-300">🔥 Mẫu Then & Now</span>
+                  <span className="text-[10px] text-neutral-400 font-sans uppercase font-bold tracking-tight">
+                    2 ảnh so sánh trước sau, nhãn Then/Now nổi bật
                   </span>
                 </button>
               </div>

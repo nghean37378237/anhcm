@@ -43,6 +43,17 @@ export interface NewsPosterConfig {
   showDiamondDivider: boolean;
 }
 
+export interface ComparisonConfig {
+  enabled: boolean;
+  leftLabel: string; // e.g. 'THEN' or 'QUÁ KHỨ' or '1995'
+  rightLabel: string; // e.g. 'NOW' or 'HIỆN TẠI' or '2024'
+  showLabels: boolean;
+  labelPosition: 'top' | 'bottom';
+  showVsBadge?: boolean;
+  vsText?: string;
+  centerDivider?: 'gap' | 'line' | 'none';
+}
+
 export interface CollageLayout {
   id: string;
   name: string;
@@ -57,6 +68,8 @@ export interface CollageLayout {
   isBlendedOverlap?: boolean;
   blendTransition?: 'vertical-fade' | 'soft-dissolve' | 'none';
   isCircleAccent?: boolean;
+  isComparison?: boolean;
+  comparisonDefault?: Partial<ComparisonConfig>;
   newsPosterDefault?: Partial<NewsPosterConfig>;
 }
 
@@ -87,6 +100,7 @@ export interface CanvasConfig {
   captionText?: string;
   dateText?: string;
   newsPoster?: NewsPosterConfig;
+  comparison?: ComparisonConfig;
 }
 
 export interface TextOverlay {

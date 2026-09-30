@@ -24,6 +24,8 @@ export default function App() {
     COLLAGE_LAYOUTS.find((l) => l.id === 'layout-3-4-news-blend-duo') || COLLAGE_LAYOUTS[0];
   const model4Layout =
     COLLAGE_LAYOUTS.find((l) => l.id === 'layout-3-4-news-circle-accent') || COLLAGE_LAYOUTS[0];
+  const model5Layout =
+    COLLAGE_LAYOUTS.find((l) => l.id === 'layout-3-4-news-comparison') || COLLAGE_LAYOUTS[0];
 
   const initialLayout = model1Layout;
   const [currentLayout, setCurrentLayout] = useState<CollageLayout>(initialLayout);
@@ -59,6 +61,15 @@ export default function App() {
     frameStyle: 'standard',
     captionText: 'Những khoảnh khắc tuyệt vời ♡',
     dateText: '2026.09.20 • MEMORIES',
+    comparison: {
+      enabled: false,
+      leftLabel: 'THEN',
+      rightLabel: 'NOW',
+      showLabels: true,
+      labelPosition: 'top',
+      showVsBadge: false,
+      centerDivider: 'gap',
+    },
     newsPoster: {
       enabled: true,
       style: 'bold-headline',
@@ -98,6 +109,17 @@ export default function App() {
       padding: newLayout.defaultPadding !== undefined ? newLayout.defaultPadding : prev.padding,
       borderRadius: newLayout.defaultRadius !== undefined ? newLayout.defaultRadius : prev.borderRadius,
       frameStyle: newLayout.frameType || 'standard',
+      comparison: newLayout.comparisonDefault
+        ? {
+            enabled: true,
+            leftLabel: newLayout.comparisonDefault.leftLabel ?? 'THEN',
+            rightLabel: newLayout.comparisonDefault.rightLabel ?? 'NOW',
+            showLabels: newLayout.comparisonDefault.showLabels ?? true,
+            labelPosition: newLayout.comparisonDefault.labelPosition ?? 'top',
+            showVsBadge: newLayout.comparisonDefault.showVsBadge ?? false,
+            centerDivider: newLayout.comparisonDefault.centerDivider ?? 'gap',
+          }
+        : prev.comparison ? { ...prev.comparison, enabled: false } : undefined,
       newsPoster: newLayout.newsPosterDefault
         ? {
             enabled: true,
@@ -484,6 +506,44 @@ export default function App() {
     }
   };
 
+  const handleSelectModel5 = () => {
+    if (model5Layout) {
+      handleSelectLayout(model5Layout);
+      handleUpdateConfig({
+        aspectRatio: '3:4',
+        gap: 6,
+        padding: 0,
+        borderRadius: 0,
+        bgColor: '#000000',
+        comparison: {
+          enabled: true,
+          leftLabel: 'THEN',
+          rightLabel: 'NOW',
+          showLabels: true,
+          labelPosition: 'top',
+          showVsBadge: false,
+          centerDivider: 'gap',
+        },
+        newsPoster: {
+          enabled: true,
+          style: 'bold-headline',
+          headline: 'THEN & NOW: THE INCREDIBLE TRANSFORMATION OVER THE YEARS',
+          highlightWords: 'THEN & NOW, INCREDIBLE TRANSFORMATION, YEARS',
+          headlineColor: '#FFFFFF',
+          highlightColor: '#FACC15',
+          fontSize: 34,
+          gradientHeight: 38,
+          gradientOpacity: 0.94,
+          showTopBadge: true,
+          topBadgeText: 'HM MEDIA',
+          showFollowButton: true,
+          followButtonText: 'FOLLOW US',
+          showDiamondDivider: true,
+        },
+      });
+    }
+  };
+
   const handleUpdateLayoutSlot = (slotIndex: number, updates: Partial<import('./types').LayoutSlot>) => {
     setCurrentLayout((prev) => {
       const nextSlots = [...prev.slots];
@@ -510,6 +570,7 @@ export default function App() {
         onSelectModel2={handleSelectModel2}
         onSelectModel3={handleSelectModel3}
         onSelectModel4={handleSelectModel4}
+        onSelectModel5={handleSelectModel5}
         activePhotosCount={activePhotosCount}
         totalSlotsCount={currentLayout.slots.length}
       />

@@ -22,6 +22,7 @@ interface HeaderProps {
   onSelectModel2?: () => void;
   onSelectModel3?: () => void;
   onSelectModel4?: () => void;
+  onSelectModel5?: () => void;
   activePhotosCount: number;
   totalSlotsCount: number;
 }
@@ -37,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectModel2,
   onSelectModel3,
   onSelectModel4,
+  onSelectModel5,
   activePhotosCount,
   totalSlotsCount,
 }) => {
@@ -64,15 +66,15 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Quick 4 Basic 3:4 Templates Toggle */}
-      <div className="hidden md:flex items-center gap-1.5 p-1 rounded-xl bg-neutral-950/80 border border-neutral-800">
+      {/* Quick 5 Basic 3:4 Templates Toggle */}
+      <div className="hidden md:flex items-center gap-1 p-1 rounded-xl bg-neutral-950/80 border border-neutral-800">
         <span className="text-[11px] font-bold text-amber-400 pl-1.5 pr-1 flex items-center gap-1">
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>4 Mẫu 3:4:</span>
+          <span>5 Mẫu 3:4:</span>
         </span>
         <button
           onClick={onSelectModel1}
-          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+          className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
             layout.id === 'layout-3-4-news-triple' || layout.id === 'layout-3-4-news-3pic'
               ? 'bg-amber-500 text-neutral-950 font-bold shadow'
               : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
@@ -83,7 +85,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
         <button
           onClick={onSelectModel2}
-          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+          className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
             layout.id === 'layout-3-4-news-single'
               ? 'bg-amber-500 text-neutral-950 font-bold shadow'
               : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
@@ -94,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
         <button
           onClick={onSelectModel3}
-          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+          className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
             layout.id === 'layout-3-4-news-blend-duo'
               ? 'bg-amber-500 text-neutral-950 font-bold shadow'
               : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
@@ -105,15 +107,27 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
         <button
           onClick={onSelectModel4}
-          className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+          className={`px-2 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
             layout.id === 'layout-3-4-news-circle-accent'
               ? 'bg-amber-500 text-neutral-950 font-bold shadow'
               : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
           }`}
           title="Mẫu 4: 1 ảnh toàn khung + 1 ảnh tròn làm điểm nhấn"
         >
-          <span className="w-2 h-2 rounded-full bg-amber-400 border border-neutral-900 inline-block" />
-          Mẫu 4 (1 Ảnh + 1 Tròn)
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 border border-neutral-900 inline-block" />
+          Mẫu 4 (1+Tròn)
+        </button>
+        <button
+          onClick={onSelectModel5}
+          className={`px-2 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+            layout.id === 'layout-3-4-news-comparison'
+              ? 'bg-amber-500 text-neutral-950 font-bold shadow'
+              : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+          }`}
+          title="Mẫu 5: 2 ảnh so sánh Then & Now (Trước & Sau)"
+        >
+          <span className="text-[10px] font-black text-amber-400">⚡</span>
+          Mẫu 5 (Then & Now)
         </button>
       </div>
 

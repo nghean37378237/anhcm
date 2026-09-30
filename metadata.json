@@ -1,6 +1,6 @@
 {
   "name": "Ghép Ảnh Nghệ Thuật 3:4 - Collage & Poster Studio",
-  "description": "Ứng dụng ghép ảnh chuyên nghiệp chuẩn 3:4 với 4 mẫu báo chí ưu tiên (3 ảnh, 1 ảnh toàn khung, 2 ảnh chồng mờ, 1 ảnh + ảnh tròn điểm nhấn), bộ lọc màu và xuất ảnh chất lượng cao.",
+  "description": "Ứng dụng ghép ảnh chuyên nghiệp chuẩn 3:4 với 5 mẫu báo chí ưu tiên (3 ảnh, 1 ảnh toàn khung, 2 ảnh chồng mờ, 1 ảnh + ảnh tròn điểm nhấn, 2 ảnh so sánh Then & Now), bộ lọc màu và xuất ảnh chất lượng cao.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

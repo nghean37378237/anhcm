@@ -315,6 +315,42 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
           </div>
         )}
 
+        {/* Slot selector for Then & Now comparison layout */}
+        {layout.isComparison && (
+          <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900/95 backdrop-blur-md border border-amber-500/40 shadow-xl text-xs whitespace-nowrap">
+            <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              Chọn ảnh:
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectSlot(0);
+              }}
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all ${
+                selectedSlotIndex === 0
+                  ? 'bg-amber-500 text-neutral-950 font-bold shadow'
+                  : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+              }`}
+            >
+              Ảnh Trái ({config.comparison?.leftLabel || 'THEN'})
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectSlot(1);
+              }}
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all ${
+                selectedSlotIndex === 1
+                  ? 'bg-amber-500 text-neutral-950 font-bold shadow'
+                  : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+              }`}
+            >
+              Ảnh Phải ({config.comparison?.rightLabel || 'NOW'})
+            </button>
+          </div>
+        )}
+
         {/* Main Canvas Card */}
         <div
           id="collage-preview-container"
@@ -566,6 +602,10 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                           ? index === 0
                             ? 'Thêm ảnh nền'
                             : 'Thêm ảnh tròn'
+                          : layout.isComparison
+                          ? index === 0
+                            ? `Thêm ảnh (${config.comparison?.leftLabel || 'THEN'})`
+                            : `Thêm ảnh (${config.comparison?.rightLabel || 'NOW'})`
                           : `Thêm ảnh #${index + 1}`}
                       </span>
                     </div>
@@ -574,6 +614,52 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
               );
             })}
           </div>
+
+          {/* Then & Now Comparison Badges Overlay Layer */}
+          {layout.isComparison && (config.comparison?.showLabels ?? true) && (
+            <div
+              className="absolute inset-x-0 pointer-events-none z-20 flex items-center justify-between px-4 transition-all"
+              style={
+                config.comparison?.labelPosition === 'bottom'
+                  ? { bottom: `calc(${config.newsPoster?.gradientHeight ?? 38}% + 12px)` }
+                  : {
+                      top:
+                        config.newsPoster?.showTopBadge || config.newsPoster?.showFollowButton
+                          ? '52px'
+                          : '16px',
+                    }
+              }
+            >
+              {/* Left Label */}
+              <div className="w-1/2 flex items-center justify-center">
+                <div className="px-3.5 py-1 rounded-full bg-neutral-950/90 backdrop-blur-md border border-amber-400/60 shadow-xl flex items-center gap-1.5 pointer-events-auto">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <span className="text-[11px] font-black uppercase tracking-wider text-amber-300 font-sans">
+                    {config.comparison?.leftLabel || 'THEN'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Center VS Badge */}
+              {config.comparison?.showVsBadge && (
+                <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 text-neutral-950 font-black text-[10px] flex items-center justify-center shadow-2xl border-2 border-white">
+                    {config.comparison?.vsText || 'VS'}
+                  </div>
+                </div>
+              )}
+
+              {/* Right Label */}
+              <div className="w-1/2 flex items-center justify-center">
+                <div className="px-3.5 py-1 rounded-full bg-neutral-950/90 backdrop-blur-md border border-white/60 shadow-xl flex items-center gap-1.5 pointer-events-auto">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  <span className="text-[11px] font-black uppercase tracking-wider text-white font-sans">
+                    {config.comparison?.rightLabel || 'NOW'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* News Poster Overlay Layer (Tỷ lệ 3:4 chuẩn tin tức / báo chí / fanpage) */}
           {config.newsPoster?.enabled && (
