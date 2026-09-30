@@ -43,12 +43,19 @@ export interface NewsPosterConfig {
   showDiamondDivider: boolean;
 }
 
+export type ComparisonPosition = 'bottom' | 'above-headline' | 'top-bar' | 'top';
+export type ComparisonBadgeAlign = 'center' | 'outer';
+export type ComparisonBadgeStyle = 'pill' | 'minimal' | 'tag';
+
 export interface ComparisonConfig {
   enabled: boolean;
   leftLabel: string; // e.g. 'THEN' or 'QUÁ KHỨ' or '1995'
   rightLabel: string; // e.g. 'NOW' or 'HIỆN TẠI' or '2024'
   showLabels: boolean;
-  labelPosition: 'top' | 'bottom';
+  labelPosition: ComparisonPosition;
+  verticalPercent?: number; // 5 to 90 (mặc định 60 - vị trí an toàn tuyệt đối không che mặt)
+  badgeAlign?: ComparisonBadgeAlign; // 'center' | 'outer' (dạt 2 bên để mặt ở giữa không bị che)
+  badgeStyle?: ComparisonBadgeStyle; // 'pill' | 'minimal' | 'tag'
   showVsBadge?: boolean;
   vsText?: string;
   centerDivider?: 'gap' | 'line' | 'none';

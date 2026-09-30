@@ -165,7 +165,10 @@ export const COLLAGE_LAYOUTS: CollageLayout[] = [
       leftLabel: 'THEN',
       rightLabel: 'NOW',
       showLabels: true,
-      labelPosition: 'top',
+      labelPosition: 'bottom', // Mặc định ở chân ảnh để không che mặt
+      verticalPercent: 58, // Vùng ngực / chân ảnh an toàn tuyệt đối
+      badgeAlign: 'center',
+      badgeStyle: 'pill',
       showVsBadge: false,
       centerDivider: 'gap',
     },

@@ -712,22 +712,37 @@ export async function renderCollageToCanvas(
   // 2.7. Render Then & Now Comparison Badges (for comparison 3:4 posters)
   if (layout.isComparison && (config.comparison?.showLabels ?? true)) {
     ctx.save();
-    const isBottomPos = config.comparison?.labelPosition === 'bottom';
-    const hasTopBadges = !!(config.newsPoster?.showTopBadge || config.newsPoster?.showFollowButton);
-    const badgeY = isBottomPos
-      ? canvasH - (canvasH * (config.newsPoster?.gradientHeight || 38)) / 100 - 24 * exportScale
-      : (hasTopBadges ? 92 * exportScale : 34 * exportScale);
+    const styleType = config.comparison?.badgeStyle || 'pill';
+    const isOuter = config.comparison?.badgeAlign === 'outer';
 
-    const pillH = 26 * exportScale;
-    const pillRadius = 13 * exportScale;
+    // Safe badgeY calculation so badges never cover the person's face
+    let badgeY: number;
+    if (config.comparison?.verticalPercent !== undefined) {
+      badgeY = (canvasH * config.comparison.verticalPercent) / 100;
+    } else {
+      const pos = config.comparison?.labelPosition || 'bottom';
+      if (pos === 'bottom') {
+        badgeY = canvasH * 0.58; // 58% height, safely in chest / lower photo area
+      } else if (pos === 'above-headline') {
+        badgeY = canvasH - (canvasH * (config.newsPoster?.gradientHeight || 38)) / 100 - 20 * exportScale;
+      } else if (pos === 'top-bar') {
+        badgeY = 26 * exportScale;
+      } else {
+        const hasTopBadges = !!(config.newsPoster?.showTopBadge || config.newsPoster?.showFollowButton);
+        badgeY = hasTopBadges ? 92 * exportScale : 34 * exportScale;
+      }
+    }
+
+    const pillH = (styleType === 'minimal' ? 22 : 26) * exportScale;
+    const pillRadius = (styleType === 'minimal' ? 5 : 13) * exportScale;
+    const marginSide = 20 * exportScale;
 
     // A. Left Label (THEN)
     const leftText = (config.comparison?.leftLabel || 'THEN').toUpperCase();
     ctx.font = `900 ${11 * exportScale}px Montserrat, sans-serif`;
     const leftMetrics = ctx.measureText(leftText);
-    const leftPillW = leftMetrics.width + 36 * exportScale;
-    const leftCenterX = canvasW / 4;
-    const leftPillX = leftCenterX - leftPillW / 2;
+    const leftPillW = leftMetrics.width + (styleType === 'minimal' ? 22 : 36) * exportScale;
+    const leftPillX = isOuter ? marginSide : canvasW / 4 - leftPillW / 2;
     const leftPillY = badgeY - pillH / 2;
 
     // Drop shadow
@@ -736,32 +751,38 @@ export async function renderCollageToCanvas(
     ctx.shadowOffsetY = 4 * exportScale;
 
     drawRoundedRect(ctx, leftPillX, leftPillY, leftPillW, pillH, pillRadius);
-    ctx.fillStyle = 'rgba(10, 10, 10, 0.88)';
+    ctx.fillStyle = 'rgba(10, 10, 10, 0.90)';
     ctx.fill();
-    ctx.lineWidth = 1.5 * exportScale;
+    ctx.lineWidth = (styleType === 'minimal' ? 2 : 1.5) * exportScale;
     ctx.strokeStyle = '#f59e0b';
     ctx.stroke();
 
     ctx.shadowColor = 'transparent';
-    // Inner dot
-    ctx.beginPath();
-    ctx.arc(leftPillX + 13 * exportScale, badgeY, 3 * exportScale, 0, Math.PI * 2);
-    ctx.fillStyle = '#f59e0b';
-    ctx.fill();
+    if (styleType === 'pill') {
+      // Inner dot
+      ctx.beginPath();
+      ctx.arc(leftPillX + 13 * exportScale, badgeY, 3 * exportScale, 0, Math.PI * 2);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fill();
 
-    // Text
-    ctx.fillStyle = '#fde68a';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(leftText, leftPillX + 22 * exportScale, badgeY);
+      // Text
+      ctx.fillStyle = '#fde68a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(leftText, leftPillX + 22 * exportScale, badgeY);
+    } else {
+      ctx.fillStyle = '#fde68a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(leftText, leftPillX + leftPillW / 2, badgeY);
+    }
 
     // B. Right Label (NOW)
     const rightText = (config.comparison?.rightLabel || 'NOW').toUpperCase();
     ctx.font = `900 ${11 * exportScale}px Montserrat, sans-serif`;
     const rightMetrics = ctx.measureText(rightText);
-    const rightPillW = rightMetrics.width + 36 * exportScale;
-    const rightCenterX = (3 * canvasW) / 4;
-    const rightPillX = rightCenterX - rightPillW / 2;
+    const rightPillW = rightMetrics.width + (styleType === 'minimal' ? 22 : 36) * exportScale;
+    const rightPillX = isOuter ? canvasW - marginSide - rightPillW : (3 * canvasW) / 4 - rightPillW / 2;
     const rightPillY = badgeY - pillH / 2;
 
     ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
@@ -769,24 +790,31 @@ export async function renderCollageToCanvas(
     ctx.shadowOffsetY = 4 * exportScale;
 
     drawRoundedRect(ctx, rightPillX, rightPillY, rightPillW, pillH, pillRadius);
-    ctx.fillStyle = 'rgba(10, 10, 10, 0.88)';
+    ctx.fillStyle = 'rgba(10, 10, 10, 0.90)';
     ctx.fill();
-    ctx.lineWidth = 1.5 * exportScale;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.lineWidth = (styleType === 'minimal' ? 2 : 1.5) * exportScale;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.stroke();
 
     ctx.shadowColor = 'transparent';
-    // Inner dot
-    ctx.beginPath();
-    ctx.arc(rightPillX + 13 * exportScale, badgeY, 3 * exportScale, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.fill();
+    if (styleType === 'pill') {
+      // Inner dot
+      ctx.beginPath();
+      ctx.arc(rightPillX + 13 * exportScale, badgeY, 3 * exportScale, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
 
-    // Text
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(rightText, rightPillX + 22 * exportScale, badgeY);
+      // Text
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(rightText, rightPillX + 22 * exportScale, badgeY);
+    } else {
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(rightText, rightPillX + rightPillW / 2, badgeY);
+    }
 
     // C. Optional Center VS Badge
     if (config.comparison?.showVsBadge) {

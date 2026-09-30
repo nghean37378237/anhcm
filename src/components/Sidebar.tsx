@@ -393,18 +393,189 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 </div>
 
-                {/* Vị trí nhãn */}
-                <div>
-                  <label className="text-[11px] font-semibold text-neutral-300 block mb-1.5">
-                    Vị trí đặt nhãn
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
+                {/* Vị trí nhãn THEN & NOW - Tối ưu chống che mặt */}
+                <div className="space-y-2 pt-1 border-t border-neutral-800">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-neutral-300 flex items-center gap-1.5">
+                      <span>Vị trí nhãn</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-normal border border-emerald-500/30">
+                        Chống che mặt
+                      </span>
+                    </label>
+                    <span className="text-[10px] text-amber-400 font-mono font-bold">
+                      {config.comparison?.verticalPercent ?? 58}% Y
+                    </span>
+                  </div>
+
+                  {/* 4 Nút Vị Trí Nhanh */}
+                  <div className="grid grid-cols-2 gap-1.5">
                     {[
-                      { label: 'Phía trên ảnh (Top)', pos: 'top' as const },
-                      { label: 'Chân ảnh (Bottom)', pos: 'bottom' as const },
-                    ].map((item) => (
+                      {
+                        label: '🛡️ Chân ảnh (Chuẩn)',
+                        sub: 'Dưới mặt, an toàn 100%',
+                        pos: 'bottom' as const,
+                        vPercent: 58,
+                      },
+                      {
+                        label: '📰 Trên tiêu đề',
+                        sub: 'Trong dải màu tối đáy',
+                        pos: 'above-headline' as const,
+                        vPercent: 68,
+                      },
+                      {
+                        label: '🔝 Sát đỉnh trên',
+                        sub: 'Trên cùng, tránh trán',
+                        pos: 'top-bar' as const,
+                        vPercent: 12,
+                      },
+                      {
+                        label: '👤 Góc trên ảnh',
+                        sub: 'Vị trí cổ điển',
+                        pos: 'top' as const,
+                        vPercent: 22,
+                      },
+                    ].map((item) => {
+                      const isActive =
+                        (config.comparison?.verticalPercent === item.vPercent) ||
+                        (!config.comparison?.verticalPercent && (config.comparison?.labelPosition || 'bottom') === item.pos);
+                      return (
+                        <button
+                          key={item.pos}
+                          onClick={() =>
+                            onUpdateConfig({
+                              comparison: {
+                                ...(config.comparison || {
+                                  enabled: true,
+                                  leftLabel: 'THEN',
+                                  rightLabel: 'NOW',
+                                  showLabels: true,
+                                  labelPosition: 'bottom',
+                                }),
+                                labelPosition: item.pos,
+                                verticalPercent: item.vPercent,
+                              },
+                            })
+                          }
+                          className={`p-1.5 text-left rounded-lg border transition-all ${
+                            isActive
+                              ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold shadow-sm'
+                              : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-850'
+                          }`}
+                        >
+                          <div className="text-[11px] font-semibold leading-tight">{item.label}</div>
+                          <div className="text-[9px] text-neutral-400 leading-tight mt-0.5">{item.sub}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Thanh kéo chỉnh độ cao tự do */}
+                  <div className="bg-neutral-950 p-2 rounded-lg border border-neutral-800 space-y-1">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-neutral-400">Kéo độ cao tùy chỉnh:</span>
+                      <span className={`font-medium ${
+                        (config.comparison?.verticalPercent ?? 58) < 45
+                          ? 'text-amber-400'
+                          : 'text-emerald-400'
+                      }`}>
+                        {(config.comparison?.verticalPercent ?? 58) < 45
+                          ? '⚠️ Cẩn thận che mặt'
+                          : '✅ Vùng an toàn (Không che mặt)'}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="8"
+                      max="85"
+                      step="1"
+                      value={config.comparison?.verticalPercent ?? 58}
+                      onChange={(e) =>
+                        onUpdateConfig({
+                          comparison: {
+                            ...(config.comparison || {
+                              enabled: true,
+                              leftLabel: 'THEN',
+                              rightLabel: 'NOW',
+                              showLabels: true,
+                              labelPosition: 'bottom',
+                            }),
+                            verticalPercent: Number(e.target.value),
+                          },
+                        })
+                      }
+                      className="w-full accent-amber-500 cursor-pointer h-1.5 bg-neutral-800 rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                {/* Căn lề nhãn (Center vs Dạt mép ngoài) */}
+                <div className="space-y-1.5 pt-1 border-t border-neutral-800">
+                  <label className="text-[11px] font-semibold text-neutral-300 block">
+                    Căn lề nhãn 2 bên
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      onClick={() =>
+                        onUpdateConfig({
+                          comparison: {
+                            ...(config.comparison || {
+                              enabled: true,
+                              leftLabel: 'THEN',
+                              rightLabel: 'NOW',
+                              showLabels: true,
+                              labelPosition: 'bottom',
+                            }),
+                            badgeAlign: 'center',
+                          },
+                        })
+                      }
+                      className={`py-1.5 px-2 text-xs rounded-lg border font-medium transition-all ${
+                        (config.comparison?.badgeAlign || 'center') === 'center'
+                          ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                          : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      Giữa mỗi ảnh
+                    </button>
+                    <button
+                      onClick={() =>
+                        onUpdateConfig({
+                          comparison: {
+                            ...(config.comparison || {
+                              enabled: true,
+                              leftLabel: 'THEN',
+                              rightLabel: 'NOW',
+                              showLabels: true,
+                              labelPosition: 'bottom',
+                            }),
+                            badgeAlign: 'outer',
+                          },
+                        })
+                      }
+                      className={`py-1.5 px-2 text-xs rounded-lg border font-medium transition-all ${
+                        config.comparison?.badgeAlign === 'outer'
+                          ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                          : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      Dạt 2 mép ngoài (Tránh mặt)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Kiểu huy hiệu */}
+                <div className="space-y-1.5 pt-1 border-t border-neutral-800">
+                  <label className="text-[11px] font-semibold text-neutral-300 block">
+                    Kiểu dáng nhãn
+                  </label>
+                  <div className="grid grid-cols-3 gap-1">
+                    {[
+                      { id: 'pill' as const, label: 'Viên thuốc' },
+                      { id: 'minimal' as const, label: 'Tối giản' },
+                      { id: 'tag' as const, label: 'Thẻ viền' },
+                    ].map((st) => (
                       <button
-                        key={item.pos}
+                        key={st.id}
                         onClick={() =>
                           onUpdateConfig({
                             comparison: {
@@ -413,19 +584,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 leftLabel: 'THEN',
                                 rightLabel: 'NOW',
                                 showLabels: true,
-                                labelPosition: 'top',
+                                labelPosition: 'bottom',
                               }),
-                              labelPosition: item.pos,
+                              badgeStyle: st.id,
                             },
                           })
                         }
-                        className={`py-1.5 px-2 text-xs rounded-lg border font-medium transition-all ${
-                          (config.comparison?.labelPosition || 'top') === item.pos
+                        className={`py-1 px-1.5 text-[10px] rounded-lg border font-medium transition-all ${
+                          (config.comparison?.badgeStyle || 'pill') === st.id
                             ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
-                            : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-800'
+                            : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
                         }`}
                       >
-                        {item.label}
+                        {st.label}
                       </button>
                     ))}
                   </div>
@@ -446,7 +617,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               leftLabel: 'THEN',
                               rightLabel: 'NOW',
                               showLabels: true,
-                              labelPosition: 'top',
+                              labelPosition: 'bottom',
                             }),
                             showLabels: e.target.checked,
                           },
@@ -473,7 +644,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               leftLabel: 'THEN',
                               rightLabel: 'NOW',
                               showLabels: true,
-                              labelPosition: 'top',
+                              labelPosition: 'bottom',
                             }),
                             showVsBadge: e.target.checked,
                           },
@@ -844,7 +1015,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         leftLabel: 'THEN',
                         rightLabel: 'NOW',
                         showLabels: true,
-                        labelPosition: 'top',
+                        labelPosition: 'bottom',
+                        verticalPercent: 58,
+                        badgeAlign: 'center',
+                        badgeStyle: 'pill',
                         showVsBadge: false,
                         centerDivider: 'gap',
                       },

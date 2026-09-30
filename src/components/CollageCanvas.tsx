@@ -616,50 +616,96 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
           </div>
 
           {/* Then & Now Comparison Badges Overlay Layer */}
-          {layout.isComparison && (config.comparison?.showLabels ?? true) && (
-            <div
-              className="absolute inset-x-0 pointer-events-none z-20 flex items-center justify-between px-4 transition-all"
-              style={
-                config.comparison?.labelPosition === 'bottom'
-                  ? { bottom: `calc(${config.newsPoster?.gradientHeight ?? 38}% + 12px)` }
-                  : {
-                      top:
-                        config.newsPoster?.showTopBadge || config.newsPoster?.showFollowButton
-                          ? '52px'
-                          : '16px',
-                    }
-              }
-            >
-              {/* Left Label */}
-              <div className="w-1/2 flex items-center justify-center">
-                <div className="px-3.5 py-1 rounded-full bg-neutral-950/90 backdrop-blur-md border border-amber-400/60 shadow-xl flex items-center gap-1.5 pointer-events-auto">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-amber-300 font-sans">
-                    {config.comparison?.leftLabel || 'THEN'}
-                  </span>
-                </div>
-              </div>
+          {layout.isComparison && (config.comparison?.showLabels ?? true) && (() => {
+            const isOuter = config.comparison?.badgeAlign === 'outer';
+            const styleType = config.comparison?.badgeStyle || 'pill';
+            const vPercent = config.comparison?.verticalPercent;
+            const pos = config.comparison?.labelPosition || 'bottom';
 
-              {/* Center VS Badge */}
-              {config.comparison?.showVsBadge && (
-                <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 text-neutral-950 font-black text-[10px] flex items-center justify-center shadow-2xl border-2 border-white">
-                    {config.comparison?.vsText || 'VS'}
+            // Safe calculation so badges never obstruct faces
+            let containerStyle: React.CSSProperties;
+            if (vPercent !== undefined) {
+              containerStyle = { top: `${vPercent}%`, transform: 'translateY(-50%)' };
+            } else if (pos === 'bottom') {
+              // Placed in chest / lower photo area (~58% height), completely safe from faces
+              containerStyle = { top: '58%', transform: 'translateY(-50%)' };
+            } else if (pos === 'above-headline') {
+              // Placed just above the headline gradient
+              containerStyle = { bottom: `calc(${config.newsPoster?.gradientHeight ?? 38}% + 10px)` };
+            } else if (pos === 'top-bar') {
+              containerStyle = { top: '14px' };
+            } else {
+              containerStyle = {
+                top: config.newsPoster?.showTopBadge || config.newsPoster?.showFollowButton ? '52px' : '16px',
+              };
+            }
+
+            return (
+              <div
+                className="absolute inset-x-0 pointer-events-none z-20 flex items-center justify-between px-3 sm:px-4 transition-all duration-150"
+                style={containerStyle}
+              >
+                {/* Left Label (THEN) */}
+                <div className={`w-1/2 flex items-center ${isOuter ? 'justify-start pl-1 sm:pl-2' : 'justify-center'}`}>
+                  {styleType === 'pill' ? (
+                    <div className="px-3 py-1 rounded-full bg-neutral-950/90 backdrop-blur-md border border-amber-400/70 shadow-2xl flex items-center gap-1.5 pointer-events-auto transition-transform hover:scale-105">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      <span className="text-[11px] font-black uppercase tracking-wider text-amber-300 font-sans">
+                        {config.comparison?.leftLabel || 'THEN'}
+                      </span>
+                    </div>
+                  ) : styleType === 'minimal' ? (
+                    <div className="px-2.5 py-0.5 rounded bg-black/85 backdrop-blur-sm border-l-2 border-amber-400 shadow-lg pointer-events-auto">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 font-sans">
+                        {config.comparison?.leftLabel || 'THEN'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="px-3 py-1 rounded-md bg-neutral-950/90 backdrop-blur-md border border-amber-500/50 shadow-xl flex items-center gap-1.5 pointer-events-auto">
+                      <span className="w-1 h-3 rounded-full bg-amber-400" />
+                      <span className="text-[11px] font-black uppercase tracking-wider text-amber-300 font-sans">
+                        {config.comparison?.leftLabel || 'THEN'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Center VS Badge */}
+                {config.comparison?.showVsBadge && (
+                  <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 text-neutral-950 font-black text-[10px] flex items-center justify-center shadow-2xl border-2 border-white transition-transform hover:scale-110">
+                      {config.comparison?.vsText || 'VS'}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Right Label */}
-              <div className="w-1/2 flex items-center justify-center">
-                <div className="px-3.5 py-1 rounded-full bg-neutral-950/90 backdrop-blur-md border border-white/60 shadow-xl flex items-center gap-1.5 pointer-events-auto">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-white font-sans">
-                    {config.comparison?.rightLabel || 'NOW'}
-                  </span>
+                {/* Right Label (NOW) */}
+                <div className={`w-1/2 flex items-center ${isOuter ? 'justify-end pr-1 sm:pr-2' : 'justify-center'}`}>
+                  {styleType === 'pill' ? (
+                    <div className="px-3 py-1 rounded-full bg-neutral-950/90 backdrop-blur-md border border-white/70 shadow-2xl flex items-center gap-1.5 pointer-events-auto transition-transform hover:scale-105">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                      <span className="text-[11px] font-black uppercase tracking-wider text-white font-sans">
+                        {config.comparison?.rightLabel || 'NOW'}
+                      </span>
+                    </div>
+                  ) : styleType === 'minimal' ? (
+                    <div className="px-2.5 py-0.5 rounded bg-black/85 backdrop-blur-sm border-r-2 border-white shadow-lg pointer-events-auto">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-white font-sans">
+                        {config.comparison?.rightLabel || 'NOW'}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="px-3 py-1 rounded-md bg-neutral-950/90 backdrop-blur-md border border-white/50 shadow-xl flex items-center gap-1.5 pointer-events-auto">
+                      <span className="w-1 h-3 rounded-full bg-white" />
+                      <span className="text-[11px] font-black uppercase tracking-wider text-white font-sans">
+                        {config.comparison?.rightLabel || 'NOW'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* News Poster Overlay Layer (Tỷ lệ 3:4 chuẩn tin tức / báo chí / fanpage) */}
           {config.newsPoster?.enabled && (
