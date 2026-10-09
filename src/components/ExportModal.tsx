@@ -118,9 +118,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white">Xuất ảnh chất lượng cao</h2>
+              <h2 className="text-sm font-bold text-white">Xuất ảnh chất lượng cao & Chữ siêu nét</h2>
               <p className="text-xs text-neutral-400">
-                Tải ảnh về máy hoặc sao chép nhanh vào bộ nhớ tạm
+                Chữ tiêu đề & nhãn xuất ra với phông sắc nét tối đa, không bị mờ hay vỡ hạt
               </p>
             </div>
           </div>

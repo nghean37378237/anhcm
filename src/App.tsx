@@ -89,6 +89,7 @@ export default function App() {
       showFollowButton: true,
       followButtonText: 'FOLLOW US',
       showDiamondDivider: true,
+      dividerPosition: 'top',
     },
   });
 
@@ -353,14 +354,15 @@ export default function App() {
     text: string,
     fontFamily: string,
     color: string,
-    bgBox: boolean
+    bgBox: boolean,
+    fontSize = 32
   ) => {
     const newText: TextOverlay = {
       id: `text-${Date.now()}`,
       text,
       x: 50,
       y: 50 + (texts.length * 6) % 30,
-      fontSize: 24,
+      fontSize: fontSize || 32,
       fontFamily,
       color,
       fontWeight: 'bold',
@@ -368,6 +370,10 @@ export default function App() {
       bgBox,
     };
     setTexts((prev) => [...prev, newText]);
+  };
+
+  const handleUpdateText = (id: string, updates: Partial<TextOverlay>) => {
+    setTexts((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
   };
 
   const handleRemoveText = (id: string) => {
@@ -603,6 +609,7 @@ export default function App() {
             selectedSlotIndex={selectedSlotIndex}
             texts={texts}
             onAddText={handleAddText}
+            onUpdateText={handleUpdateText}
             onRemoveText={handleRemoveText}
             stickers={stickers}
             onAddSticker={handleAddSticker}

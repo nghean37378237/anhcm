@@ -33,7 +33,8 @@ export interface NewsPosterConfig {
   highlightWords: string; // Từ khóa tô màu nổi bật (phân tách dấu phẩy)
   headlineColor: string; // Mặc định #FFFFFF
   highlightColor: string; // Mặc định #FACC15 hoặc #F5D061
-  fontSize: number; // 18 to 44
+  fontSize: number; // 18 to 72 (Cỡ chữ có thể kéo to)
+  textOutline?: boolean; // Viền nét chữ đen để tăng độ rõ nét khi xuất ảnh
   gradientHeight: number; // 25 to 60 (% chiều cao đáy)
   gradientOpacity: number; // 0.6 to 1.0
   showTopBadge: boolean;
@@ -41,6 +42,7 @@ export interface NewsPosterConfig {
   showFollowButton: boolean;
   followButtonText: string;
   showDiamondDivider: boolean;
+  dividerPosition?: 'top' | 'bottom' | 'both'; // 'top' = phía trên chữ để phân cách ảnh và chữ; 'bottom'; 'both'
 }
 
 export type ComparisonPosition = 'bottom' | 'above-headline' | 'top-bar' | 'top';
@@ -56,6 +58,7 @@ export interface ComparisonConfig {
   verticalPercent?: number; // 5 to 90 (mặc định 60 - vị trí an toàn tuyệt đối không che mặt)
   badgeAlign?: ComparisonBadgeAlign; // 'center' | 'outer' (dạt 2 bên để mặt ở giữa không bị che)
   badgeStyle?: ComparisonBadgeStyle; // 'pill' | 'minimal' | 'tag'
+  badgeSize?: 'normal' | 'large' | 'xl'; // Cỡ nhãn THEN & NOW có thể kéo to rõ hơn
   showVsBadge?: boolean;
   vsText?: string;
   centerDivider?: 'gap' | 'line' | 'none';

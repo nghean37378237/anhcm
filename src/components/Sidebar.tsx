@@ -48,7 +48,8 @@ interface SidebarProps {
   onApplyFilter: (filterId: string, applyToAll: boolean) => void;
   selectedSlotIndex: number | null;
   texts: TextOverlay[];
-  onAddText: (text: string, font: string, color: string, bgBox: boolean) => void;
+  onAddText: (text: string, font: string, color: string, bgBox: boolean, fontSize?: number) => void;
+  onUpdateText?: (id: string, updates: Partial<TextOverlay>) => void;
   onRemoveText: (id: string) => void;
   stickers: StickerOverlay[];
   onAddSticker: (emoji: string) => void;
@@ -75,6 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   selectedSlotIndex,
   texts,
   onAddText,
+  onUpdateText,
   onRemoveText,
   stickers,
   onAddSticker,
@@ -93,6 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0].value);
   const [textColor, setTextColor] = useState('#ffffff');
   const [textBgBox, setTextBgBox] = useState(true);
+  const [inputFontSize, setInputFontSize] = useState(32);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -113,7 +116,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleAddTextSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
-    onAddText(inputText.trim(), selectedFont, textColor, textBgBox);
+    onAddText(inputText.trim(), selectedFont, textColor, textBgBox, inputFontSize);
     setInputText('');
   };
 
@@ -597,6 +600,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         }`}
                       >
                         {st.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Kích cỡ nhãn THEN & NOW - Kéo to & rõ */}
+                <div className="space-y-1.5 pt-1 border-t border-neutral-800">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-neutral-300">
+                      Độ to & rõ nhãn THEN & NOW
+                    </label>
+                    <span className="text-[10px] text-amber-400 font-bold">
+                      {config.comparison?.badgeSize === 'xl'
+                        ? 'Cực to (XL)'
+                        : config.comparison?.badgeSize === 'large'
+                        ? 'To rõ (L)'
+                        : 'Chuẩn (M)'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {[
+                      { id: 'normal' as const, label: 'Vừa (Chuẩn)' },
+                      { id: 'large' as const, label: 'To rõ (L)' },
+                      { id: 'xl' as const, label: 'Cực to (XL)' },
+                    ].map((sz) => (
+                      <button
+                        key={sz.id}
+                        onClick={() =>
+                          onUpdateConfig({
+                            comparison: {
+                              ...(config.comparison || {
+                                enabled: true,
+                                leftLabel: 'THEN',
+                                rightLabel: 'NOW',
+                                showLabels: true,
+                                labelPosition: 'bottom',
+                              }),
+                              badgeSize: sz.id,
+                            },
+                          })
+                        }
+                        className={`py-1 px-1.5 text-[10px] rounded-lg border font-medium transition-all ${
+                          (config.comparison?.badgeSize || 'normal') === sz.id
+                            ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                            : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white'
+                        }`}
+                      >
+                        {sz.label}
                       </button>
                     ))}
                   </div>
@@ -1215,18 +1266,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 {/* Typography & Gradient Sliders */}
                 <div className="space-y-3 bg-neutral-950/40 p-3.5 rounded-xl border border-neutral-800">
-                  {/* Font Size */}
+                  {/* Font Size - Mở rộng kéo to và rõ hơn */}
                   <div>
                     <div className="flex justify-between text-xs mb-1 font-medium">
-                      <span className="text-neutral-300">Cỡ chữ tiêu đề</span>
-                      <span className="text-amber-400 font-bold">
+                      <span className="text-neutral-300 font-semibold flex items-center gap-1.5">
+                        <span>Cỡ chữ tiêu đề (Kéo to & cực rõ nét)</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-normal">
+                          Max 75px
+                        </span>
+                      </span>
+                      <span className="text-amber-400 font-bold text-sm">
                         {config.newsPoster.fontSize || 35}px
                       </span>
                     </div>
                     <input
                       type="range"
-                      min={18}
-                      max={40}
+                      min={16}
+                      max={75}
+                      step={1}
                       value={config.newsPoster.fontSize || 35}
                       onChange={(e) =>
                         onUpdateConfig({
@@ -1236,8 +1293,67 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           },
                         })
                       }
-                      className="w-full accent-amber-500"
+                      className="w-full accent-amber-500 cursor-pointer h-2 bg-neutral-800 rounded-lg"
                     />
+
+                    {/* Quick Font Size Presets */}
+                    <div className="grid grid-cols-5 gap-1 pt-2">
+                      {[
+                        { label: '28px', val: 28 },
+                        { label: '35px', val: 35 },
+                        { label: '45px', val: 45 },
+                        { label: '56px', val: 56 },
+                        { label: '70px', val: 70 },
+                      ].map((item) => (
+                        <button
+                          key={item.val}
+                          type="button"
+                          onClick={() =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                fontSize: item.val,
+                              },
+                            })
+                          }
+                          className={`py-1 text-[10px] rounded-lg border transition-all cursor-pointer font-medium text-center ${
+                            (config.newsPoster?.fontSize || 35) === item.val
+                              ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                              : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Text Sharpness / Outline toggle */}
+                    <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-neutral-800">
+                      <div>
+                        <span className="text-xs font-semibold text-neutral-200 block">
+                          Viền nét đen chống chìm chữ
+                        </span>
+                        <span className="text-[10px] text-neutral-400 block">
+                          Chữ nổi bật, cực rõ nét khi xuất ảnh
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={config.newsPoster.textOutline ?? true}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                textOutline: e.target.checked,
+                              },
+                            })
+                          }
+                          className="sr-only peer"
+                        />
+                        <div className="w-8 h-4 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500"></div>
+                      </label>
+                    </div>
                   </div>
 
                   {/* Gradient Height */}
@@ -1297,23 +1413,67 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     Chi tiết trang trí báo chí
                   </span>
 
-                  {/* Diamond divider */}
-                  <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
-                    <span>Đường gạch kim cương vàng đáy (`— ◆ —`)</span>
-                    <input
-                      type="checkbox"
-                      checked={config.newsPoster.showDiamondDivider}
-                      onChange={(e) =>
-                        onUpdateConfig({
-                          newsPoster: {
-                            ...config.newsPoster!,
-                            showDiamondDivider: e.target.checked,
-                          },
-                        })
-                      }
-                      className="accent-amber-500 w-4 h-4 rounded"
-                    />
-                  </label>
+                  {/* Diamond divider with position options */}
+                  <div className="space-y-2">
+                    <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
+                      <div>
+                        <span className="font-medium text-neutral-200 block">
+                          Vạch kim cương (`— ◆ —`)
+                        </span>
+                        <span className="text-[10px] text-neutral-400 block">
+                          Phân cách ranh giới sang trọng giữa ảnh và chữ
+                        </span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={config.newsPoster.showDiamondDivider}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              showDiamondDivider: e.target.checked,
+                            },
+                          })
+                        }
+                        className="accent-amber-500 w-4 h-4 rounded"
+                      />
+                    </label>
+
+                    {config.newsPoster.showDiamondDivider && (
+                      <div className="pt-1.5 pl-2 border-l-2 border-amber-500/50 space-y-1.5">
+                        <span className="text-[11px] font-semibold text-neutral-300 block">
+                          Vị trí đặt vạch:
+                        </span>
+                        <div className="grid grid-cols-3 gap-1">
+                          {[
+                            { id: 'top', label: 'Trên chữ (Ảnh & Chữ)' },
+                            { id: 'bottom', label: 'Dưới chữ' },
+                            { id: 'both', label: 'Cả 2 bên' },
+                          ].map((pos) => (
+                            <button
+                              key={pos.id}
+                              type="button"
+                              onClick={() =>
+                                onUpdateConfig({
+                                  newsPoster: {
+                                    ...config.newsPoster!,
+                                    dividerPosition: pos.id as 'top' | 'bottom' | 'both',
+                                  },
+                                })
+                              }
+                              className={`py-1.5 px-1 rounded text-[10px] font-medium border text-center transition-all cursor-pointer ${
+                                (config.newsPoster?.dividerPosition ?? 'top') === pos.id
+                                  ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                  : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                              }`}
+                            >
+                              {pos.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Top Badge */}
                   <div className="pt-2 border-t border-neutral-800 space-y-2">
@@ -1905,6 +2065,52 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 </div>
 
+                {/* Font Size slider for new text */}
+                <div className="space-y-1 bg-neutral-900 p-2 rounded-lg border border-neutral-800">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-neutral-300 font-medium">Cỡ chữ (Kéo to & rõ):</span>
+                    <span className="text-amber-400 font-bold">{inputFontSize}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={16}
+                    max={72}
+                    value={inputFontSize}
+                    onChange={(e) => setInputFontSize(Number(e.target.value))}
+                    className="w-full accent-amber-500 cursor-pointer h-1.5 bg-neutral-800 rounded-lg"
+                  />
+                  <div className="flex justify-between text-[10px] text-neutral-400">
+                    <button
+                      type="button"
+                      onClick={() => setInputFontSize(22)}
+                      className="hover:text-amber-300"
+                    >
+                      Nhỏ (22px)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInputFontSize(34)}
+                      className="hover:text-amber-300"
+                    >
+                      Chuẩn (34px)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInputFontSize(48)}
+                      className="hover:text-amber-300"
+                    >
+                      To rõ (48px)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInputFontSize(64)}
+                      className="hover:text-amber-300"
+                    >
+                      Cực to (64px)
+                    </button>
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   disabled={!inputText.trim()}
@@ -1947,12 +2153,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       key={t.id}
                       className="flex items-center justify-between p-2 rounded-lg bg-neutral-800/60 text-xs border border-neutral-700/60"
                     >
-                      <span className="truncate max-w-[200px] text-neutral-200">
-                        Chữ: &quot;{t.text}&quot;
-                      </span>
+                      <div className="flex-1 min-w-0 pr-2">
+                        <span className="truncate block text-neutral-200 font-medium">
+                          &quot;{t.text}&quot;
+                        </span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-[10px] text-amber-400 font-bold">{t.fontSize || 32}px</span>
+                          {onUpdateText && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onUpdateText(t.id, {
+                                    fontSize: Math.max(14, (t.fontSize || 32) - 4),
+                                  })
+                                }
+                                className="px-1.5 py-0.5 rounded bg-neutral-700 hover:bg-neutral-600 text-neutral-200 text-[10px]"
+                                title="Thu nhỏ chữ"
+                              >
+                                -4px
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onUpdateText(t.id, {
+                                    fontSize: Math.min(80, (t.fontSize || 32) + 6),
+                                  })
+                                }
+                                className="px-1.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-[10px] border border-amber-500/30"
+                                title="Kéo to chữ"
+                              >
+                                +6px
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                       <button
                         onClick={() => onRemoveText(t.id)}
-                        className="text-neutral-400 hover:text-rose-400 transition-colors"
+                        className="text-neutral-400 hover:text-rose-400 transition-colors p-1"
+                        title="Xóa chữ"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

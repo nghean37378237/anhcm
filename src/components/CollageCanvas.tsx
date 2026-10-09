@@ -621,6 +621,7 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
             const styleType = config.comparison?.badgeStyle || 'pill';
             const vPercent = config.comparison?.verticalPercent;
             const pos = config.comparison?.labelPosition || 'bottom';
+            const bSize = config.comparison?.badgeSize || 'normal';
 
             // Safe calculation so badges never obstruct faces
             let containerStyle: React.CSSProperties;
@@ -640,6 +641,16 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
               };
             }
 
+            // Size scaling classes
+            const pillPad =
+              bSize === 'xl' ? 'px-4 py-2 sm:px-5 sm:py-2.5' : bSize === 'large' ? 'px-3.5 py-1.5' : 'px-3 py-1';
+            const pillTextSize =
+              bSize === 'xl' ? 'text-xs sm:text-sm font-black' : bSize === 'large' ? 'text-[12px] font-black' : 'text-[11px] font-black';
+            const minimalPad =
+              bSize === 'xl' ? 'px-3.5 py-1.5' : bSize === 'large' ? 'px-3 py-1' : 'px-2.5 py-0.5';
+            const minimalTextSize =
+              bSize === 'xl' ? 'text-[12px] font-black' : bSize === 'large' ? 'text-[11px] font-black' : 'text-[10px] font-black';
+
             return (
               <div
                 className="absolute inset-x-0 pointer-events-none z-20 flex items-center justify-between px-3 sm:px-4 transition-all duration-150"
@@ -648,22 +659,22 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                 {/* Left Label (THEN) */}
                 <div className={`w-1/2 flex items-center ${isOuter ? 'justify-start pl-1 sm:pl-2' : 'justify-center'}`}>
                   {styleType === 'pill' ? (
-                    <div className="px-3 py-1 rounded-full bg-neutral-950/90 backdrop-blur-md border border-amber-400/70 shadow-2xl flex items-center gap-1.5 pointer-events-auto transition-transform hover:scale-105">
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                      <span className="text-[11px] font-black uppercase tracking-wider text-amber-300 font-sans">
+                    <div className={`${pillPad} rounded-full bg-neutral-950/95 backdrop-blur-md border border-amber-400/80 shadow-2xl flex items-center gap-1.5 pointer-events-auto transition-transform hover:scale-105 ring-1 ring-amber-400/30`}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                      <span className={`${pillTextSize} uppercase tracking-wider text-amber-300 font-sans`}>
                         {config.comparison?.leftLabel || 'THEN'}
                       </span>
                     </div>
                   ) : styleType === 'minimal' ? (
-                    <div className="px-2.5 py-0.5 rounded bg-black/85 backdrop-blur-sm border-l-2 border-amber-400 shadow-lg pointer-events-auto">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 font-sans">
+                    <div className={`${minimalPad} rounded bg-black/90 backdrop-blur-sm border-l-2 border-amber-400 shadow-lg pointer-events-auto`}>
+                      <span className={`${minimalTextSize} uppercase tracking-wider text-amber-300 font-sans`}>
                         {config.comparison?.leftLabel || 'THEN'}
                       </span>
                     </div>
                   ) : (
-                    <div className="px-3 py-1 rounded-md bg-neutral-950/90 backdrop-blur-md border border-amber-500/50 shadow-xl flex items-center gap-1.5 pointer-events-auto">
-                      <span className="w-1 h-3 rounded-full bg-amber-400" />
-                      <span className="text-[11px] font-black uppercase tracking-wider text-amber-300 font-sans">
+                    <div className={`${pillPad} rounded-md bg-neutral-950/95 backdrop-blur-md border border-amber-500/60 shadow-xl flex items-center gap-1.5 pointer-events-auto`}>
+                      <span className="w-1.5 h-3.5 rounded-full bg-amber-400 shrink-0" />
+                      <span className={`${pillTextSize} uppercase tracking-wider text-amber-300 font-sans`}>
                         {config.comparison?.leftLabel || 'THEN'}
                       </span>
                     </div>
@@ -673,7 +684,7 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                 {/* Center VS Badge */}
                 {config.comparison?.showVsBadge && (
                   <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-auto">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 text-neutral-950 font-black text-[10px] flex items-center justify-center shadow-2xl border-2 border-white transition-transform hover:scale-110">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 text-neutral-950 font-black text-[11px] flex items-center justify-center shadow-2xl border-2 border-white transition-transform hover:scale-110">
                       {config.comparison?.vsText || 'VS'}
                     </div>
                   </div>
@@ -682,22 +693,22 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                 {/* Right Label (NOW) */}
                 <div className={`w-1/2 flex items-center ${isOuter ? 'justify-end pr-1 sm:pr-2' : 'justify-center'}`}>
                   {styleType === 'pill' ? (
-                    <div className="px-3 py-1 rounded-full bg-neutral-950/90 backdrop-blur-md border border-white/70 shadow-2xl flex items-center gap-1.5 pointer-events-auto transition-transform hover:scale-105">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                      <span className="text-[11px] font-black uppercase tracking-wider text-white font-sans">
+                    <div className={`${pillPad} rounded-full bg-neutral-950/95 backdrop-blur-md border border-white/85 shadow-2xl flex items-center gap-1.5 pointer-events-auto transition-transform hover:scale-105 ring-1 ring-white/30`}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse shrink-0" />
+                      <span className={`${pillTextSize} uppercase tracking-wider text-white font-sans`}>
                         {config.comparison?.rightLabel || 'NOW'}
                       </span>
                     </div>
                   ) : styleType === 'minimal' ? (
-                    <div className="px-2.5 py-0.5 rounded bg-black/85 backdrop-blur-sm border-r-2 border-white shadow-lg pointer-events-auto">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-white font-sans">
+                    <div className={`${minimalPad} rounded bg-black/90 backdrop-blur-sm border-r-2 border-white shadow-lg pointer-events-auto`}>
+                      <span className={`${minimalTextSize} uppercase tracking-wider text-white font-sans`}>
                         {config.comparison?.rightLabel || 'NOW'}
                       </span>
                     </div>
                   ) : (
-                    <div className="px-3 py-1 rounded-md bg-neutral-950/90 backdrop-blur-md border border-white/50 shadow-xl flex items-center gap-1.5 pointer-events-auto">
-                      <span className="w-1 h-3 rounded-full bg-white" />
-                      <span className="text-[11px] font-black uppercase tracking-wider text-white font-sans">
+                    <div className={`${pillPad} rounded-md bg-neutral-950/95 backdrop-blur-md border border-white/60 shadow-xl flex items-center gap-1.5 pointer-events-auto`}>
+                      <span className="w-1.5 h-3.5 rounded-full bg-white shrink-0" />
+                      <span className={`${pillTextSize} uppercase tracking-wider text-white font-sans`}>
                         {config.comparison?.rightLabel || 'NOW'}
                       </span>
                     </div>
@@ -754,8 +765,41 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
 
               {/* Headline Typography Overlay */}
               <div className="absolute inset-x-3.5 bottom-3.5 z-20 text-center pointer-events-auto flex flex-col items-center">
+                {/* Golden Diamond Divider on TOP (Phía trên chữ - Phân cách ảnh và chữ) */}
+                {config.newsPoster.showDiamondDivider &&
+                  (config.newsPoster.dividerPosition ?? 'top') !== 'bottom' && (
+                    <div className="flex items-center justify-center gap-2 mb-2 sm:mb-2.5 opacity-95">
+                      <div
+                        className="h-[1.5px] w-14 sm:w-20 bg-gradient-to-r from-transparent via-amber-300/80 to-amber-300 shadow-sm"
+                        style={{
+                          background: `linear-gradient(to right, transparent, ${
+                            config.newsPoster.highlightColor || '#facc15'
+                          })`,
+                        }}
+                      />
+                      <span
+                        className="text-[10px] font-serif leading-none filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+                        style={{ color: config.newsPoster.highlightColor || '#facc15' }}
+                      >
+                        ◆
+                      </span>
+                      <div
+                        className="h-[1.5px] w-14 sm:w-20 bg-gradient-to-l from-transparent via-amber-300/80 to-amber-300 shadow-sm"
+                        style={{
+                          background: `linear-gradient(to left, transparent, ${
+                            config.newsPoster.highlightColor || '#facc15'
+                          })`,
+                        }}
+                      />
+                    </div>
+                  )}
+
                 <div
-                  className={`w-full max-w-[94%] leading-tight select-none transition-all drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] ${
+                  className={`w-full max-w-[94%] leading-tight select-none transition-all ${
+                    config.newsPoster.textOutline ?? true
+                      ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] [text-shadow:_0_1px_3px_#000,_0_2px_6px_#000]'
+                      : 'drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]'
+                  } ${
                     config.newsPoster.style === 'bold-headline'
                       ? 'font-["Anton","Montserrat",sans-serif] uppercase tracking-wide'
                       : 'font-["Playfair_Display",serif]'
@@ -774,14 +818,35 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                   )}
                 </div>
 
-                {/* Golden Diamond Divider */}
-                {config.newsPoster.showDiamondDivider && (
-                  <div className="flex items-center justify-center gap-2 mt-2 opacity-90 text-amber-300">
-                    <div className="h-[1px] w-12 sm:w-16 bg-gradient-to-r from-transparent to-amber-300/80" />
-                    <span className="text-[9px] text-amber-300 font-serif">◆</span>
-                    <div className="h-[1px] w-12 sm:w-16 bg-gradient-to-l from-transparent to-amber-300/80" />
-                  </div>
-                )}
+                {/* Golden Diamond Divider on BOTTOM (if configured) */}
+                {config.newsPoster.showDiamondDivider &&
+                  (config.newsPoster.dividerPosition === 'bottom' ||
+                    config.newsPoster.dividerPosition === 'both') && (
+                    <div className="flex items-center justify-center gap-2 mt-2 opacity-90">
+                      <div
+                        className="h-[1px] w-12 sm:w-16 bg-gradient-to-r from-transparent to-amber-300/80"
+                        style={{
+                          background: `linear-gradient(to right, transparent, ${
+                            config.newsPoster.highlightColor || '#facc15'
+                          })`,
+                        }}
+                      />
+                      <span
+                        className="text-[9px] font-serif leading-none"
+                        style={{ color: config.newsPoster.highlightColor || '#facc15' }}
+                      >
+                        ◆
+                      </span>
+                      <div
+                        className="h-[1px] w-12 sm:w-16 bg-gradient-to-l from-transparent to-amber-300/80"
+                        style={{
+                          background: `linear-gradient(to left, transparent, ${
+                            config.newsPoster.highlightColor || '#facc15'
+                          })`,
+                        }}
+                      />
+                    </div>
+                  )}
               </div>
             </>
           )}

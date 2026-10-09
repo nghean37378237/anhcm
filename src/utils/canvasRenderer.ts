@@ -112,6 +112,16 @@ export async function renderCollageToCanvas(
 ): Promise<void> {
   const { layout, slots, config, texts, stickers, exportScale = 2 } = options;
 
+  // Đảm bảo toàn bộ phông chữ web (Anton, Playfair Display, Montserrat) đã nạp xong
+  // trước khi vẽ lên canvas để chữ không bị nhòe hay vỡ phông khi xuất ảnh
+  if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+    try {
+      await document.fonts.ready;
+    } catch (e) {
+      console.warn('Document fonts wait skipped:', e);
+    }
+  }
+
   const baseSize = 1080;
   const { width: rawW, height: rawH } = getAspectRatioDimensions(config.aspectRatio, baseSize);
 
@@ -595,7 +605,8 @@ export async function renderCollageToCanvas(
     // C. Headline Typography
     if (np.headline) {
       ctx.save();
-      const baseFontSize = (np.fontSize || 35) * exportScale * 1.35;
+      // baseFontSize: Tỉ lệ chuẩn theo canvasW để chữ to, rõ và sắc nét tuyệt đối khi xuất ảnh
+      const baseFontSize = ((np.fontSize || 35) / 500) * canvasW;
       const isBoldStyle = np.style === 'bold-headline';
 
       ctx.font = isBoldStyle
@@ -605,13 +616,13 @@ export async function renderCollageToCanvas(
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
 
-      // Subtle drop shadow for crisp readability
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-      ctx.shadowBlur = 10 * exportScale;
+      // Drop shadow for crisp readability
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+      ctx.shadowBlur = 12 * exportScale;
       ctx.shadowOffsetY = 4 * exportScale;
 
       // Word wrapping logic
-      const maxTextW = canvasW * 0.9;
+      const maxTextW = canvasW * 0.92;
       const words = np.headline.split(/\s+/);
       const lines: string[] = [];
       let currentLine = '';
@@ -634,53 +645,34 @@ export async function renderCollageToCanvas(
         .map((w) => w.trim().toLowerCase())
         .filter(Boolean);
 
-      const lineHeight = baseFontSize * (isBoldStyle ? 1.22 : 1.32);
-      const dividerSpace = np.showDiamondDivider ? 36 * exportScale : 0;
-      const totalBlockH = lines.length * lineHeight + dividerSpace;
-      const startY = canvasH - 36 * exportScale - totalBlockH + baseFontSize;
+      const lineHeight = baseFontSize * (isBoldStyle ? 1.15 : 1.25);
+      const dividerPos = np.dividerPosition ?? 'top';
+      const hasTopDivider = np.showDiamondDivider && (dividerPos === 'top' || dividerPos === 'both');
+      const hasBottomDivider = np.showDiamondDivider && (dividerPos === 'bottom' || dividerPos === 'both');
 
-      // Render line by line, coloring highlight words
-      lines.forEach((lineStr, lineIdx) => {
-        const lineY = startY + lineIdx * lineHeight;
+      const topDividerSpace = hasTopDivider ? 28 * exportScale : 0;
+      const bottomDividerSpace = hasBottomDivider ? 24 * exportScale : 0;
 
-        if (highlightPhrases.length === 0) {
-          ctx.fillStyle = np.headlineColor || '#ffffff';
-          ctx.fillText(isBoldStyle ? lineStr.toUpperCase() : lineStr, canvasW / 2, lineY);
-        } else {
-          // Break line into words to draw each word with matching color
-          const lineWords = lineStr.split(' ');
-          // Measure full line width
-          const fullLineWidth = ctx.measureText(isBoldStyle ? lineStr.toUpperCase() : lineStr).width;
-          let currentWordX = canvasW / 2 - fullLineWidth / 2;
+      const bottomPad = 28 * exportScale;
+      const textBlockH = (lines.length - 1) * lineHeight;
 
-          lineWords.forEach((word) => {
-            const cleanWord = word.replace(/[^a-zA-Z0-9À-ỹ]/g, '').toLowerCase();
-            const isHighlighted = highlightPhrases.some(
-              (hp) => hp === cleanWord || hp.includes(cleanWord) || cleanWord.includes(hp)
-            );
+      // firstLineY: Baseline of first line of headline
+      const firstLineY = canvasH - bottomPad - bottomDividerSpace - textBlockH;
+      const topDividerY = firstLineY - baseFontSize * 0.85 - 12 * exportScale;
+      const bottomDividerY = canvasH - bottomPad - 6 * exportScale;
 
-            ctx.fillStyle = isHighlighted
-              ? np.highlightColor || '#facc15'
-              : np.headlineColor || '#ffffff';
+      const hasOutline = np.textOutline ?? true;
+      const outlineLineWidth = Math.max(3.5 * exportScale, baseFontSize * 0.08);
 
-            const displayWord = (isBoldStyle ? word.toUpperCase() : word) + ' ';
-            ctx.textAlign = 'left';
-            ctx.fillText(displayWord, currentWordX, lineY);
-            currentWordX += ctx.measureText(displayWord).width;
-          });
-        }
-      });
-
-      // D. Diamond Divider (— ◆ —)
-      if (np.showDiamondDivider) {
+      // Helper to draw diamond divider (— ◆ —)
+      const drawDiamondDivider = (dividerY: number) => {
+        ctx.save();
         ctx.shadowColor = 'transparent';
-        const dividerY = startY + lines.length * lineHeight + 4 * exportScale;
         const dividerColor = np.highlightColor || '#f5d061';
-
         ctx.strokeStyle = dividerColor;
-        ctx.lineWidth = 1.2 * exportScale;
+        ctx.lineWidth = 1.4 * exportScale;
 
-        const lineLen = 45 * exportScale;
+        const lineLen = 50 * exportScale;
         const gap = 12 * exportScale;
 
         // Left line
@@ -701,6 +693,67 @@ export async function renderCollageToCanvas(
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('◆', canvasW / 2, dividerY);
+        ctx.restore();
+      };
+
+      // Draw Top Divider if enabled (ngăn cách giữa ảnh và chữ)
+      if (hasTopDivider) {
+        drawDiamondDivider(topDividerY);
+      }
+
+      // Render line by line, coloring highlight words
+      lines.forEach((lineStr, lineIdx) => {
+        const lineY = firstLineY + lineIdx * lineHeight;
+
+        if (highlightPhrases.length === 0) {
+          const textToDraw = isBoldStyle ? lineStr.toUpperCase() : lineStr;
+          if (hasOutline) {
+            ctx.save();
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = outlineLineWidth;
+            ctx.lineJoin = 'round';
+            ctx.strokeText(textToDraw, canvasW / 2, lineY);
+            ctx.restore();
+          }
+          ctx.fillStyle = np.headlineColor || '#ffffff';
+          ctx.fillText(textToDraw, canvasW / 2, lineY);
+        } else {
+          // Break line into words to draw each word with matching color
+          const lineWords = lineStr.split(' ');
+          const fullLineWidth = ctx.measureText(isBoldStyle ? lineStr.toUpperCase() : lineStr).width;
+          let currentWordX = canvasW / 2 - fullLineWidth / 2;
+
+          lineWords.forEach((word) => {
+            const cleanWord = word.replace(/[^a-zA-Z0-9À-ỹ]/g, '').toLowerCase();
+            const isHighlighted = highlightPhrases.some(
+              (hp) => hp === cleanWord || hp.includes(cleanWord) || cleanWord.includes(hp)
+            );
+
+            const displayWord = (isBoldStyle ? word.toUpperCase() : word) + ' ';
+
+            if (hasOutline) {
+              ctx.save();
+              ctx.strokeStyle = '#000000';
+              ctx.lineWidth = outlineLineWidth;
+              ctx.lineJoin = 'round';
+              ctx.strokeText(displayWord, currentWordX, lineY);
+              ctx.restore();
+            }
+
+            ctx.fillStyle = isHighlighted
+              ? np.highlightColor || '#facc15'
+              : np.headlineColor || '#ffffff';
+
+            ctx.textAlign = 'left';
+            ctx.fillText(displayWord, currentWordX, lineY);
+            currentWordX += ctx.measureText(displayWord).width;
+          });
+        }
+      });
+
+      // Draw Bottom Divider if enabled
+      if (hasBottomDivider) {
+        drawDiamondDivider(bottomDividerY);
       }
 
       ctx.restore();
@@ -733,35 +786,42 @@ export async function renderCollageToCanvas(
       }
     }
 
-    const pillH = (styleType === 'minimal' ? 22 : 26) * exportScale;
-    const pillRadius = (styleType === 'minimal' ? 5 : 13) * exportScale;
+    const bSize = config.comparison?.badgeSize || 'normal';
+    const sizeMultiplier = bSize === 'xl' ? 1.45 : bSize === 'large' ? 1.22 : 1.0;
+    const badgeFontPx = Math.round(11 * sizeMultiplier * exportScale);
+
+    const pillH = (styleType === 'minimal' ? 22 : 28) * sizeMultiplier * exportScale;
+    const pillRadius = (styleType === 'minimal' ? 6 : pillH / 2);
     const marginSide = 20 * exportScale;
 
     // A. Left Label (THEN)
     const leftText = (config.comparison?.leftLabel || 'THEN').toUpperCase();
-    ctx.font = `900 ${11 * exportScale}px Montserrat, sans-serif`;
+    ctx.font = `900 ${badgeFontPx}px Montserrat, sans-serif`;
     const leftMetrics = ctx.measureText(leftText);
-    const leftPillW = leftMetrics.width + (styleType === 'minimal' ? 22 : 36) * exportScale;
+    const pillPaddingExtra = (styleType === 'minimal' ? 24 : 38) * sizeMultiplier * exportScale;
+    const leftPillW = leftMetrics.width + pillPaddingExtra;
     const leftPillX = isOuter ? marginSide : canvasW / 4 - leftPillW / 2;
     const leftPillY = badgeY - pillH / 2;
 
     // Drop shadow
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
-    ctx.shadowBlur = 12 * exportScale;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+    ctx.shadowBlur = 14 * exportScale;
     ctx.shadowOffsetY = 4 * exportScale;
 
     drawRoundedRect(ctx, leftPillX, leftPillY, leftPillW, pillH, pillRadius);
-    ctx.fillStyle = 'rgba(10, 10, 10, 0.90)';
+    ctx.fillStyle = 'rgba(10, 10, 10, 0.95)';
     ctx.fill();
-    ctx.lineWidth = (styleType === 'minimal' ? 2 : 1.5) * exportScale;
+    ctx.lineWidth = (styleType === 'minimal' ? 2.5 : 2) * exportScale;
     ctx.strokeStyle = '#f59e0b';
     ctx.stroke();
 
     ctx.shadowColor = 'transparent';
+    const dotR = 3.5 * sizeMultiplier * exportScale;
+    const dotMargin = 14 * sizeMultiplier * exportScale;
     if (styleType === 'pill') {
       // Inner dot
       ctx.beginPath();
-      ctx.arc(leftPillX + 13 * exportScale, badgeY, 3 * exportScale, 0, Math.PI * 2);
+      ctx.arc(leftPillX + dotMargin, badgeY, dotR, 0, Math.PI * 2);
       ctx.fillStyle = '#f59e0b';
       ctx.fill();
 
@@ -769,7 +829,7 @@ export async function renderCollageToCanvas(
       ctx.fillStyle = '#fde68a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(leftText, leftPillX + 22 * exportScale, badgeY);
+      ctx.fillText(leftText, leftPillX + dotMargin + 9 * sizeMultiplier * exportScale, badgeY);
     } else {
       ctx.fillStyle = '#fde68a';
       ctx.textAlign = 'center';
@@ -779,28 +839,28 @@ export async function renderCollageToCanvas(
 
     // B. Right Label (NOW)
     const rightText = (config.comparison?.rightLabel || 'NOW').toUpperCase();
-    ctx.font = `900 ${11 * exportScale}px Montserrat, sans-serif`;
+    ctx.font = `900 ${badgeFontPx}px Montserrat, sans-serif`;
     const rightMetrics = ctx.measureText(rightText);
-    const rightPillW = rightMetrics.width + (styleType === 'minimal' ? 22 : 36) * exportScale;
+    const rightPillW = rightMetrics.width + pillPaddingExtra;
     const rightPillX = isOuter ? canvasW - marginSide - rightPillW : (3 * canvasW) / 4 - rightPillW / 2;
     const rightPillY = badgeY - pillH / 2;
 
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
-    ctx.shadowBlur = 12 * exportScale;
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+    ctx.shadowBlur = 14 * exportScale;
     ctx.shadowOffsetY = 4 * exportScale;
 
     drawRoundedRect(ctx, rightPillX, rightPillY, rightPillW, pillH, pillRadius);
-    ctx.fillStyle = 'rgba(10, 10, 10, 0.90)';
+    ctx.fillStyle = 'rgba(10, 10, 10, 0.95)';
     ctx.fill();
-    ctx.lineWidth = (styleType === 'minimal' ? 2 : 1.5) * exportScale;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = (styleType === 'minimal' ? 2.5 : 2) * exportScale;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.stroke();
 
     ctx.shadowColor = 'transparent';
     if (styleType === 'pill') {
       // Inner dot
       ctx.beginPath();
-      ctx.arc(rightPillX + 13 * exportScale, badgeY, 3 * exportScale, 0, Math.PI * 2);
+      ctx.arc(rightPillX + dotMargin, badgeY, dotR, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
       ctx.fill();
 
@@ -808,7 +868,7 @@ export async function renderCollageToCanvas(
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(rightText, rightPillX + 22 * exportScale, badgeY);
+      ctx.fillText(rightText, rightPillX + dotMargin + 9 * sizeMultiplier * exportScale, badgeY);
     } else {
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
