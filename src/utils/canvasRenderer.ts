@@ -702,13 +702,14 @@ export async function renderCollageToCanvas(
     if (isTribute) {
       ctx.save();
       const baseFontSize = ((np.fontSize || 48) / 500) * canvasW;
-      const subtitleFontSize = Math.max(14 * exportScale, Math.round(baseFontSize * 0.28));
+      const subtitleFontSize = ((np.subtitleFontSize || 13) / 500) * canvasW;
 
       const hasSubtitle = Boolean(np.subtitle);
       const hasRibbon = (np.bottomSymbol ?? 'ribbon') !== 'none';
-      const ribbonH = hasRibbon ? 46 * exportScale : 0;
-      const subH = hasSubtitle ? 32 * exportScale : 0;
-      const bottomPad = 26 * exportScale;
+      const symbolBasePx = np.bottomSymbolSize || 36;
+      const ribbonH = hasRibbon ? (symbolBasePx + 10) * exportScale : 0;
+      const subH = hasSubtitle ? subtitleFontSize * 1.4 + 14 * exportScale : 0;
+      const bottomPad = 24 * exportScale;
 
       const headlineLines = np.headline ? np.headline.split('\n') : ['REST', 'IN PEACE'];
       const headlineLineH = baseFontSize * 1.06;
@@ -748,7 +749,11 @@ export async function renderCollageToCanvas(
 
       // Draw Subtitle (e.g. 'LAST ROSIE THE RIVETER OF WWII')
       if (hasSubtitle && np.subtitle) {
-        const subY = firstLineY + (headlineLines.length - 1) * headlineLineH + 26 * exportScale;
+        const subY =
+          firstLineY +
+          (headlineLines.length - 1) * headlineLineH +
+          subtitleFontSize * 1.1 +
+          8 * exportScale;
         ctx.font = `600 ${subtitleFontSize}px "Playfair Display", Georgia, serif`;
         ctx.fillStyle = np.subtitleColor || '#ffffff';
         const subUpper = np.subtitle.toUpperCase();
@@ -756,7 +761,7 @@ export async function renderCollageToCanvas(
         if (hasOutline) {
           ctx.save();
           ctx.strokeStyle = '#000000';
-          ctx.lineWidth = 2.5 * exportScale;
+          ctx.lineWidth = Math.max(2 * exportScale, subtitleFontSize * 0.08);
           ctx.strokeText(subUpper, canvasW / 2, subY);
           ctx.restore();
         }
@@ -766,7 +771,7 @@ export async function renderCollageToCanvas(
         if (np.showSubtitleUnderline ?? true) {
           const textMetrics = ctx.measureText(subUpper);
           const lineW = Math.max(textMetrics.width * 1.1, 140 * exportScale);
-          const lineY = subY + 8 * exportScale;
+          const lineY = subY + Math.max(6 * exportScale, subtitleFontSize * 0.32);
           const lineGrad = ctx.createLinearGradient(
             canvasW / 2 - lineW / 2,
             0,
@@ -785,12 +790,13 @@ export async function renderCollageToCanvas(
 
       // Draw Memorial Ribbon (Ruy băng trắng)
       if (hasRibbon) {
-        const ribbonTopY = canvasH - bottomPad - ribbonH + 8 * exportScale;
+        const ribbonTopY = canvasH - bottomPad - ribbonH + 6 * exportScale;
+        const symPx = symbolBasePx * exportScale;
         if (np.bottomSymbol === 'ribbon' || !np.bottomSymbol) {
           ctx.save();
           ctx.fillStyle = np.bottomSymbolColor || '#FFFFFF';
           ctx.translate(canvasW / 2, ribbonTopY);
-          const ribbonScale = (36 * exportScale) / 140;
+          const ribbonScale = symPx / 140;
           ctx.scale(ribbonScale, ribbonScale);
           ctx.translate(-50, 0);
 
@@ -820,28 +826,28 @@ export async function renderCollageToCanvas(
           ctx.fill('evenodd');
           ctx.restore();
         } else if (np.bottomSymbol === 'candle') {
-          ctx.font = `${28 * exportScale}px sans-serif`;
-          ctx.fillText('🕯️', canvasW / 2, ribbonTopY + 24 * exportScale);
+          ctx.font = `${Math.round(symPx * 0.75)}px sans-serif`;
+          ctx.fillText('🕯️', canvasW / 2, ribbonTopY + symPx * 0.7);
         } else if (np.bottomSymbol === 'dove') {
-          ctx.font = `${28 * exportScale}px sans-serif`;
-          ctx.fillText('🕊️', canvasW / 2, ribbonTopY + 24 * exportScale);
+          ctx.font = `${Math.round(symPx * 0.75)}px sans-serif`;
+          ctx.fillText('🕊️', canvasW / 2, ribbonTopY + symPx * 0.7);
         } else if (np.bottomSymbol === 'rose') {
-          ctx.font = `${28 * exportScale}px sans-serif`;
-          ctx.fillText('🌹', canvasW / 2, ribbonTopY + 24 * exportScale);
+          ctx.font = `${Math.round(symPx * 0.75)}px sans-serif`;
+          ctx.fillText('🌹', canvasW / 2, ribbonTopY + symPx * 0.7);
         } else if (np.bottomSymbol === 'lotus') {
-          ctx.font = `${28 * exportScale}px sans-serif`;
-          ctx.fillText('🪷', canvasW / 2, ribbonTopY + 24 * exportScale);
+          ctx.font = `${Math.round(symPx * 0.75)}px sans-serif`;
+          ctx.fillText('🪷', canvasW / 2, ribbonTopY + symPx * 0.7);
         } else if (np.bottomSymbol === 'star') {
           ctx.fillStyle = '#facc15';
-          ctx.font = `${26 * exportScale}px sans-serif`;
-          ctx.fillText('⭐', canvasW / 2, ribbonTopY + 24 * exportScale);
+          ctx.font = `${Math.round(symPx * 0.72)}px sans-serif`;
+          ctx.fillText('⭐', canvasW / 2, ribbonTopY + symPx * 0.7);
         } else if (np.bottomSymbol === 'cross') {
           ctx.fillStyle = '#ffffff';
-          ctx.font = `${26 * exportScale}px sans-serif`;
-          ctx.fillText('✝️', canvasW / 2, ribbonTopY + 24 * exportScale);
+          ctx.font = `${Math.round(symPx * 0.72)}px sans-serif`;
+          ctx.fillText('✝️', canvasW / 2, ribbonTopY + symPx * 0.7);
         } else if (np.bottomSymbol === 'hands') {
-          ctx.font = `${28 * exportScale}px sans-serif`;
-          ctx.fillText('🙏', canvasW / 2, ribbonTopY + 24 * exportScale);
+          ctx.font = `${Math.round(symPx * 0.75)}px sans-serif`;
+          ctx.fillText('🙏', canvasW / 2, ribbonTopY + symPx * 0.7);
         }
       }
 

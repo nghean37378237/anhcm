@@ -1258,10 +1258,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </div>
 
                     {/* Subtitle / Description (e.g. 'LAST ROSIE THE RIVETER OF WWII') */}
-                    <div className="space-y-2 bg-neutral-950/40 p-3 rounded-xl border border-neutral-800">
-                      <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block">
-                        Dòng phụ đề danh vị / tên tuổi
-                      </label>
+                    <div className="space-y-2.5 bg-neutral-950/40 p-3 rounded-xl border border-neutral-800">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block">
+                          Dòng phụ đề danh vị / tên tuổi
+                        </label>
+                        <span className="text-[10px] text-amber-400 font-bold font-mono">
+                          {config.newsPoster.subtitleFontSize || 13}px
+                        </span>
+                      </div>
                       <input
                         type="text"
                         value={config.newsPoster.subtitle || ''}
@@ -1276,7 +1281,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         placeholder="VD: LAST ROSIE THE RIVETER OF WWII"
                         className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 uppercase tracking-wider"
                       />
-                      <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer pt-1">
+
+                      {/* Subtitle Font Size Slider & Quick Presets */}
+                      <div className="space-y-1.5 pt-1 border-t border-neutral-800/80">
+                        <div className="flex justify-between text-xs font-medium">
+                          <span className="text-neutral-300 text-[11px] font-medium">Cỡ chữ phụ đề:</span>
+                          <span className="text-amber-400 font-bold text-[11px]">
+                            {config.newsPoster.subtitleFontSize || 13}px
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="10"
+                          max="32"
+                          value={config.newsPoster.subtitleFontSize || 13}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                subtitleFontSize: Number(e.target.value),
+                              },
+                            })
+                          }
+                          className="w-full accent-amber-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+                        />
+                        {/* Quick preset buttons for Subtitle Font Size */}
+                        <div className="grid grid-cols-5 gap-1 pt-0.5">
+                          {[
+                            { label: '11px', size: 11, desc: 'Nhỏ' },
+                            { label: '13px', size: 13, desc: 'Chuẩn' },
+                            { label: '16px', size: 16, desc: 'Vừa' },
+                            { label: '20px', size: 20, desc: 'To' },
+                            { label: '26px', size: 26, desc: 'Rất to' },
+                          ].map((preset) => (
+                            <button
+                              key={preset.size}
+                              type="button"
+                              onClick={() =>
+                                onUpdateConfig({
+                                  newsPoster: {
+                                    ...config.newsPoster!,
+                                    subtitleFontSize: preset.size,
+                                  },
+                                })
+                              }
+                              className={`py-1 px-0.5 rounded text-[10px] font-medium border text-center transition-all cursor-pointer ${
+                                (config.newsPoster?.subtitleFontSize || 13) === preset.size
+                                  ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold shadow-sm'
+                                  : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:text-neutral-200'
+                              }`}
+                            >
+                              <span className="block leading-none">{preset.label}</span>
+                              <span className="text-[8px] opacity-70 block mt-0.5">{preset.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer pt-1 border-t border-neutral-800/80">
                         <span className="text-[11px] text-neutral-300">Đường gạch chân trắng dưới phụ đề</span>
                         <input
                           type="checkbox"
@@ -1295,10 +1357,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </div>
 
                     {/* Bottom Memorial Symbol Selection */}
-                    <div className="space-y-2 bg-neutral-950/40 p-3 rounded-xl border border-neutral-800">
-                      <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block">
-                        Biểu tượng tưởng niệm (Đáy poster)
-                      </label>
+                    <div className="space-y-3 bg-neutral-950/40 p-3 rounded-xl border border-neutral-800">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block">
+                          Biểu tượng tưởng niệm (Đáy poster)
+                        </label>
+                        <span className="text-[10px] text-amber-400 font-mono bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/30">
+                          {config.newsPoster?.bottomSymbolSize ?? 36}px
+                        </span>
+                      </div>
+
                       <div className="grid grid-cols-3 gap-1.5">
                         {[
                           { id: 'ribbon', label: '🎗 Ruy băng (Mẫu ảnh)' },
@@ -1332,6 +1400,73 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           </button>
                         ))}
                       </div>
+
+                      {/* Slider & Quick Presets to adjust symbol size (16px - 72px) */}
+                      {(config.newsPoster?.bottomSymbol ?? 'ribbon') !== 'none' && (
+                        <div className="space-y-2 pt-2 border-t border-neutral-800/80">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-medium text-neutral-300 flex items-center gap-1.5">
+                              <span>Kích thước biểu tượng ruy băng</span>
+                            </span>
+                            <span className="text-[10px] text-neutral-400">
+                              Kéo để phóng to / thu nhỏ
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-neutral-500 font-mono">16px</span>
+                            <input
+                              type="range"
+                              min="16"
+                              max="72"
+                              step="2"
+                              value={config.newsPoster?.bottomSymbolSize ?? 36}
+                              onChange={(e) =>
+                                onUpdateConfig({
+                                  newsPoster: {
+                                    ...config.newsPoster!,
+                                    bottomSymbolSize: parseInt(e.target.value, 10),
+                                  },
+                                })
+                              }
+                              className="flex-1 h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                            />
+                            <span className="text-[10px] text-neutral-500 font-mono">72px</span>
+                          </div>
+
+                          {/* Quick size presets */}
+                          <div className="grid grid-cols-5 gap-1 pt-1">
+                            {[
+                              { size: 24, label: 'Nhỏ', desc: '24px' },
+                              { size: 36, label: 'Chuẩn', desc: '36px' },
+                              { size: 44, label: 'Vừa', desc: '44px' },
+                              { size: 54, label: 'To', desc: '54px' },
+                              { size: 68, label: 'Cực đại', desc: '68px' },
+                            ].map((preset) => (
+                              <button
+                                key={preset.size}
+                                type="button"
+                                onClick={() =>
+                                  onUpdateConfig({
+                                    newsPoster: {
+                                      ...config.newsPoster!,
+                                      bottomSymbolSize: preset.size,
+                                    },
+                                  })
+                                }
+                                className={`py-1 px-1 rounded text-[10px] border text-center transition-all cursor-pointer ${
+                                  (config.newsPoster?.bottomSymbolSize ?? 36) === preset.size
+                                    ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold shadow-sm'
+                                    : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:text-neutral-200'
+                                }`}
+                              >
+                                <span className="block leading-none">{preset.label}</span>
+                                <span className="text-[8px] opacity-70 block mt-0.5">{preset.desc}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Top Emblem Badge Selection */}

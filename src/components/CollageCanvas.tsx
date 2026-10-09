@@ -236,14 +236,16 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
   };
 
   // Helper to render tribute memorial symbol (white awareness ribbon, candle, etc.)
-  const renderMemorialSymbol = (symbol: string, color: string = '#FFFFFF') => {
+  const renderMemorialSymbol = (symbol: string, color: string = '#FFFFFF', size: number = 36) => {
+    // ribbon viewBox is 100x140 -> width = size * (100 / 140)
+    const ribbonWidth = Math.round(size * (100 / 140));
     switch (symbol) {
       case 'ribbon':
         return (
           <svg
             viewBox="0 0 100 140"
-            className="w-7 h-10 sm:w-8 sm:h-12 drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]"
-            style={{ color }}
+            style={{ width: `${ribbonWidth}px`, height: `${size}px`, color }}
+            className="drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] transition-all"
             fill="currentColor"
           >
             {/* Elegant Awareness / Mourning ribbon */}
@@ -251,19 +253,19 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
           </svg>
         );
       case 'candle':
-        return <span className="text-2xl sm:text-3xl filter drop-shadow">🕯️</span>;
+        return <span style={{ fontSize: `${size * 0.75}px` }} className="filter drop-shadow leading-none">🕯️</span>;
       case 'rose':
-        return <span className="text-2xl sm:text-3xl filter drop-shadow">🌹</span>;
+        return <span style={{ fontSize: `${size * 0.75}px` }} className="filter drop-shadow leading-none">🌹</span>;
       case 'dove':
-        return <span className="text-2xl sm:text-3xl filter drop-shadow">🕊️</span>;
+        return <span style={{ fontSize: `${size * 0.75}px` }} className="filter drop-shadow leading-none">🕊️</span>;
       case 'lotus':
-        return <span className="text-2xl sm:text-3xl filter drop-shadow">🪷</span>;
+        return <span style={{ fontSize: `${size * 0.75}px` }} className="filter drop-shadow leading-none">🪷</span>;
       case 'star':
-        return <span className="text-2xl sm:text-3xl filter drop-shadow text-amber-300">⭐</span>;
+        return <span style={{ fontSize: `${size * 0.75}px` }} className="filter drop-shadow text-amber-300 leading-none">⭐</span>;
       case 'cross':
-        return <span className="text-2xl sm:text-3xl filter drop-shadow text-white">✝️</span>;
+        return <span style={{ fontSize: `${size * 0.75}px` }} className="filter drop-shadow text-white leading-none">✝️</span>;
       case 'hands':
-        return <span className="text-2xl sm:text-3xl filter drop-shadow">🙏</span>;
+        return <span style={{ fontSize: `${size * 0.75}px` }} className="filter drop-shadow leading-none">🙏</span>;
       default:
         return null;
     }
@@ -902,8 +904,11 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                     {config.newsPoster.subtitle && (
                       <div className="flex flex-col items-center mt-2 sm:mt-2.5 w-full max-w-[94%]">
                         <span
-                          className="text-[11px] sm:text-[13px] font-['Playfair_Display',Georgia,serif] uppercase tracking-[0.16em] font-medium text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
-                          style={{ color: config.newsPoster.subtitleColor || '#ffffff' }}
+                          className="font-['Playfair_Display',Georgia,serif] uppercase tracking-[0.16em] font-medium text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
+                          style={{
+                            fontSize: `${config.newsPoster.subtitleFontSize || 13}px`,
+                            color: config.newsPoster.subtitleColor || '#ffffff',
+                          }}
                         >
                           {config.newsPoster.subtitle}
                         </span>
@@ -918,7 +923,8 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                       <div className="mt-2.5 sm:mt-3 flex items-center justify-center">
                         {renderMemorialSymbol(
                           config.newsPoster.bottomSymbol || 'ribbon',
-                          config.newsPoster.bottomSymbolColor || '#FFFFFF'
+                          config.newsPoster.bottomSymbolColor || '#FFFFFF',
+                          config.newsPoster.bottomSymbolSize ?? 36
                         )}
                       </div>
                     )}

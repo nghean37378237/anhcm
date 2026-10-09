@@ -45,9 +45,11 @@ export interface NewsPosterConfig {
   dividerPosition?: 'top' | 'bottom' | 'both'; // 'top' = phía trên chữ để phân cách ảnh và chữ; 'bottom'; 'both'
   // Các trường bổ sung cho Mẫu Tưởng niệm Tri ân (REST IN PEACE / MEMORIAL)
   subtitle?: string; // Dòng phụ đề (e.g. 'LAST ROSIE THE RIVETER OF WWII')
+  subtitleFontSize?: number; // Cỡ chữ phụ đề (10 to 36px)
   subtitleColor?: string;
   showSubtitleUnderline?: boolean; // Gạch chân tinh tế dưới dòng phụ đề
   bottomSymbol?: 'ribbon' | 'candle' | 'dove' | 'rose' | 'lotus' | 'star' | 'cross' | 'hands' | 'none'; // Biểu tượng ruy băng trắng, hoa, nến...
+  bottomSymbolSize?: number; // Kích thước biểu tượng đáy (16 to 80px, mặc định 36px)
   bottomSymbolColor?: string;
   showTopEmblem?: boolean; // Huy hiệu tròn góc trên (như huy hiệu tàu chiến / quân nhân trong mẫu ảnh)
   topEmblemPosition?: 'top-right' | 'top-left' | 'none';
