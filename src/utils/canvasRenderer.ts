@@ -520,24 +520,120 @@ export async function renderCollageToCanvas(
     ctx.save();
 
     // A. Bottom Dark Gradient
-    const gradH = (canvasH * (np.gradientHeight || 38)) / 100;
+    const isTribute = np.style === 'tribute-rip';
+    const gradH = (canvasH * (np.gradientHeight || (isTribute ? 46 : 38))) / 100;
     const gradStartY = canvasH - gradH;
     const grad = ctx.createLinearGradient(0, gradStartY, 0, canvasH);
-    const op = np.gradientOpacity ?? 0.94;
-    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    grad.addColorStop(0.35, `rgba(0, 0, 0, ${op * 0.45})`);
-    grad.addColorStop(0.7, `rgba(0, 0, 0, ${op * 0.85})`);
-    grad.addColorStop(1, `rgba(0, 0, 0, ${op})`);
+    const op = np.gradientOpacity ?? 1.0;
+
+    if (isTribute) {
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      grad.addColorStop(0.28, `rgba(0, 0, 0, ${op * 0.52})`);
+      grad.addColorStop(0.5, `rgba(0, 0, 0, ${op * 0.95})`);
+      grad.addColorStop(0.72, `rgba(0, 0, 0, ${op})`);
+      grad.addColorStop(1, `rgba(0, 0, 0, ${op})`);
+    } else {
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      grad.addColorStop(0.35, `rgba(0, 0, 0, ${op * 0.45})`);
+      grad.addColorStop(0.7, `rgba(0, 0, 0, ${op * 0.85})`);
+      grad.addColorStop(1, `rgba(0, 0, 0, ${op})`);
+    }
 
     ctx.fillStyle = grad;
     ctx.fillRect(0, gradStartY, canvasW, gradH);
 
-    // B. Top Badges
+    // B. Top Badges & Emblems
     const padTop = 28 * exportScale;
     const padSide = 28 * exportScale;
 
-    // Logo Badge (Top Left)
-    if (np.showTopBadge) {
+    // Top Emblem Badge (cho Mẫu Tưởng niệm REST IN PEACE)
+    if (isTribute && (np.showTopEmblem ?? true)) {
+      ctx.save();
+      const isLeft = np.topEmblemPosition === 'top-left';
+      const emblemR = 22 * exportScale;
+      const emblemCx = isLeft ? padSide + emblemR : canvasW - padSide - emblemR;
+      const emblemCy = padTop + emblemR;
+
+      // Dark circle with white ring
+      ctx.beginPath();
+      ctx.arc(emblemCx, emblemCy, emblemR, 0, Math.PI * 2);
+      ctx.fillStyle = '#050505';
+      ctx.fill();
+      ctx.lineWidth = 2 * exportScale;
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.stroke();
+
+      // Draw emblem icon
+      if (np.topEmblemIcon === 'ship' || !np.topEmblemIcon) {
+        ctx.save();
+        ctx.translate(emblemCx, emblemCy);
+        const iconScale = (emblemR * 1.35) / 48;
+        ctx.scale(iconScale, iconScale);
+        ctx.translate(-24, -24);
+        ctx.fillStyle = '#FFFFFF';
+
+        // Warship silhouette
+        ctx.beginPath();
+        ctx.moveTo(24, 7);
+        ctx.lineTo(26, 12);
+        ctx.lineTo(28, 12);
+        ctx.lineTo(29, 17);
+        ctx.lineTo(33, 17);
+        ctx.lineTo(33, 20);
+        ctx.lineTo(35, 20);
+        ctx.lineTo(35, 23);
+        ctx.lineTo(39, 24);
+        ctx.lineTo(41, 28);
+        ctx.lineTo(7, 28);
+        ctx.lineTo(9, 24);
+        ctx.lineTo(13, 20);
+        ctx.lineTo(15, 20);
+        ctx.lineTo(15, 17);
+        ctx.lineTo(19, 17);
+        ctx.lineTo(20, 12);
+        ctx.lineTo(22, 12);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillRect(29, 14, 8, 2);
+        ctx.fillRect(11, 21, 6, 2);
+
+        // Waves
+        ctx.beginPath();
+        ctx.moveTo(4, 32);
+        ctx.bezierCurveTo(8, 30, 12, 34, 16, 32);
+        ctx.bezierCurveTo(20, 30, 24, 34, 28, 32);
+        ctx.bezierCurveTo(32, 30, 36, 34, 40, 32);
+        ctx.lineTo(44, 33);
+        ctx.lineTo(40, 36);
+        ctx.bezierCurveTo(36, 38, 32, 34, 28, 36);
+        ctx.bezierCurveTo(24, 38, 20, 34, 16, 36);
+        ctx.bezierCurveTo(12, 38, 8, 34, 4, 36);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(7, 38);
+        ctx.bezierCurveTo(11, 37, 15, 40, 19, 38);
+        ctx.bezierCurveTo(23, 37, 27, 40, 31, 38);
+        ctx.bezierCurveTo(35, 37, 39, 40, 42, 38);
+        ctx.stroke();
+
+        ctx.restore();
+      } else if (np.topEmblemIcon === 'star') {
+        ctx.fillStyle = '#facc15';
+        ctx.font = `${18 * exportScale}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⭐', emblemCx, emblemCy);
+      }
+      ctx.restore();
+    }
+
+    // Logo Badge (Top Left - cho tin tức báo chí)
+    if (!isTribute && np.showTopBadge) {
       ctx.save();
       const badgeText = np.topBadgeText || 'HM MEDIA';
       const lines = badgeText.split('\n');
@@ -578,8 +674,8 @@ export async function renderCollageToCanvas(
       ctx.restore();
     }
 
-    // Follow Button (Top Right)
-    if (np.showFollowButton) {
+    // Follow Button (Top Right - cho tin tức báo chí)
+    if (!isTribute && np.showFollowButton) {
       ctx.save();
       const btnText = (np.followButtonText || 'FOLLOW US').toUpperCase();
       const btnH = 28 * exportScale;
@@ -603,7 +699,154 @@ export async function renderCollageToCanvas(
     }
 
     // C. Headline Typography
-    if (np.headline) {
+    if (isTribute) {
+      ctx.save();
+      const baseFontSize = ((np.fontSize || 48) / 500) * canvasW;
+      const subtitleFontSize = Math.max(14 * exportScale, Math.round(baseFontSize * 0.28));
+
+      const hasSubtitle = Boolean(np.subtitle);
+      const hasRibbon = (np.bottomSymbol ?? 'ribbon') !== 'none';
+      const ribbonH = hasRibbon ? 46 * exportScale : 0;
+      const subH = hasSubtitle ? 32 * exportScale : 0;
+      const bottomPad = 26 * exportScale;
+
+      const headlineLines = np.headline ? np.headline.split('\n') : ['REST', 'IN PEACE'];
+      const headlineLineH = baseFontSize * 1.06;
+
+      // firstLineY: Baseline of first line of headline
+      const firstLineY =
+        canvasH - bottomPad - ribbonH - subH - (headlineLines.length - 1) * headlineLineH;
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+      ctx.shadowBlur = 12 * exportScale;
+      ctx.shadowOffsetY = 4 * exportScale;
+
+      const hasOutline = np.textOutline ?? true;
+      const outlineLineWidth = Math.max(3.5 * exportScale, baseFontSize * 0.08);
+
+      // Draw Primary Headline (REST IN PEACE)
+      headlineLines.forEach((lineText, idx) => {
+        const lineY = firstLineY + idx * headlineLineH;
+        const currentFontSize = idx === 0 ? baseFontSize : Math.round(baseFontSize * 0.72);
+        ctx.font = `900 ${currentFontSize}px "Playfair Display", Georgia, serif`;
+
+        const upperText = lineText.toUpperCase();
+        if (hasOutline) {
+          ctx.save();
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = outlineLineWidth;
+          ctx.lineJoin = 'round';
+          ctx.strokeText(upperText, canvasW / 2, lineY);
+          ctx.restore();
+        }
+
+        ctx.fillStyle = np.headlineColor || '#ffffff';
+        ctx.fillText(upperText, canvasW / 2, lineY);
+      });
+
+      // Draw Subtitle (e.g. 'LAST ROSIE THE RIVETER OF WWII')
+      if (hasSubtitle && np.subtitle) {
+        const subY = firstLineY + (headlineLines.length - 1) * headlineLineH + 26 * exportScale;
+        ctx.font = `600 ${subtitleFontSize}px "Playfair Display", Georgia, serif`;
+        ctx.fillStyle = np.subtitleColor || '#ffffff';
+        const subUpper = np.subtitle.toUpperCase();
+
+        if (hasOutline) {
+          ctx.save();
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2.5 * exportScale;
+          ctx.strokeText(subUpper, canvasW / 2, subY);
+          ctx.restore();
+        }
+        ctx.fillText(subUpper, canvasW / 2, subY);
+
+        // Subtitle underline
+        if (np.showSubtitleUnderline ?? true) {
+          const textMetrics = ctx.measureText(subUpper);
+          const lineW = Math.max(textMetrics.width * 1.1, 140 * exportScale);
+          const lineY = subY + 8 * exportScale;
+          const lineGrad = ctx.createLinearGradient(
+            canvasW / 2 - lineW / 2,
+            0,
+            canvasW / 2 + lineW / 2,
+            0
+          );
+          lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+          lineGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0.85)');
+          lineGrad.addColorStop(0.7, 'rgba(255, 255, 255, 0.85)');
+          lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+          ctx.fillStyle = lineGrad;
+          ctx.fillRect(canvasW / 2 - lineW / 2, lineY, lineW, 1.5 * exportScale);
+        }
+      }
+
+      // Draw Memorial Ribbon (Ruy băng trắng)
+      if (hasRibbon) {
+        const ribbonTopY = canvasH - bottomPad - ribbonH + 8 * exportScale;
+        if (np.bottomSymbol === 'ribbon' || !np.bottomSymbol) {
+          ctx.save();
+          ctx.fillStyle = np.bottomSymbolColor || '#FFFFFF';
+          ctx.translate(canvasW / 2, ribbonTopY);
+          const ribbonScale = (36 * exportScale) / 140;
+          ctx.scale(ribbonScale, ribbonScale);
+          ctx.translate(-50, 0);
+
+          ctx.beginPath();
+          ctx.moveTo(50, 6);
+          ctx.bezierCurveTo(28, 6, 16, 25, 16, 48);
+          ctx.bezierCurveTo(16, 66, 25, 83, 37, 99);
+          ctx.lineTo(13, 134);
+          ctx.bezierCurveTo(11, 137, 14, 141, 18, 139);
+          ctx.lineTo(47, 116);
+          ctx.lineTo(50, 120);
+          ctx.lineTo(53, 116);
+          ctx.lineTo(82, 139);
+          ctx.bezierCurveTo(86, 141, 89, 137, 87, 134);
+          ctx.lineTo(63, 99);
+          ctx.bezierCurveTo(75, 83, 84, 66, 84, 48);
+          ctx.bezierCurveTo(84, 25, 72, 6, 50, 6);
+          ctx.closePath();
+
+          ctx.moveTo(50, 23);
+          ctx.bezierCurveTo(62, 23, 68, 34, 68, 48);
+          ctx.bezierCurveTo(68, 60, 61, 74, 52, 89);
+          ctx.bezierCurveTo(43, 74, 32, 60, 32, 48);
+          ctx.bezierCurveTo(32, 34, 38, 23, 50, 23);
+          ctx.closePath();
+
+          ctx.fill('evenodd');
+          ctx.restore();
+        } else if (np.bottomSymbol === 'candle') {
+          ctx.font = `${28 * exportScale}px sans-serif`;
+          ctx.fillText('🕯️', canvasW / 2, ribbonTopY + 24 * exportScale);
+        } else if (np.bottomSymbol === 'dove') {
+          ctx.font = `${28 * exportScale}px sans-serif`;
+          ctx.fillText('🕊️', canvasW / 2, ribbonTopY + 24 * exportScale);
+        } else if (np.bottomSymbol === 'rose') {
+          ctx.font = `${28 * exportScale}px sans-serif`;
+          ctx.fillText('🌹', canvasW / 2, ribbonTopY + 24 * exportScale);
+        } else if (np.bottomSymbol === 'lotus') {
+          ctx.font = `${28 * exportScale}px sans-serif`;
+          ctx.fillText('🪷', canvasW / 2, ribbonTopY + 24 * exportScale);
+        } else if (np.bottomSymbol === 'star') {
+          ctx.fillStyle = '#facc15';
+          ctx.font = `${26 * exportScale}px sans-serif`;
+          ctx.fillText('⭐', canvasW / 2, ribbonTopY + 24 * exportScale);
+        } else if (np.bottomSymbol === 'cross') {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `${26 * exportScale}px sans-serif`;
+          ctx.fillText('✝️', canvasW / 2, ribbonTopY + 24 * exportScale);
+        } else if (np.bottomSymbol === 'hands') {
+          ctx.font = `${28 * exportScale}px sans-serif`;
+          ctx.fillText('🙏', canvasW / 2, ribbonTopY + 24 * exportScale);
+        }
+      }
+
+      ctx.restore();
+    } else if (np.headline) {
       ctx.save();
       // baseFontSize: Tỉ lệ chuẩn theo canvasW để chữ to, rõ và sắc nét tuyệt đối khi xuất ảnh
       const baseFontSize = ((np.fontSize || 35) / 500) * canvasW;

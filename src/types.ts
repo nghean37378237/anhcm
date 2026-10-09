@@ -28,12 +28,12 @@ export type LayoutCategory =
 
 export interface NewsPosterConfig {
   enabled: boolean;
-  style: 'bold-headline' | 'editorial-serif'; // Mẫu 1: Bold News; Mẫu 2: Serif sang trọng
+  style: 'bold-headline' | 'editorial-serif' | 'tribute-rip'; // Mẫu 1: Bold News; Mẫu 2: Serif sang trọng; Mẫu 3: Tưởng niệm REST IN PEACE
   headline: string;
   highlightWords: string; // Từ khóa tô màu nổi bật (phân tách dấu phẩy)
   headlineColor: string; // Mặc định #FFFFFF
   highlightColor: string; // Mặc định #FACC15 hoặc #F5D061
-  fontSize: number; // 18 to 72 (Cỡ chữ có thể kéo to)
+  fontSize: number; // 18 to 75 (Cỡ chữ có thể kéo to)
   textOutline?: boolean; // Viền nét chữ đen để tăng độ rõ nét khi xuất ảnh
   gradientHeight: number; // 25 to 60 (% chiều cao đáy)
   gradientOpacity: number; // 0.6 to 1.0
@@ -43,6 +43,16 @@ export interface NewsPosterConfig {
   followButtonText: string;
   showDiamondDivider: boolean;
   dividerPosition?: 'top' | 'bottom' | 'both'; // 'top' = phía trên chữ để phân cách ảnh và chữ; 'bottom'; 'both'
+  // Các trường bổ sung cho Mẫu Tưởng niệm Tri ân (REST IN PEACE / MEMORIAL)
+  subtitle?: string; // Dòng phụ đề (e.g. 'LAST ROSIE THE RIVETER OF WWII')
+  subtitleColor?: string;
+  showSubtitleUnderline?: boolean; // Gạch chân tinh tế dưới dòng phụ đề
+  bottomSymbol?: 'ribbon' | 'candle' | 'dove' | 'rose' | 'lotus' | 'star' | 'cross' | 'hands' | 'none'; // Biểu tượng ruy băng trắng, hoa, nến...
+  bottomSymbolColor?: string;
+  showTopEmblem?: boolean; // Huy hiệu tròn góc trên (như huy hiệu tàu chiến / quân nhân trong mẫu ảnh)
+  topEmblemPosition?: 'top-right' | 'top-left' | 'none';
+  topEmblemIcon?: 'ship' | 'shield' | 'star' | 'dove' | 'lotus';
+  topEmblemText?: string;
 }
 
 export type ComparisonPosition = 'bottom' | 'above-headline' | 'top-bar' | 'top';

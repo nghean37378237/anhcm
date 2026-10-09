@@ -223,7 +223,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </span>
               </div>
               <p className="text-[11px] text-neutral-300 leading-relaxed">
-                Đã dựng sẵn 5 mẫu báo chí / tạp chí 3:4 với hiệu ứng chữ nổi bật, bóng mờ và so sánh:
+                Đã dựng sẵn 6 mẫu báo chí / tưởng niệm / tạp chí với hiệu ứng chữ nổi bật, bóng mờ và so sánh:
               </p>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-0.5">
@@ -232,13 +232,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   const isBlend = !!layoutItem.isBlendedOverlap;
                   const isCircle = !!layoutItem.isCircleAccent;
                   const isComp = !!layoutItem.isComparison;
+                  const isTribute = layoutItem.id === 'layout-tribute-rip' || layoutItem.newsPosterDefault?.style === 'tribute-rip';
                   return (
                     <button
                       key={layoutItem.id}
                       onClick={() => {
                         onSelectLayout(layoutItem);
                         onUpdateConfig({
-                          aspectRatio: '3:4',
+                          aspectRatio: layoutItem.defaultAspectRatio || '3:4',
                           gap: layoutItem.defaultGap ?? 0,
                           padding: 0,
                           borderRadius: 0,
@@ -278,6 +279,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               NOW
                             </div>
                           </>
+                        ) : isTribute ? (
+                          <>
+                            {/* Tribute portrait representation */}
+                            <div className="absolute inset-0 bg-neutral-800/80" />
+                            {/* Top right circular emblem */}
+                            <div className="absolute right-1 top-1 w-3.5 h-3.5 rounded-full border border-white bg-black flex items-center justify-center text-[6px] text-white z-20">
+                              ⚓
+                            </div>
+                            {/* Solid black bottom with REST IN PEACE and ribbon */}
+                            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/95 to-transparent flex flex-col items-center justify-end pb-0.5 px-0.5 z-20">
+                              <span className="text-[5.5px] font-black font-serif text-white leading-none tracking-wider mb-0.5">
+                                REST IN PEACE
+                              </span>
+                              <div className="w-1.5 h-2 text-white">
+                                <svg viewBox="0 0 100 140" fill="currentColor" className="w-full h-full">
+                                  <path d="M50 6 C28 6, 16 25, 16 48 C16 66, 25 83, 37 99 L13 134 C11 137, 14 141, 18 139 L47 116 L50 120 L53 116 L82 139 C86 141, 89 137, 87 134 L63 99 C75 83, 84 66, 84 48 C84 25, 72 6, 50 6 Z M50 23 C62 23, 68 34, 68 48 C68 60, 61 74, 52 89 C43 74, 32 60, 32 48 C32 34, 38 23, 50 23 Z" />
+                                </svg>
+                              </div>
+                            </div>
+                          </>
                         ) : (
                           layoutItem.slots.map((s, sIdx) => (
                             <div
@@ -293,10 +314,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ))
                         )}
                         {/* Visual indicator of bottom text gradient */}
-                        <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/95 to-transparent flex flex-col items-center justify-end pb-1 px-0.5 z-20">
-                          <div className="w-4/5 h-1 bg-amber-400 rounded-full mb-0.5" />
-                          <div className="w-3/5 h-0.5 bg-neutral-200 rounded-full" />
-                        </div>
+                        {!isTribute && (
+                          <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/95 to-transparent flex flex-col items-center justify-end pb-1 px-0.5 z-20">
+                            <div className="w-4/5 h-1 bg-amber-400 rounded-full mb-0.5" />
+                            <div className="w-3/5 h-0.5 bg-neutral-200 rounded-full" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-[10px] font-bold text-amber-300 truncate">
@@ -308,7 +331,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             ? 'Mẫu 3: Chồng Mờ'
                             : idx === 3
                             ? 'Mẫu 4: 1+Tròn'
-                            : 'Mẫu 5: Then&Now'}
+                            : idx === 4
+                            ? 'Mẫu 5: Then&Now'
+                            : 'Mẫu 6: Tưởng Niệm'}
                         </span>
                         <span className="text-[9px] text-neutral-400 truncate">
                           {idx === 0
@@ -319,7 +344,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             ? '2 ảnh mờ mờ'
                             : idx === 3
                             ? 'Điểm nhấn tròn'
-                            : 'So sánh Trước Sau'}
+                            : idx === 4
+                            ? 'So sánh Trước Sau'
+                            : 'REST IN PEACE'}
                         </span>
                       </div>
                     </button>
@@ -1110,10 +1137,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {/* Font Style Selection */}
                 <div>
                   <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block mb-1.5">
-                    Kiểu dáng chữ tiêu đề
+                    Phong cách thiết kế
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-1.5">
                     <button
+                      type="button"
                       onClick={() =>
                         onUpdateConfig({
                           newsPoster: {
@@ -1122,15 +1150,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           },
                         })
                       }
-                      className={`py-2 px-2 text-xs rounded-xl border font-bold text-center transition-all ${
+                      className={`py-2 px-1 text-[11px] rounded-xl border font-bold text-center transition-all ${
                         config.newsPoster.style === 'bold-headline'
                           ? 'border-amber-400 bg-amber-500/15 text-amber-300'
                           : 'border-neutral-800 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
                       }`}
                     >
-                      IN HOA ĐIỆN ẢNH (Anton)
+                      In Hoa Báo Chí
                     </button>
                     <button
+                      type="button"
                       onClick={() =>
                         onUpdateConfig({
                           newsPoster: {
@@ -1139,130 +1168,389 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           },
                         })
                       }
-                      className={`py-2 px-2 text-xs rounded-xl border font-bold font-serif italic text-center transition-all ${
+                      className={`py-2 px-1 text-[11px] rounded-xl border font-bold font-serif italic text-center transition-all ${
                         config.newsPoster.style === 'editorial-serif'
                           ? 'border-amber-400 bg-amber-500/15 text-amber-300'
                           : 'border-neutral-800 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
                       }`}
                     >
-                      Nghiêng Tạp Chí (Playfair)
+                      Nghiêng Tạp Chí
                     </button>
-                  </div>
-                </div>
-
-                {/* Headline Textarea */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">
-                      Nội dung tiêu đề
-                    </label>
-                    <span className="text-[10px] text-neutral-500">
-                      {config.newsPoster.headline.length} ký tự
-                    </span>
-                  </div>
-                  <textarea
-                    rows={3}
-                    value={config.newsPoster.headline}
-                    onChange={(e) =>
-                      onUpdateConfig({
-                        newsPoster: {
-                          ...config.newsPoster!,
-                          headline: e.target.value,
-                        },
-                      })
-                    }
-                    placeholder="Nhập tiêu đề bài báo / tin tức nổi bật..."
-                    className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2.5 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 transition-colors leading-relaxed"
-                  />
-                  {/* Quick Vietnamese / English templates buttons */}
-                  <div className="flex flex-wrap gap-1.5 mt-1.5">
                     <button
+                      type="button"
                       onClick={() =>
                         onUpdateConfig({
                           newsPoster: {
                             ...config.newsPoster!,
-                            headline: 'Khoảnh Khắc Đẹp Nhất Của Chuyến Đi Được Ghi Lại Hoàn Hảo',
-                            highlightWords: 'Khoảnh Khắc Đẹp Nhất, Hoàn Hảo',
+                            style: 'tribute-rip',
+                            headline: config.newsPoster?.headline?.includes('REST')
+                              ? config.newsPoster?.headline
+                              : 'REST\nIN PEACE',
+                            subtitle: config.newsPoster?.subtitle || 'LAST ROSIE THE RIVETER OF WWII',
+                            bottomSymbol: config.newsPoster?.bottomSymbol || 'ribbon',
+                            showTopEmblem: config.newsPoster?.showTopEmblem ?? true,
+                            topEmblemIcon: config.newsPoster?.topEmblemIcon || 'ship',
                           },
                         })
                       }
-                      className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-amber-300 hover:bg-neutral-700 transition-colors"
+                      className={`py-2 px-1 text-[11px] rounded-xl border font-bold font-serif text-center transition-all ${
+                        config.newsPoster.style === 'tribute-rip'
+                          ? 'border-amber-400 bg-amber-500/20 text-white font-extrabold shadow-sm'
+                          : 'border-neutral-800 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
+                      }`}
                     >
-                      + Mẫu Kỷ Niệm
-                    </button>
-                    <button
-                      onClick={() =>
-                        onUpdateConfig({
-                          newsPoster: {
-                            ...config.newsPoster!,
-                            headline: 'BỘ SƯU TẬP PHONG CÁCH MÙA THU ĐẬM CHẤT ĐIỆN ẢNH VÀ NGHỆ THUẬT',
-                            highlightWords: 'BỘ SƯU TẬP, ĐIỆN ẢNH, NGHỆ THUẬT',
-                            style: 'bold-headline',
-                          },
-                        })
-                      }
-                      className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-amber-300 hover:bg-neutral-700 transition-colors"
-                    >
-                      + Mẫu Thời Trang
+                      Tưởng Niệm (RIP) 🎗
                     </button>
                   </div>
                 </div>
 
-                {/* Highlight Words & Color */}
-                <div>
-                  <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block mb-1.5">
-                    Từ khóa tô màu nổi bật (cách nhau bởi dấu phẩy)
-                  </label>
-                  <input
-                    type="text"
-                    value={config.newsPoster.highlightWords}
-                    onChange={(e) =>
-                      onUpdateConfig({
-                        newsPoster: {
-                          ...config.newsPoster!,
-                          highlightWords: e.target.value,
-                        },
-                      })
-                    }
-                    placeholder="VD: Iris West, Flash, JOHNNY DEPP"
-                    className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500"
-                  />
+                {config.newsPoster.style === 'tribute-rip' ? (
+                  /* ==================== CÁC TÙY CHỌN RIÊNG CHO MẪU TƯỞNG NIỆM TRI ÂN ==================== */
+                  <div className="space-y-3.5">
+                    {/* Headline for Tribute */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">
+                          Tiêu đề tưởng niệm chính (Chữ Serif đậm)
+                        </label>
+                        <span className="text-[10px] text-amber-400 font-medium">Xuống dòng để căn 2 hàng</span>
+                      </div>
+                      <textarea
+                        rows={2}
+                        value={config.newsPoster.headline}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              headline: e.target.value,
+                            },
+                          })
+                        }
+                        placeholder="REST&#10;IN PEACE"
+                        className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2.5 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 transition-colors font-serif uppercase tracking-widest font-bold leading-tight"
+                      />
+                      {/* Quick Tribute presets */}
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {[
+                          { label: 'REST IN PEACE', text: 'REST\nIN PEACE' },
+                          { label: 'VÔ CÙNG THƯƠNG TIẾC', text: 'VÔ CÙNG\nTHƯƠNG TIẾC' },
+                          { label: 'IN LOVING MEMORY', text: 'IN LOVING\nMEMORY' },
+                          { label: 'TƯỞNG NIỆM & TRI ÂN', text: 'TƯỞNG NIỆM\n& TRI ÂN' },
+                          { label: 'MÃI TRONG TIM', text: 'MÃI MÃI\nTRONG TIM' },
+                        ].map((item) => (
+                          <button
+                            key={item.label}
+                            type="button"
+                            onClick={() =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  headline: item.text,
+                                },
+                              })
+                            }
+                            className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-amber-300 hover:bg-neutral-700 transition-colors cursor-pointer"
+                          >
+                            + {item.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                  {/* Highlight Color Picker */}
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-[11px] text-neutral-400 shrink-0">Màu từ khóa:</span>
-                    <div className="flex items-center gap-1.5">
-                      {[
-                        { color: '#FACC15', label: 'Vàng tươi' },
-                        { color: '#F5D061', label: 'Vàng kim' },
-                        { color: '#FB923C', label: 'Cam ấm' },
-                        { color: '#F87171', label: 'Đỏ son' },
-                        { color: '#38BDF8', label: 'Xanh lơ' },
-                        { color: '#4ADE80', label: 'Xanh lá' },
-                        { color: '#FFFFFF', label: 'Trắng' },
-                      ].map((c) => (
+                    {/* Subtitle / Description (e.g. 'LAST ROSIE THE RIVETER OF WWII') */}
+                    <div className="space-y-2 bg-neutral-950/40 p-3 rounded-xl border border-neutral-800">
+                      <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block">
+                        Dòng phụ đề danh vị / tên tuổi
+                      </label>
+                      <input
+                        type="text"
+                        value={config.newsPoster.subtitle || ''}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              subtitle: e.target.value,
+                            },
+                          })
+                        }
+                        placeholder="VD: LAST ROSIE THE RIVETER OF WWII"
+                        className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 uppercase tracking-wider"
+                      />
+                      <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer pt-1">
+                        <span className="text-[11px] text-neutral-300">Đường gạch chân trắng dưới phụ đề</span>
+                        <input
+                          type="checkbox"
+                          checked={config.newsPoster.showSubtitleUnderline ?? true}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                showSubtitleUnderline: e.target.checked,
+                              },
+                            })
+                          }
+                          className="accent-amber-500 w-4 h-4 rounded cursor-pointer"
+                        />
+                      </label>
+                    </div>
+
+                    {/* Bottom Memorial Symbol Selection */}
+                    <div className="space-y-2 bg-neutral-950/40 p-3 rounded-xl border border-neutral-800">
+                      <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block">
+                        Biểu tượng tưởng niệm (Đáy poster)
+                      </label>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[
+                          { id: 'ribbon', label: '🎗 Ruy băng (Mẫu ảnh)' },
+                          { id: 'candle', label: '🕯️ Ngọn nến' },
+                          { id: 'rose', label: '🌹 Hoa hồng' },
+                          { id: 'dove', label: '🕊️ Chim bồ câu' },
+                          { id: 'lotus', label: '🪷 Hoa sen' },
+                          { id: 'star', label: '⭐ Ngôi sao' },
+                          { id: 'cross', label: '✝️ Thập tự' },
+                          { id: 'hands', label: '🙏 Cầu nguyện' },
+                          { id: 'none', label: '✕ Tắt' },
+                        ].map((sym) => (
+                          <button
+                            key={sym.id}
+                            type="button"
+                            onClick={() =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  bottomSymbol: sym.id as any,
+                                },
+                              })
+                            }
+                            className={`py-1.5 px-1 rounded-lg text-[10px] font-medium border text-center transition-all cursor-pointer ${
+                              (config.newsPoster?.bottomSymbol || 'ribbon') === sym.id
+                                ? 'border-amber-400 bg-amber-500/20 text-white font-bold shadow-sm'
+                                : 'border-neutral-800 bg-neutral-900/80 text-neutral-400 hover:text-neutral-200'
+                            }`}
+                          >
+                            {sym.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Top Emblem Badge Selection */}
+                    <div className="space-y-2 bg-neutral-950/40 p-3 rounded-xl border border-neutral-800">
+                      <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
+                        <div>
+                          <span className="font-semibold text-neutral-200 block">
+                            Huy hiệu tròn góc trên (Tàu chiến / Quân nhân)
+                          </span>
+                          <span className="text-[10px] text-neutral-400 block">
+                            Đúng chuẩn huy hiệu góc trên trong mẫu ảnh
+                          </span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={config.newsPoster.showTopEmblem ?? true}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                showTopEmblem: e.target.checked,
+                              },
+                            })
+                          }
+                          className="accent-amber-500 w-4 h-4 rounded cursor-pointer"
+                        />
+                      </label>
+
+                      {config.newsPoster.showTopEmblem && (
+                        <div className="pt-2 space-y-2 border-t border-neutral-800">
+                          <div>
+                            <span className="text-[11px] font-semibold text-neutral-300 block mb-1">
+                              Biểu tượng huy hiệu:
+                            </span>
+                            <div className="grid grid-cols-3 gap-1">
+                              {[
+                                { id: 'ship', label: '⚓ Tàu chiến (Ảnh)' },
+                                { id: 'star', label: '⭐ Ngôi sao' },
+                                { id: 'shield', label: '🛡️ Khiên' },
+                              ].map((em) => (
+                                <button
+                                  key={em.id}
+                                  type="button"
+                                  onClick={() =>
+                                    onUpdateConfig({
+                                      newsPoster: {
+                                        ...config.newsPoster!,
+                                        topEmblemIcon: em.id as any,
+                                      },
+                                    })
+                                  }
+                                  className={`py-1.5 px-1 rounded-lg text-[10px] font-medium border text-center transition-all cursor-pointer ${
+                                    (config.newsPoster?.topEmblemIcon || 'ship') === em.id
+                                      ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                      : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                                  }`}
+                                >
+                                  {em.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <span className="text-[11px] font-semibold text-neutral-300 block mb-1">
+                              Vị trí đặt:
+                            </span>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {[
+                                { id: 'top-right', label: 'Góc phải trên (Mẫu ảnh)' },
+                                { id: 'top-left', label: 'Góc trái trên' },
+                              ].map((pos) => (
+                                <button
+                                  key={pos.id}
+                                  type="button"
+                                  onClick={() =>
+                                    onUpdateConfig({
+                                      newsPoster: {
+                                        ...config.newsPoster!,
+                                        topEmblemPosition: pos.id as any,
+                                      },
+                                    })
+                                  }
+                                  className={`py-1.5 px-2 rounded-lg text-[10px] font-medium border text-center transition-all cursor-pointer ${
+                                    (config.newsPoster?.topEmblemPosition || 'top-right') === pos.id
+                                      ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                      : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                                  }`}
+                                >
+                                  {pos.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* ==================== CÁC TÙY CHỌN CHO MẪU BÁO CHÍ THÔNG THƯỜNG ==================== */
+                  <>
+                    {/* Headline Textarea */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">
+                          Nội dung tiêu đề
+                        </label>
+                        <span className="text-[10px] text-neutral-500">
+                          {config.newsPoster.headline.length} ký tự
+                        </span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={config.newsPoster.headline}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              headline: e.target.value,
+                            },
+                          })
+                        }
+                        placeholder="Nhập tiêu đề bài báo / tin tức nổi bật..."
+                        className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2.5 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 transition-colors leading-relaxed"
+                      />
+                      {/* Quick Vietnamese / English templates buttons */}
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
                         <button
-                          key={c.color}
+                          type="button"
                           onClick={() =>
                             onUpdateConfig({
                               newsPoster: {
                                 ...config.newsPoster!,
-                                highlightColor: c.color,
+                                headline: 'Khoảnh Khắc Đẹp Nhất Của Chuyến Đi Được Ghi Lại Hoàn Hảo',
+                                highlightWords: 'Khoảnh Khắc Đẹp Nhất, Hoàn Hảo',
                               },
                             })
                           }
-                          className={`w-5 h-5 rounded-full border transition-all ${
-                            config.newsPoster?.highlightColor === c.color
-                              ? 'ring-2 ring-white ring-offset-1 ring-offset-neutral-900 scale-110'
-                              : 'border-white/30'
-                          }`}
-                          style={{ backgroundColor: c.color }}
-                          title={c.label}
-                        />
-                      ))}
+                          className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-amber-300 hover:bg-neutral-700 transition-colors"
+                        >
+                          + Mẫu Kỷ Niệm
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                headline: 'BỘ SƯU TẬP PHONG CÁCH MÙA THU ĐẬM CHẤT ĐIỆN ẢNH VÀ NGHỆ THUẬT',
+                                highlightWords: 'BỘ SƯU TẬP, ĐIỆN ẢNH, NGHỆ THUẬT',
+                                style: 'bold-headline',
+                              },
+                            })
+                          }
+                          className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-amber-300 hover:bg-neutral-700 transition-colors"
+                        >
+                          + Mẫu Thời Trang
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </div>
+
+                    {/* Highlight Words & Color */}
+                    <div>
+                      <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block mb-1.5">
+                        Từ khóa tô màu nổi bật (cách nhau bởi dấu phẩy)
+                      </label>
+                      <input
+                        type="text"
+                        value={config.newsPoster.highlightWords}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              highlightWords: e.target.value,
+                            },
+                          })
+                        }
+                        placeholder="VD: Iris West, Flash, JOHNNY DEPP"
+                        className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500"
+                      />
+
+                      {/* Highlight Color Picker */}
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[11px] text-neutral-400 shrink-0">Màu từ khóa:</span>
+                        <div className="flex items-center gap-1.5">
+                          {[
+                            { color: '#FACC15', label: 'Vàng tươi' },
+                            { color: '#F5D061', label: 'Vàng kim' },
+                            { color: '#FB923C', label: 'Cam ấm' },
+                            { color: '#F87171', label: 'Đỏ son' },
+                            { color: '#38BDF8', label: 'Xanh lơ' },
+                            { color: '#4ADE80', label: 'Xanh lá' },
+                            { color: '#FFFFFF', label: 'Trắng' },
+                          ].map((c) => (
+                            <button
+                              key={c.color}
+                              type="button"
+                              onClick={() =>
+                                onUpdateConfig({
+                                  newsPoster: {
+                                    ...config.newsPoster!,
+                                    highlightColor: c.color,
+                                  },
+                                })
+                              }
+                              className={`w-5 h-5 rounded-full border transition-all ${
+                                config.newsPoster?.highlightColor === c.color
+                                  ? 'ring-2 ring-white ring-offset-1 ring-offset-neutral-900 scale-110'
+                                  : 'border-white/30'
+                              }`}
+                              style={{ backgroundColor: c.color }}
+                              title={c.label}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Typography & Gradient Sliders */}
                 <div className="space-y-3 bg-neutral-950/40 p-3.5 rounded-xl border border-neutral-800">
@@ -1407,146 +1695,148 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </div>
                 </div>
 
-                {/* Additional Decorative Elements */}
-                <div className="space-y-3 bg-neutral-950/40 p-3.5 rounded-xl border border-neutral-800">
-                  <span className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block">
-                    Chi tiết trang trí báo chí
-                  </span>
+                {/* Additional Decorative Elements (Dành cho Mẫu Báo chí) */}
+                {config.newsPoster.style !== 'tribute-rip' && (
+                  <div className="space-y-3 bg-neutral-950/40 p-3.5 rounded-xl border border-neutral-800">
+                    <span className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block">
+                      Chi tiết trang trí báo chí
+                    </span>
 
-                  {/* Diamond divider with position options */}
-                  <div className="space-y-2">
-                    <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
-                      <div>
-                        <span className="font-medium text-neutral-200 block">
-                          Vạch kim cương (`— ◆ —`)
-                        </span>
-                        <span className="text-[10px] text-neutral-400 block">
-                          Phân cách ranh giới sang trọng giữa ảnh và chữ
-                        </span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={config.newsPoster.showDiamondDivider}
-                        onChange={(e) =>
-                          onUpdateConfig({
-                            newsPoster: {
-                              ...config.newsPoster!,
-                              showDiamondDivider: e.target.checked,
-                            },
-                          })
-                        }
-                        className="accent-amber-500 w-4 h-4 rounded"
-                      />
-                    </label>
-
-                    {config.newsPoster.showDiamondDivider && (
-                      <div className="pt-1.5 pl-2 border-l-2 border-amber-500/50 space-y-1.5">
-                        <span className="text-[11px] font-semibold text-neutral-300 block">
-                          Vị trí đặt vạch:
-                        </span>
-                        <div className="grid grid-cols-3 gap-1">
-                          {[
-                            { id: 'top', label: 'Trên chữ (Ảnh & Chữ)' },
-                            { id: 'bottom', label: 'Dưới chữ' },
-                            { id: 'both', label: 'Cả 2 bên' },
-                          ].map((pos) => (
-                            <button
-                              key={pos.id}
-                              type="button"
-                              onClick={() =>
-                                onUpdateConfig({
-                                  newsPoster: {
-                                    ...config.newsPoster!,
-                                    dividerPosition: pos.id as 'top' | 'bottom' | 'both',
-                                  },
-                                })
-                              }
-                              className={`py-1.5 px-1 rounded text-[10px] font-medium border text-center transition-all cursor-pointer ${
-                                (config.newsPoster?.dividerPosition ?? 'top') === pos.id
-                                  ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
-                                  : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
-                              }`}
-                            >
-                              {pos.label}
-                            </button>
-                          ))}
+                    {/* Diamond divider with position options */}
+                    <div className="space-y-2">
+                      <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
+                        <div>
+                          <span className="font-medium text-neutral-200 block">
+                            Vạch kim cương (`— ◆ —`)
+                          </span>
+                          <span className="text-[10px] text-neutral-400 block">
+                            Phân cách ranh giới sang trọng giữa ảnh và chữ
+                          </span>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                        <input
+                          type="checkbox"
+                          checked={config.newsPoster.showDiamondDivider}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                showDiamondDivider: e.target.checked,
+                              },
+                            })
+                          }
+                          className="accent-amber-500 w-4 h-4 rounded"
+                        />
+                      </label>
 
-                  {/* Top Badge */}
-                  <div className="pt-2 border-t border-neutral-800 space-y-2">
-                    <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
-                      <span>Huy hiệu logo tròn góc trái</span>
-                      <input
-                        type="checkbox"
-                        checked={config.newsPoster.showTopBadge}
-                        onChange={(e) =>
-                          onUpdateConfig({
-                            newsPoster: {
-                              ...config.newsPoster!,
-                              showTopBadge: e.target.checked,
-                            },
-                          })
-                        }
-                        className="accent-amber-500 w-4 h-4 rounded"
-                      />
-                    </label>
-                    {config.newsPoster.showTopBadge && (
-                      <input
-                        type="text"
-                        value={config.newsPoster.topBadgeText || ''}
-                        onChange={(e) =>
-                          onUpdateConfig({
-                            newsPoster: {
-                              ...config.newsPoster!,
-                              topBadgeText: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="HM MEDIA"
-                        className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 text-xs text-neutral-100"
-                      />
-                    )}
-                  </div>
+                      {config.newsPoster.showDiamondDivider && (
+                        <div className="pt-1.5 pl-2 border-l-2 border-amber-500/50 space-y-1.5">
+                          <span className="text-[11px] font-semibold text-neutral-300 block">
+                            Vị trí đặt vạch:
+                          </span>
+                          <div className="grid grid-cols-3 gap-1">
+                            {[
+                              { id: 'top', label: 'Trên chữ (Ảnh & Chữ)' },
+                              { id: 'bottom', label: 'Dưới chữ' },
+                              { id: 'both', label: 'Cả 2 bên' },
+                            ].map((pos) => (
+                              <button
+                                key={pos.id}
+                                type="button"
+                                onClick={() =>
+                                  onUpdateConfig({
+                                    newsPoster: {
+                                      ...config.newsPoster!,
+                                      dividerPosition: pos.id as 'top' | 'bottom' | 'both',
+                                    },
+                                  })
+                                }
+                                className={`py-1.5 px-1 rounded text-[10px] font-medium border text-center transition-all cursor-pointer ${
+                                  (config.newsPoster?.dividerPosition ?? 'top') === pos.id
+                                    ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                    : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                                }`}
+                              >
+                                {pos.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Follow Button */}
-                  <div className="pt-2 border-t border-neutral-800 space-y-2">
-                    <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
-                      <span>Nút &quot;FOLLOW US&quot; góc phải</span>
-                      <input
-                        type="checkbox"
-                        checked={config.newsPoster.showFollowButton}
-                        onChange={(e) =>
-                          onUpdateConfig({
-                            newsPoster: {
-                              ...config.newsPoster!,
-                              showFollowButton: e.target.checked,
-                            },
-                          })
-                        }
-                        className="accent-amber-500 w-4 h-4 rounded"
-                      />
-                    </label>
-                    {config.newsPoster.showFollowButton && (
-                      <input
-                        type="text"
-                        value={config.newsPoster.followButtonText || ''}
-                        onChange={(e) =>
-                          onUpdateConfig({
-                            newsPoster: {
-                              ...config.newsPoster!,
-                              followButtonText: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="FOLLOW US"
-                        className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 text-xs text-neutral-100"
-                      />
-                    )}
+                    {/* Top Badge */}
+                    <div className="pt-2 border-t border-neutral-800 space-y-2">
+                      <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
+                        <span>Huy hiệu logo tròn góc trái</span>
+                        <input
+                          type="checkbox"
+                          checked={config.newsPoster.showTopBadge}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                showTopBadge: e.target.checked,
+                              },
+                            })
+                          }
+                          className="accent-amber-500 w-4 h-4 rounded"
+                        />
+                      </label>
+                      {config.newsPoster.showTopBadge && (
+                        <input
+                          type="text"
+                          value={config.newsPoster.topBadgeText || ''}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                topBadgeText: e.target.value,
+                              },
+                            })
+                          }
+                          placeholder="HM MEDIA"
+                          className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 text-xs text-neutral-100"
+                        />
+                      )}
+                    </div>
+
+                    {/* Follow Button */}
+                    <div className="pt-2 border-t border-neutral-800 space-y-2">
+                      <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
+                        <span>Nút &quot;FOLLOW US&quot; góc phải</span>
+                        <input
+                          type="checkbox"
+                          checked={config.newsPoster.showFollowButton}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                showFollowButton: e.target.checked,
+                              },
+                            })
+                          }
+                          className="accent-amber-500 w-4 h-4 rounded"
+                        />
+                      </label>
+                      {config.newsPoster.showFollowButton && (
+                        <input
+                          type="text"
+                          value={config.newsPoster.followButtonText || ''}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                followButtonText: e.target.value,
+                              },
+                            })
+                          }
+                          placeholder="FOLLOW US"
+                          className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 text-xs text-neutral-100"
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>

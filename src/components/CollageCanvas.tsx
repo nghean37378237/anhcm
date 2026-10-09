@@ -22,6 +22,7 @@ import {
   CanvasConfig,
   CollageLayout,
   FilterPreset,
+  NewsPosterConfig,
   SlotState,
   StickerOverlay,
   TextOverlay,
@@ -66,6 +67,8 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
   const panStartRef = useRef<{ x: number; y: number; initialOffsetX: number; initialOffsetY: number } | null>(null);
   const [showSlotFilterMenu, setShowSlotFilterMenu] = useState(false);
   const [showSharpenMenu, setShowSharpenMenu] = useState(false);
+
+  const activeSlot = selectedSlotIndex !== null ? slots[selectedSlotIndex] : null;
 
   // Aspect ratio helper
   const getAspectRatioClass = (ratio: AspectRatioType): string => {
@@ -232,7 +235,77 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
     );
   };
 
-  const activeSlot = selectedSlotIndex !== null ? slots[selectedSlotIndex] : null;
+  // Helper to render tribute memorial symbol (white awareness ribbon, candle, etc.)
+  const renderMemorialSymbol = (symbol: string, color: string = '#FFFFFF') => {
+    switch (symbol) {
+      case 'ribbon':
+        return (
+          <svg
+            viewBox="0 0 100 140"
+            className="w-7 h-10 sm:w-8 sm:h-12 drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]"
+            style={{ color }}
+            fill="currentColor"
+          >
+            {/* Elegant Awareness / Mourning ribbon */}
+            <path d="M50 6 C28 6, 16 25, 16 48 C16 66, 25 83, 37 99 L13 134 C11 137, 14 141, 18 139 L47 116 L50 120 L53 116 L82 139 C86 141, 89 137, 87 134 L63 99 C75 83, 84 66, 84 48 C84 25, 72 6, 50 6 Z M50 23 C62 23, 68 34, 68 48 C68 60, 61 74, 52 89 C43 74, 32 60, 32 48 C32 34, 38 23, 50 23 Z" />
+          </svg>
+        );
+      case 'candle':
+        return <span className="text-2xl sm:text-3xl filter drop-shadow">🕯️</span>;
+      case 'rose':
+        return <span className="text-2xl sm:text-3xl filter drop-shadow">🌹</span>;
+      case 'dove':
+        return <span className="text-2xl sm:text-3xl filter drop-shadow">🕊️</span>;
+      case 'lotus':
+        return <span className="text-2xl sm:text-3xl filter drop-shadow">🪷</span>;
+      case 'star':
+        return <span className="text-2xl sm:text-3xl filter drop-shadow text-amber-300">⭐</span>;
+      case 'cross':
+        return <span className="text-2xl sm:text-3xl filter drop-shadow text-white">✝️</span>;
+      case 'hands':
+        return <span className="text-2xl sm:text-3xl filter drop-shadow">🙏</span>;
+      default:
+        return null;
+    }
+  };
+
+  // Helper to render top emblem badge (ship silhouette on waves, star, shield, etc.)
+  const renderTopEmblem = (np: NewsPosterConfig) => {
+    if (!np.showTopEmblem) return null;
+    const isLeft = np.topEmblemPosition === 'top-left';
+    return (
+      <div
+        className={`absolute top-3.5 z-30 pointer-events-auto ${
+          isLeft ? 'left-3.5' : 'right-3.5'
+        }`}
+      >
+        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/95 border-2 border-white flex items-center justify-center shadow-2xl p-1.5 transition-transform hover:scale-105">
+          {np.topEmblemIcon === 'ship' ? (
+            <svg viewBox="0 0 48 48" className="w-full h-full text-white fill-current">
+              {/* Battleship / Warship silhouette with waves */}
+              <path d="M24 7 L26 12 L28 12 L29 17 L33 17 L33 20 L35 20 L35 23 L39 24 L41 28 L7 28 L9 24 L13 20 L15 20 L15 17 L19 17 L20 12 L22 12 Z" />
+              <rect x="29" y="14" width="8" height="2" rx="0.5" />
+              <rect x="11" y="21" width="6" height="2" rx="0.5" />
+              <path d="M4 32 C8 30, 12 34, 16 32 C20 30, 24 34, 28 32 C32 30, 36 34, 40 32 C42 31, 44 32, 44 33 C44 34, 42 35, 40 36 C36 38, 32 34, 28 36 C24 38, 20 34, 16 36 C12 38, 8 34, 4 36 Z" />
+              <path d="M7 38 C11 37, 15 40, 19 38 C23 37, 27 40, 31 38 C35 37, 39 40, 42 38" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+            </svg>
+          ) : np.topEmblemIcon === 'star' ? (
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-amber-300 fill-current">
+              <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+            </svg>
+          ) : np.topEmblemIcon === 'dove' ? (
+            <span className="text-base">🕊️</span>
+          ) : np.topEmblemIcon === 'lotus' ? (
+            <span className="text-base">🪷</span>
+          ) : (
+            <svg viewBox="0 0 24 24" className="w-5 h-5 text-white fill-none stroke-current stroke-2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div
@@ -718,135 +791,225 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
             );
           })()}
 
-          {/* News Poster Overlay Layer (Tỷ lệ 3:4 chuẩn tin tức / báo chí / fanpage) */}
+          {/* News Poster Overlay Layer (Tỷ lệ 3:4 chuẩn tin tức / báo chí / tưởng niệm) */}
           {config.newsPoster?.enabled && (
             <>
-              {/* Top Badges */}
-              {(config.newsPoster.showTopBadge || config.newsPoster.showFollowButton) && (
-                <div className="absolute top-3 inset-x-3.5 flex justify-between items-start pointer-events-none z-20">
-                  {config.newsPoster.showTopBadge ? (
-                    <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-neutral-950/85 backdrop-blur-md border border-amber-500/40 shadow-xl pointer-events-auto">
-                      <div className="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400">
-                        <Award className="w-3 h-3" />
+              {/* Top Badges (cho báo chí) */}
+              {config.newsPoster.style !== 'tribute-rip' &&
+                (config.newsPoster.showTopBadge || config.newsPoster.showFollowButton) && (
+                  <div className="absolute top-3 inset-x-3.5 flex justify-between items-start pointer-events-none z-20">
+                    {config.newsPoster.showTopBadge ? (
+                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-neutral-950/85 backdrop-blur-md border border-amber-500/40 shadow-xl pointer-events-auto">
+                        <div className="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400">
+                          <Award className="w-3 h-3" />
+                        </div>
+                        <div className="text-[9px] font-black uppercase tracking-wider text-neutral-100 whitespace-pre-line leading-tight text-left">
+                          {config.newsPoster.topBadgeText || 'HM MEDIA'}
+                        </div>
                       </div>
-                      <div className="text-[9px] font-black uppercase tracking-wider text-neutral-100 whitespace-pre-line leading-tight text-left">
-                        {config.newsPoster.topBadgeText || 'HM MEDIA'}
-                      </div>
-                    </div>
-                  ) : (
-                    <div />
-                  )}
+                    ) : (
+                      <div />
+                    )}
 
-                  {config.newsPoster.showFollowButton && (
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-950/85 backdrop-blur-md border border-white/25 shadow-xl pointer-events-auto">
-                      <span className="text-[10px] font-black uppercase tracking-wider text-white">
-                        {config.newsPoster.followButtonText || 'FOLLOW US'}
-                      </span>
-                      <MousePointerClick className="w-3.5 h-3.5 text-white animate-pulse" />
-                    </div>
-                  )}
-                </div>
-              )}
+                    {config.newsPoster.showFollowButton && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-950/85 backdrop-blur-md border border-white/25 shadow-xl pointer-events-auto">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-white">
+                          {config.newsPoster.followButtonText || 'FOLLOW US'}
+                        </span>
+                        <MousePointerClick className="w-3.5 h-3.5 text-white animate-pulse" />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+              {/* Top Emblem (Huy hiệu tròn quân nhân / tàu chiến cho mẫu Tưởng niệm REST IN PEACE) */}
+              {config.newsPoster.style === 'tribute-rip' && renderTopEmblem(config.newsPoster)}
 
               {/* Bottom Dark Gradient Fade */}
               <div
                 className="absolute inset-x-0 bottom-0 pointer-events-none z-10 transition-all duration-200"
                 style={{
-                  height: `${config.newsPoster.gradientHeight ?? 38}%`,
-                  background: `linear-gradient(to top, rgba(0,0,0,${
-                    config.newsPoster.gradientOpacity ?? 0.94
-                  }) 0%, rgba(0,0,0,${
-                    (config.newsPoster.gradientOpacity ?? 0.94) * 0.85
-                  }) 42%, rgba(0,0,0,${
-                    (config.newsPoster.gradientOpacity ?? 0.94) * 0.4
-                  }) 75%, transparent 100%)`,
+                  height: `${
+                    config.newsPoster.gradientHeight ??
+                    (config.newsPoster.style === 'tribute-rip' ? 46 : 38)
+                  }%`,
+                  background:
+                    config.newsPoster.style === 'tribute-rip'
+                      ? `linear-gradient(to top, rgba(0,0,0,${
+                          config.newsPoster.gradientOpacity ?? 1
+                        }) 0%, rgba(0,0,0,${
+                          config.newsPoster.gradientOpacity ?? 1
+                        }) 32%, rgba(0,0,0,${
+                          (config.newsPoster.gradientOpacity ?? 1) * 0.95
+                        }) 54%, rgba(0,0,0,${
+                          (config.newsPoster.gradientOpacity ?? 1) * 0.52
+                        }) 76%, transparent 100%)`
+                      : `linear-gradient(to top, rgba(0,0,0,${
+                          config.newsPoster.gradientOpacity ?? 0.94
+                        }) 0%, rgba(0,0,0,${
+                          (config.newsPoster.gradientOpacity ?? 0.94) * 0.85
+                        }) 42%, rgba(0,0,0,${
+                          (config.newsPoster.gradientOpacity ?? 0.94) * 0.4
+                        }) 75%, transparent 100%)`,
                 }}
               />
 
               {/* Headline Typography Overlay */}
               <div className="absolute inset-x-3.5 bottom-3.5 z-20 text-center pointer-events-auto flex flex-col items-center">
-                {/* Golden Diamond Divider on TOP (Phía trên chữ - Phân cách ảnh và chữ) */}
-                {config.newsPoster.showDiamondDivider &&
-                  (config.newsPoster.dividerPosition ?? 'top') !== 'bottom' && (
-                    <div className="flex items-center justify-center gap-2 mb-2 sm:mb-2.5 opacity-95">
-                      <div
-                        className="h-[1.5px] w-14 sm:w-20 bg-gradient-to-r from-transparent via-amber-300/80 to-amber-300 shadow-sm"
-                        style={{
-                          background: `linear-gradient(to right, transparent, ${
-                            config.newsPoster.highlightColor || '#facc15'
-                          })`,
-                        }}
-                      />
-                      <span
-                        className="text-[10px] font-serif leading-none filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
-                        style={{ color: config.newsPoster.highlightColor || '#facc15' }}
-                      >
-                        ◆
-                      </span>
-                      <div
-                        className="h-[1.5px] w-14 sm:w-20 bg-gradient-to-l from-transparent via-amber-300/80 to-amber-300 shadow-sm"
-                        style={{
-                          background: `linear-gradient(to left, transparent, ${
-                            config.newsPoster.highlightColor || '#facc15'
-                          })`,
-                        }}
-                      />
+                {config.newsPoster.style === 'tribute-rip' ? (
+                  /* MẪU TƯỞNG NIỆM TRI ÂN: REST IN PEACE */
+                  <div className="w-full max-w-[96%] flex flex-col items-center select-none text-center">
+                    {/* Primary Big Serif Headline (REST IN PEACE) */}
+                    <div
+                      className={`font-['Playfair_Display',Georgia,serif] font-black uppercase text-white ${
+                        config.newsPoster.textOutline ?? true
+                          ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] [text-shadow:_0_1px_3px_#000,_0_2px_6px_#000]'
+                          : 'drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]'
+                      }`}
+                      style={{ lineHeight: 1.05 }}
+                    >
+                      {config.newsPoster.headline.includes('\n') ? (
+                        config.newsPoster.headline.split('\n').map((line, lIdx) => (
+                          <div
+                            key={lIdx}
+                            className={lIdx === 0 ? 'tracking-[0.05em]' : 'tracking-[0.14em] mt-0.5'}
+                            style={{
+                              fontSize: `${
+                                lIdx === 0
+                                  ? config.newsPoster?.fontSize || 48
+                                  : Math.round((config.newsPoster?.fontSize || 48) * 0.72)
+                              }px`,
+                              color: config.newsPoster?.headlineColor || '#ffffff',
+                            }}
+                          >
+                            {line}
+                          </div>
+                        ))
+                      ) : (
+                        <div
+                          className="tracking-[0.06em]"
+                          style={{
+                            fontSize: `${config.newsPoster?.fontSize || 48}px`,
+                            color: config.newsPoster?.headlineColor || '#ffffff',
+                          }}
+                        >
+                          {config.newsPoster.headline}
+                        </div>
+                      )}
                     </div>
-                  )}
 
-                <div
-                  className={`w-full max-w-[94%] leading-tight select-none transition-all ${
-                    config.newsPoster.textOutline ?? true
-                      ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] [text-shadow:_0_1px_3px_#000,_0_2px_6px_#000]'
-                      : 'drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]'
-                  } ${
-                    config.newsPoster.style === 'bold-headline'
-                      ? 'font-["Anton","Montserrat",sans-serif] uppercase tracking-wide'
-                      : 'font-["Playfair_Display",serif]'
-                  }`}
-                  style={{
-                    fontSize: `${config.newsPoster.fontSize || 35}px`,
-                    lineHeight: config.newsPoster.style === 'bold-headline' ? 1.15 : 1.25,
-                  }}
-                >
-                  {renderHighlightedHeadline(
-                    config.newsPoster.headline,
-                    config.newsPoster.highlightWords,
-                    config.newsPoster.style,
-                    config.newsPoster.highlightColor,
-                    config.newsPoster.headlineColor
-                  )}
-                </div>
+                    {/* Subtitle / Description (e.g. 'LAST ROSIE THE RIVETER OF WWII') */}
+                    {config.newsPoster.subtitle && (
+                      <div className="flex flex-col items-center mt-2 sm:mt-2.5 w-full max-w-[94%]">
+                        <span
+                          className="text-[11px] sm:text-[13px] font-['Playfair_Display',Georgia,serif] uppercase tracking-[0.16em] font-medium text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
+                          style={{ color: config.newsPoster.subtitleColor || '#ffffff' }}
+                        >
+                          {config.newsPoster.subtitle}
+                        </span>
+                        {(config.newsPoster.showSubtitleUnderline ?? true) && (
+                          <div className="h-[1.5px] w-52 sm:w-68 bg-gradient-to-r from-transparent via-white/85 to-transparent mt-1 shadow-sm" />
+                        )}
+                      </div>
+                    )}
 
-                {/* Golden Diamond Divider on BOTTOM (if configured) */}
-                {config.newsPoster.showDiamondDivider &&
-                  (config.newsPoster.dividerPosition === 'bottom' ||
-                    config.newsPoster.dividerPosition === 'both') && (
-                    <div className="flex items-center justify-center gap-2 mt-2 opacity-90">
-                      <div
-                        className="h-[1px] w-12 sm:w-16 bg-gradient-to-r from-transparent to-amber-300/80"
-                        style={{
-                          background: `linear-gradient(to right, transparent, ${
-                            config.newsPoster.highlightColor || '#facc15'
-                          })`,
-                        }}
-                      />
-                      <span
-                        className="text-[9px] font-serif leading-none"
-                        style={{ color: config.newsPoster.highlightColor || '#facc15' }}
-                      >
-                        ◆
-                      </span>
-                      <div
-                        className="h-[1px] w-12 sm:w-16 bg-gradient-to-l from-transparent to-amber-300/80"
-                        style={{
-                          background: `linear-gradient(to left, transparent, ${
-                            config.newsPoster.highlightColor || '#facc15'
-                          })`,
-                        }}
-                      />
+                    {/* Bottom Memorial Ribbon / Symbol */}
+                    {(config.newsPoster.bottomSymbol ?? 'ribbon') !== 'none' && (
+                      <div className="mt-2.5 sm:mt-3 flex items-center justify-center">
+                        {renderMemorialSymbol(
+                          config.newsPoster.bottomSymbol || 'ribbon',
+                          config.newsPoster.bottomSymbolColor || '#FFFFFF'
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* MẪU BÁO CHÍ THÔNG THƯỜNG */
+                  <>
+                    {/* Golden Diamond Divider on TOP (Phía trên chữ - Phân cách ảnh và chữ) */}
+                    {config.newsPoster.showDiamondDivider &&
+                      (config.newsPoster.dividerPosition ?? 'top') !== 'bottom' && (
+                        <div className="flex items-center justify-center gap-2 mb-2 sm:mb-2.5 opacity-95">
+                          <div
+                            className="h-[1.5px] w-14 sm:w-20 bg-gradient-to-r from-transparent via-amber-300/80 to-amber-300 shadow-sm"
+                            style={{
+                              background: `linear-gradient(to right, transparent, ${
+                                config.newsPoster.highlightColor || '#facc15'
+                              })`,
+                            }}
+                          />
+                          <span
+                            className="text-[10px] font-serif leading-none filter drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+                            style={{ color: config.newsPoster.highlightColor || '#facc15' }}
+                          >
+                            ◆
+                          </span>
+                          <div
+                            className="h-[1.5px] w-14 sm:w-20 bg-gradient-to-l from-transparent via-amber-300/80 to-amber-300 shadow-sm"
+                            style={{
+                              background: `linear-gradient(to left, transparent, ${
+                                config.newsPoster.highlightColor || '#facc15'
+                              })`,
+                            }}
+                          />
+                        </div>
+                      )}
+
+                    <div
+                      className={`w-full max-w-[94%] leading-tight select-none transition-all ${
+                        config.newsPoster.textOutline ?? true
+                          ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] [text-shadow:_0_1px_3px_#000,_0_2px_6px_#000]'
+                          : 'drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]'
+                      } ${
+                        config.newsPoster.style === 'bold-headline'
+                          ? 'font-["Anton","Montserrat",sans-serif] uppercase tracking-wide'
+                          : 'font-["Playfair_Display",serif]'
+                      }`}
+                      style={{
+                        fontSize: `${config.newsPoster.fontSize || 35}px`,
+                        lineHeight: config.newsPoster.style === 'bold-headline' ? 1.15 : 1.25,
+                      }}
+                    >
+                      {renderHighlightedHeadline(
+                        config.newsPoster.headline,
+                        config.newsPoster.highlightWords,
+                        config.newsPoster.style,
+                        config.newsPoster.highlightColor,
+                        config.newsPoster.headlineColor
+                      )}
                     </div>
-                  )}
+
+                    {/* Golden Diamond Divider on BOTTOM (if configured) */}
+                    {config.newsPoster.showDiamondDivider &&
+                      (config.newsPoster.dividerPosition === 'bottom' ||
+                        config.newsPoster.dividerPosition === 'both') && (
+                        <div className="flex items-center justify-center gap-2 mt-2 opacity-90">
+                          <div
+                            className="h-[1px] w-12 sm:w-16 bg-gradient-to-r from-transparent to-amber-300/80"
+                            style={{
+                              background: `linear-gradient(to right, transparent, ${
+                                config.newsPoster.highlightColor || '#facc15'
+                              })`,
+                            }}
+                          />
+                          <span
+                            className="text-[9px] font-serif leading-none"
+                            style={{ color: config.newsPoster.highlightColor || '#facc15' }}
+                          >
+                            ◆
+                          </span>
+                          <div
+                            className="h-[1px] w-12 sm:w-16 bg-gradient-to-l from-transparent to-amber-300/80"
+                            style={{
+                              background: `linear-gradient(to left, transparent, ${
+                                config.newsPoster.highlightColor || '#facc15'
+                              })`,
+                            }}
+                          />
+                        </div>
+                      )}
+                  </>
+                )}
               </div>
             </>
           )}
