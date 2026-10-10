@@ -219,6 +219,7 @@ export const COLLAGE_LAYOUTS: CollageLayout[] = [
       subtitle: 'LAST ROSIE THE RIVETER OF WWII',
       subtitleFontSize: 13,
       subtitleColor: '#FFFFFF',
+      showTitleDivider: true,
       showSubtitleUnderline: true,
       bottomSymbol: 'ribbon',
       bottomSymbolSize: 36,

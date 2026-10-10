@@ -47,6 +47,7 @@ export interface NewsPosterConfig {
   subtitle?: string; // Dòng phụ đề (e.g. 'LAST ROSIE THE RIVETER OF WWII')
   subtitleFontSize?: number; // Cỡ chữ phụ đề (10 to 36px)
   subtitleColor?: string;
+  showTitleDivider?: boolean; // Đường gạch trắng phân cách giữa tiêu đề to và phụ đề nhỏ
   showSubtitleUnderline?: boolean; // Gạch chân tinh tế dưới dòng phụ đề
   bottomSymbol?: 'ribbon' | 'candle' | 'dove' | 'rose' | 'lotus' | 'star' | 'cross' | 'hands' | 'none'; // Biểu tượng ruy băng trắng, hoa, nến...
   bottomSymbolSize?: number; // Kích thước biểu tượng đáy (16 to 80px, mặc định 36px)

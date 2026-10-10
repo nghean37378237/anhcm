@@ -706,9 +706,11 @@ export async function renderCollageToCanvas(
 
       const hasSubtitle = Boolean(np.subtitle);
       const hasRibbon = (np.bottomSymbol ?? 'ribbon') !== 'none';
+      const hasTitleDivider = (np.showTitleDivider ?? true) && hasSubtitle;
+      const midDivH = hasTitleDivider ? 12 * exportScale : 0;
       const symbolBasePx = np.bottomSymbolSize || 36;
       const ribbonH = hasRibbon ? (symbolBasePx + 10) * exportScale : 0;
-      const subH = hasSubtitle ? subtitleFontSize * 1.4 + 14 * exportScale : 0;
+      const subH = hasSubtitle ? subtitleFontSize * 1.4 + 14 * exportScale + midDivH : 0;
       const bottomPad = 24 * exportScale;
 
       const headlineLines = np.headline ? np.headline.split('\n') : ['REST', 'IN PEACE'];
@@ -747,13 +749,34 @@ export async function renderCollageToCanvas(
         ctx.fillText(upperText, canvasW / 2, lineY);
       });
 
+      const headlineBottomY = firstLineY + (headlineLines.length - 1) * headlineLineH;
+
+      // Draw Divider between Big Headline and Small Subtitle (như phía dưới)
+      if (hasTitleDivider) {
+        const midDividerY = headlineBottomY + 8 * exportScale;
+        const dividerW = Math.min(canvasW * 0.44, 160 * exportScale);
+        const lineGrad = ctx.createLinearGradient(
+          canvasW / 2 - dividerW / 2,
+          0,
+          canvasW / 2 + dividerW / 2,
+          0
+        );
+        lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+        lineGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0.85)');
+        lineGrad.addColorStop(0.7, 'rgba(255, 255, 255, 0.85)');
+        lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.fillStyle = lineGrad;
+        ctx.fillRect(canvasW / 2 - dividerW / 2, midDividerY, dividerW, 1.5 * exportScale);
+      }
+
       // Draw Subtitle (e.g. 'LAST ROSIE THE RIVETER OF WWII')
       if (hasSubtitle && np.subtitle) {
         const subY =
-          firstLineY +
-          (headlineLines.length - 1) * headlineLineH +
+          headlineBottomY +
+          (hasTitleDivider ? midDivH : 0) +
           subtitleFontSize * 1.1 +
-          8 * exportScale;
+          6 * exportScale;
         ctx.font = `600 ${subtitleFontSize}px "Playfair Display", Georgia, serif`;
         ctx.fillStyle = np.subtitleColor || '#ffffff';
         const subUpper = np.subtitle.toUpperCase();

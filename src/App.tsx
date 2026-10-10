@@ -147,6 +147,7 @@ export default function App() {
             subtitle: newLayout.newsPosterDefault.subtitle ?? prev.newsPoster?.subtitle ?? '',
             subtitleFontSize: newLayout.newsPosterDefault.subtitleFontSize ?? prev.newsPoster?.subtitleFontSize ?? 13,
             subtitleColor: newLayout.newsPosterDefault.subtitleColor ?? prev.newsPoster?.subtitleColor ?? '#FFFFFF',
+            showTitleDivider: newLayout.newsPosterDefault.showTitleDivider ?? prev.newsPoster?.showTitleDivider ?? true,
             showSubtitleUnderline: newLayout.newsPosterDefault.showSubtitleUnderline ?? prev.newsPoster?.showSubtitleUnderline ?? true,
             bottomSymbol: newLayout.newsPosterDefault.bottomSymbol ?? prev.newsPoster?.bottomSymbol ?? 'ribbon',
             bottomSymbolSize: newLayout.newsPosterDefault.bottomSymbolSize ?? prev.newsPoster?.bottomSymbolSize ?? 36,

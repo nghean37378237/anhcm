@@ -900,9 +900,14 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                       )}
                     </div>
 
+                    {/* Divider between Big Headline and Small Subtitle (như phía dưới) */}
+                    {(config.newsPoster.showTitleDivider ?? true) && config.newsPoster.subtitle && (
+                      <div className="h-[1.5px] w-44 sm:w-56 bg-gradient-to-r from-transparent via-white/85 to-transparent my-1.5 sm:my-2 shadow-sm" />
+                    )}
+
                     {/* Subtitle / Description (e.g. 'LAST ROSIE THE RIVETER OF WWII') */}
                     {config.newsPoster.subtitle && (
-                      <div className="flex flex-col items-center mt-2 sm:mt-2.5 w-full max-w-[94%]">
+                      <div className="flex flex-col items-center mt-0.5 sm:mt-1 w-full max-w-[94%]">
                         <span
                           className="font-['Playfair_Display',Georgia,serif] uppercase tracking-[0.16em] font-medium text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
                           style={{

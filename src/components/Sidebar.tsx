@@ -1338,22 +1338,151 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </div>
                       </div>
 
-                      <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer pt-1 border-t border-neutral-800/80">
-                        <span className="text-[11px] text-neutral-300">Đường gạch chân trắng dưới phụ đề</span>
-                        <input
-                          type="checkbox"
-                          checked={config.newsPoster.showSubtitleUnderline ?? true}
-                          onChange={(e) =>
-                            onUpdateConfig({
-                              newsPoster: {
-                                ...config.newsPoster!,
-                                showSubtitleUnderline: e.target.checked,
-                              },
-                            })
-                          }
-                          className="accent-amber-500 w-4 h-4 rounded cursor-pointer"
-                        />
-                      </label>
+                      {/* Đường gạch trắng phân cách */}
+                      <div className="pt-2 border-t border-neutral-800/80 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-neutral-300">
+                            Đường gạch trắng trang trí
+                          </span>
+                          <span className="text-[10px] text-neutral-400">
+                            Hiệu ứng vát mờ 2 đầu
+                          </span>
+                        </div>
+
+                        {/* Gạch giữa 2 tiêu đề to và nhỏ */}
+                        <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer p-1.5 rounded-lg bg-neutral-900/50 hover:bg-neutral-900 border border-neutral-800/60 transition-colors">
+                          <div>
+                            <span className="text-[11px] font-medium text-white block">
+                              Gạch giữa 2 tiêu đề (To & Nhỏ)
+                            </span>
+                            <span className="text-[9px] text-neutral-400 block">
+                              Nằm giữa "REST IN PEACE" và dòng phụ đề
+                            </span>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={config.newsPoster.showTitleDivider ?? true}
+                            onChange={(e) =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  showTitleDivider: e.target.checked,
+                                },
+                              })
+                            }
+                            className="accent-amber-500 w-4 h-4 rounded cursor-pointer"
+                          />
+                        </label>
+
+                        {/* Gạch dưới phụ đề */}
+                        <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer p-1.5 rounded-lg bg-neutral-900/50 hover:bg-neutral-900 border border-neutral-800/60 transition-colors">
+                          <div>
+                            <span className="text-[11px] font-medium text-white block">
+                              Gạch chân dưới dòng phụ đề
+                            </span>
+                            <span className="text-[9px] text-neutral-400 block">
+                              Nằm phía dưới dòng phụ đề nhỏ
+                            </span>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={config.newsPoster.showSubtitleUnderline ?? true}
+                            onChange={(e) =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  showSubtitleUnderline: e.target.checked,
+                                },
+                              })
+                            }
+                            className="accent-amber-500 w-4 h-4 rounded cursor-pointer"
+                          />
+                        </label>
+
+                        {/* Nút chọn nhanh */}
+                        <div className="grid grid-cols-4 gap-1 pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  showTitleDivider: true,
+                                  showSubtitleUnderline: true,
+                                },
+                              })
+                            }
+                            className={`py-1 px-1 rounded text-[9px] font-medium border text-center transition-all cursor-pointer ${
+                              (config.newsPoster?.showTitleDivider ?? true) &&
+                              (config.newsPoster?.showSubtitleUnderline ?? true)
+                                ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:text-neutral-200'
+                            }`}
+                          >
+                            Cả 2 gạch
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  showTitleDivider: true,
+                                  showSubtitleUnderline: false,
+                                },
+                              })
+                            }
+                            className={`py-1 px-1 rounded text-[9px] font-medium border text-center transition-all cursor-pointer ${
+                              (config.newsPoster?.showTitleDivider ?? true) &&
+                              !(config.newsPoster?.showSubtitleUnderline ?? true)
+                                ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:text-neutral-200'
+                            }`}
+                          >
+                            Chỉ ở giữa
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  showTitleDivider: false,
+                                  showSubtitleUnderline: true,
+                                },
+                              })
+                            }
+                            className={`py-1 px-1 rounded text-[9px] font-medium border text-center transition-all cursor-pointer ${
+                              !(config.newsPoster?.showTitleDivider ?? true) &&
+                              (config.newsPoster?.showSubtitleUnderline ?? true)
+                                ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:text-neutral-200'
+                            }`}
+                          >
+                            Chỉ ở dưới
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  showTitleDivider: false,
+                                  showSubtitleUnderline: false,
+                                },
+                              })
+                            }
+                            className={`py-1 px-1 rounded text-[9px] font-medium border text-center transition-all cursor-pointer ${
+                              !(config.newsPoster?.showTitleDivider ?? true) &&
+                              !(config.newsPoster?.showSubtitleUnderline ?? true)
+                                ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                : 'border-neutral-800 bg-neutral-900/60 text-neutral-400 hover:text-neutral-200'
+                            }`}
+                          >
+                            Tắt gạch
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Bottom Memorial Symbol Selection */}
