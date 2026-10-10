@@ -864,12 +864,15 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                   <div className="w-full max-w-[96%] flex flex-col items-center select-none text-center">
                     {/* Primary Big Serif Headline (REST IN PEACE) */}
                     <div
-                      className={`font-['Playfair_Display',Georgia,serif] font-black uppercase text-white ${
+                      className={`font-black uppercase text-white ${
                         config.newsPoster.textOutline ?? true
                           ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] [text-shadow:_0_1px_3px_#000,_0_2px_6px_#000]'
                           : 'drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]'
                       }`}
-                      style={{ lineHeight: 1.05 }}
+                      style={{
+                        lineHeight: 1.05,
+                        fontFamily: config.newsPoster.fontFamily || "'Playfair Display', Georgia, serif",
+                      }}
                     >
                       {config.newsPoster.headline.includes('\n') ? (
                         config.newsPoster.headline.split('\n').map((line, lIdx) => (
@@ -910,10 +913,14 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                     {config.newsPoster.subtitle && (
                       <div className="flex flex-col items-center mt-0.5 sm:mt-1 w-full max-w-[94%]">
                         <span
-                          className="font-['Playfair_Display',Georgia,serif] uppercase tracking-[0.16em] font-medium text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
+                          className="uppercase tracking-[0.16em] font-medium text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
                           style={{
                             fontSize: `${config.newsPoster.subtitleFontSize || 13}px`,
                             color: config.newsPoster.subtitleColor || '#ffffff',
+                            fontFamily:
+                              config.newsPoster.subtitleFontFamily ||
+                              config.newsPoster.fontFamily ||
+                              "'Playfair Display', Georgia, serif",
                           }}
                         >
                           {config.newsPoster.subtitle}
@@ -973,11 +980,14 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                           ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] [text-shadow:_0_1px_3px_#000,_0_2px_6px_#000]'
                           : 'drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]'
                       } ${
-                        config.newsPoster.style === 'bold-headline'
+                        config.newsPoster.fontFamily
+                          ? ''
+                          : config.newsPoster.style === 'bold-headline'
                           ? 'font-["Anton","Montserrat",sans-serif] uppercase tracking-wide'
                           : 'font-["Playfair_Display",serif]'
                       }`}
                       style={{
+                        fontFamily: config.newsPoster.fontFamily || undefined,
                         fontSize: `${config.newsPoster.fontSize || 35}px`,
                         lineHeight: config.newsPoster.style === 'bold-headline' ? 1.15 : 1.25,
                       }}

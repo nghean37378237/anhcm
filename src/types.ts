@@ -34,6 +34,7 @@ export interface NewsPosterConfig {
   headlineColor: string; // Mặc định #FFFFFF
   highlightColor: string; // Mặc định #FACC15 hoặc #F5D061
   fontSize: number; // 18 to 75 (Cỡ chữ có thể kéo to)
+  fontFamily?: string; // Mẫu phông chữ tiêu đề (Playfair Display, Anton, Montserrat, Oswald, Caveat...)
   textOutline?: boolean; // Viền nét chữ đen để tăng độ rõ nét khi xuất ảnh
   gradientHeight: number; // 25 to 60 (% chiều cao đáy)
   gradientOpacity: number; // 0.6 to 1.0
@@ -46,6 +47,7 @@ export interface NewsPosterConfig {
   // Các trường bổ sung cho Mẫu Tưởng niệm Tri ân (REST IN PEACE / MEMORIAL)
   subtitle?: string; // Dòng phụ đề (e.g. 'LAST ROSIE THE RIVETER OF WWII')
   subtitleFontSize?: number; // Cỡ chữ phụ đề (10 to 36px)
+  subtitleFontFamily?: string; // Mẫu phông chữ phụ đề
   subtitleColor?: string;
   showTitleDivider?: boolean; // Đường gạch trắng phân cách giữa tiêu đề to và phụ đề nhỏ
   showSubtitleUnderline?: boolean; // Gạch chân tinh tế dưới dòng phụ đề

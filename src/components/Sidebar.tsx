@@ -32,6 +32,7 @@ import {
   COLLAGE_LAYOUTS,
   FILTER_PRESETS,
   FONT_OPTIONS,
+  HEADLINE_FONT_OPTIONS,
   STICKER_PRESETS,
 } from '../data/presets';
 
@@ -1824,26 +1825,84 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 )}
 
                 {/* Typography & Gradient Sliders */}
-                <div className="space-y-3 bg-neutral-950/40 p-3.5 rounded-xl border border-neutral-800">
+                <div className="space-y-3.5 bg-neutral-950/40 p-3.5 rounded-xl border border-neutral-800">
+                  {/* Mẫu phông chữ tiêu đề (Font Family) */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block">
+                        Mẫu phông chữ tiêu đề (Mẫu chữ)
+                      </label>
+                      <span className="text-[10px] text-amber-400 font-medium">
+                        Lưu chuẩn 100% khi xuất ảnh
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {HEADLINE_FONT_OPTIONS.map((f) => {
+                        const currentFont =
+                          config.newsPoster?.fontFamily ||
+                          (config.newsPoster?.style === 'tribute-rip'
+                            ? 'Playfair Display, Georgia, serif'
+                            : config.newsPoster?.style === 'bold-headline'
+                            ? 'Anton, Montserrat, sans-serif'
+                            : 'Playfair Display, serif');
+
+                        const isSelected =
+                          config.newsPoster?.fontFamily === f.value ||
+                          (!config.newsPoster?.fontFamily && currentFont.startsWith(f.value.split(',')[0]));
+
+                        return (
+                          <button
+                            key={f.value}
+                            type="button"
+                            onClick={() =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  fontFamily: f.value,
+                                },
+                              })
+                            }
+                            className={`p-2 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                              isSelected
+                                ? 'border-amber-400 bg-amber-500/20 text-amber-300 shadow-sm ring-1 ring-amber-400/40'
+                                : 'border-neutral-800 bg-neutral-900/80 text-neutral-300 hover:bg-neutral-800 hover:text-white'
+                            }`}
+                          >
+                            <span
+                              className="text-xs font-bold truncate block"
+                              style={{ fontFamily: f.value }}
+                            >
+                              {f.label}
+                            </span>
+                            <span className="text-[9px] text-neutral-400 truncate block mt-0.5">
+                              {f.desc}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* Font Size - Mở rộng kéo to và rõ hơn */}
                   <div>
                     <div className="flex justify-between text-xs mb-1 font-medium">
                       <span className="text-neutral-300 font-semibold flex items-center gap-1.5">
                         <span>Cỡ chữ tiêu đề (Kéo to & cực rõ nét)</span>
                         <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-normal">
-                          Max 75px
+                          Max 80px
                         </span>
                       </span>
-                      <span className="text-amber-400 font-bold text-sm">
-                        {config.newsPoster.fontSize || 35}px
+                      <span className="text-amber-400 font-bold text-sm font-mono">
+                        {config.newsPoster.fontSize || (config.newsPoster.style === 'tribute-rip' ? 48 : 35)}px
                       </span>
                     </div>
                     <input
                       type="range"
                       min={16}
-                      max={75}
+                      max={80}
                       step={1}
-                      value={config.newsPoster.fontSize || 35}
+                      value={config.newsPoster.fontSize || (config.newsPoster.style === 'tribute-rip' ? 48 : 35)}
                       onChange={(e) =>
                         onUpdateConfig({
                           newsPoster: {
@@ -1858,32 +1917,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {/* Quick Font Size Presets */}
                     <div className="grid grid-cols-5 gap-1 pt-2">
                       {[
-                        { label: '28px', val: 28 },
-                        { label: '35px', val: 35 },
-                        { label: '45px', val: 45 },
-                        { label: '56px', val: 56 },
-                        { label: '70px', val: 70 },
-                      ].map((item) => (
-                        <button
-                          key={item.val}
-                          type="button"
-                          onClick={() =>
-                            onUpdateConfig({
-                              newsPoster: {
-                                ...config.newsPoster!,
-                                fontSize: item.val,
-                              },
-                            })
-                          }
-                          className={`py-1 text-[10px] rounded-lg border transition-all cursor-pointer font-medium text-center ${
-                            (config.newsPoster?.fontSize || 35) === item.val
-                              ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
-                              : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
+                        { label: '28px', desc: 'Nhỏ', val: 28 },
+                        { label: '36px', desc: 'Vừa', val: 36 },
+                        { label: '48px', desc: 'Chuẩn', val: 48 },
+                        { label: '58px', desc: 'To', val: 58 },
+                        { label: '72px', desc: 'Cực to', val: 72 },
+                      ].map((item) => {
+                        const currentVal =
+                          config.newsPoster?.fontSize ||
+                          (config.newsPoster?.style === 'tribute-rip' ? 48 : 35);
+                        return (
+                          <button
+                            key={item.val}
+                            type="button"
+                            onClick={() =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  fontSize: item.val,
+                                },
+                              })
+                            }
+                            className={`py-1 px-0.5 text-[10px] rounded-lg border transition-all cursor-pointer font-medium text-center ${
+                              currentVal === item.val
+                                ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold shadow-sm'
+                                : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                            }`}
+                          >
+                            <span className="block leading-none">{item.label}</span>
+                            <span className="text-[8px] opacity-70 block mt-0.5">{item.desc}</span>
+                          </button>
+                        );
+                      })}
                     </div>
 
                     {/* Text Sharpness / Outline toggle */}

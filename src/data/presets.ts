@@ -598,3 +598,14 @@ export const FONT_OPTIONS = [
   { label: 'Hiện đại thanh lịch (Montserrat)', value: 'Montserrat, sans-serif' },
   { label: 'Không chân tối giản (Plus Jakarta Sans)', value: 'Plus Jakarta Sans, sans-serif' },
 ];
+
+export const HEADLINE_FONT_OPTIONS = [
+  { label: 'Playfair Display', desc: 'Cổ điển sang trọng', value: 'Playfair Display, Georgia, serif' },
+  { label: 'Anton', desc: 'In hoa đậm báo chí', value: 'Anton, Montserrat, sans-serif' },
+  { label: 'Montserrat', desc: 'Hiện đại thanh lịch', value: 'Montserrat, sans-serif' },
+  { label: 'Oswald', desc: 'Hẹp cao uy lực', value: 'Oswald, sans-serif' },
+  { label: 'Caveat', desc: 'Viết tay nghệ thuật', value: 'Caveat, cursive' },
+  { label: 'Dancing Script', desc: 'Viết tay lãng mạn', value: 'Dancing Script, cursive' },
+  { label: 'Plus Jakarta Sans', desc: 'Tối giản không chân', value: 'Plus Jakarta Sans, sans-serif' },
+];
+

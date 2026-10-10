@@ -59,6 +59,10 @@ export const ExportModal: React.FC<ExportModalProps> = ({
     const runRender = async () => {
       if (!hiddenCanvasRef.current) return;
       try {
+        const previewEl = document.getElementById('collage-preview-container');
+        const previewWidth = previewEl && previewEl.clientWidth > 100 ? previewEl.clientWidth : 480;
+        const previewHeight = previewEl && previewEl.clientHeight > 100 ? previewEl.clientHeight : 640;
+
         await renderCollageToCanvas(hiddenCanvasRef.current, {
           layout,
           slots,
@@ -66,6 +70,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           texts,
           stickers,
           exportScale,
+          previewWidth,
+          previewHeight,
         });
 
         if (isMounted && hiddenCanvasRef.current) {

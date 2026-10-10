@@ -8,6 +8,8 @@ interface RenderOptions {
   texts: TextOverlay[];
   stickers: StickerOverlay[];
   exportScale?: number; // default 2 for crystal clear 2K+ quality
+  previewWidth?: number;
+  previewHeight?: number;
 }
 
 // Preload an image safely
@@ -110,13 +112,27 @@ export async function renderCollageToCanvas(
   targetCanvas: HTMLCanvasElement,
   options: RenderOptions
 ): Promise<void> {
-  const { layout, slots, config, texts, stickers, exportScale = 2 } = options;
+  const { layout, slots, config, texts, stickers, exportScale = 2, previewWidth } = options;
 
-  // Đảm bảo toàn bộ phông chữ web (Anton, Playfair Display, Montserrat) đã nạp xong
-  // trước khi vẽ lên canvas để chữ không bị nhòe hay vỡ phông khi xuất ảnh
-  if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+  // Đảm bảo toàn bộ phông chữ web đã nạp xong đầy đủ các trọng số trước khi vẽ lên canvas
+  if (typeof document !== 'undefined' && document.fonts) {
     try {
-      await document.fonts.ready;
+      await Promise.allSettled([
+        document.fonts.load('900 48px "Playfair Display"'),
+        document.fonts.load('800 48px "Playfair Display"'),
+        document.fonts.load('700 48px "Playfair Display"'),
+        document.fonts.load('600 48px "Playfair Display"'),
+        document.fonts.load('italic 700 48px "Playfair Display"'),
+        document.fonts.load('900 48px Anton'),
+        document.fonts.load('900 48px Montserrat'),
+        document.fonts.load('800 48px Montserrat'),
+        document.fonts.load('700 48px Montserrat'),
+        document.fonts.load('700 48px Oswald'),
+        document.fonts.load('700 48px Caveat'),
+        document.fonts.load('700 48px "Dancing Script"'),
+        document.fonts.load('700 48px "Plus Jakarta Sans"'),
+        document.fonts.ready,
+      ]);
     } catch (e) {
       console.warn('Document fonts wait skipped:', e);
     }
@@ -127,6 +143,11 @@ export async function renderCollageToCanvas(
 
   const canvasW = rawW * exportScale;
   const canvasH = rawH * exportScale;
+
+  // Tỉ lệ quy đổi từ khung xem trước thực tế sang canvas xuất ảnh để đảm bảo
+  // kích thước chữ và mẫu phông chữ xuất ra khớp chính xác 100% với màn hình
+  const previewW = previewWidth && previewWidth > 100 ? previewWidth : 480;
+  const scaleRatio = canvasW / previewW;
 
   targetCanvas.width = canvasW;
   targetCanvas.height = canvasH;
@@ -710,17 +731,21 @@ export async function renderCollageToCanvas(
     // C. Headline Typography
     if (isTribute) {
       ctx.save();
-      const baseFontSize = ((np.fontSize || 48) / 500) * canvasW;
-      const subtitleFontSize = ((np.subtitleFontSize || 13) / 500) * canvasW;
+      // baseFontSize & subtitleFontSize quy đổi theo scaleRatio khớp 100% với khung xem trước thực tế
+      const baseFontSize = (np.fontSize || 48) * scaleRatio;
+      const subtitleFontSize = (np.subtitleFontSize || 13) * scaleRatio;
+
+      const headlineFontFamily = np.fontFamily || '"Playfair Display", Georgia, serif';
+      const subtitleFontFamily = np.subtitleFontFamily || np.fontFamily || '"Playfair Display", Georgia, serif';
 
       const hasSubtitle = Boolean(np.subtitle);
       const hasRibbon = (np.bottomSymbol ?? 'ribbon') !== 'none';
       const hasTitleDivider = (np.showTitleDivider ?? true) && hasSubtitle;
-      const midDivH = hasTitleDivider ? 12 * exportScale : 0;
-      const symbolBasePx = np.bottomSymbolSize || 36;
-      const ribbonH = hasRibbon ? (symbolBasePx + 10) * exportScale : 0;
-      const subH = hasSubtitle ? subtitleFontSize * 1.4 + 14 * exportScale + midDivH : 0;
-      const bottomPad = 24 * exportScale;
+      const midDivH = hasTitleDivider ? 12 * scaleRatio : 0;
+      const symbolBasePx = (np.bottomSymbolSize || 36) * scaleRatio;
+      const ribbonH = hasRibbon ? (symbolBasePx + 10 * scaleRatio) : 0;
+      const subH = hasSubtitle ? subtitleFontSize * 1.4 + 14 * scaleRatio + midDivH : 0;
+      const bottomPad = 24 * scaleRatio;
 
       const headlineLines = np.headline ? np.headline.split('\n') : ['REST', 'IN PEACE'];
       const headlineLineH = baseFontSize * 1.06;
@@ -742,7 +767,7 @@ export async function renderCollageToCanvas(
       headlineLines.forEach((lineText, idx) => {
         const lineY = firstLineY + idx * headlineLineH;
         const currentFontSize = idx === 0 ? baseFontSize : Math.round(baseFontSize * 0.72);
-        ctx.font = `900 ${currentFontSize}px "Playfair Display", Georgia, serif`;
+        ctx.font = `900 ${currentFontSize}px ${headlineFontFamily}`;
 
         const upperText = lineText.toUpperCase();
         if (hasOutline) {
@@ -762,8 +787,8 @@ export async function renderCollageToCanvas(
 
       // Draw Divider between Big Headline and Small Subtitle (như phía dưới)
       if (hasTitleDivider) {
-        const midDividerY = headlineBottomY + 8 * exportScale;
-        const dividerW = Math.min(canvasW * 0.44, 160 * exportScale);
+        const midDividerY = headlineBottomY + 8 * scaleRatio;
+        const dividerW = Math.min(canvasW * 0.44, 200 * scaleRatio);
         const lineGrad = ctx.createLinearGradient(
           canvasW / 2 - dividerW / 2,
           0,
@@ -776,7 +801,7 @@ export async function renderCollageToCanvas(
         lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
         ctx.fillStyle = lineGrad;
-        ctx.fillRect(canvasW / 2 - dividerW / 2, midDividerY, dividerW, 1.5 * exportScale);
+        ctx.fillRect(canvasW / 2 - dividerW / 2, midDividerY, dividerW, 1.5 * scaleRatio);
       }
 
       // Draw Subtitle (e.g. 'LAST ROSIE THE RIVETER OF WWII')
@@ -785,8 +810,8 @@ export async function renderCollageToCanvas(
           headlineBottomY +
           (hasTitleDivider ? midDivH : 0) +
           subtitleFontSize * 1.1 +
-          6 * exportScale;
-        ctx.font = `600 ${subtitleFontSize}px "Playfair Display", Georgia, serif`;
+          6 * scaleRatio;
+        ctx.font = `600 ${subtitleFontSize}px ${subtitleFontFamily}`;
         ctx.fillStyle = np.subtitleColor || '#ffffff';
         const subUpper = np.subtitle.toUpperCase();
 
@@ -802,8 +827,8 @@ export async function renderCollageToCanvas(
         // Subtitle underline
         if (np.showSubtitleUnderline ?? true) {
           const textMetrics = ctx.measureText(subUpper);
-          const lineW = Math.max(textMetrics.width * 1.1, 140 * exportScale);
-          const lineY = subY + Math.max(6 * exportScale, subtitleFontSize * 0.32);
+          const lineW = Math.max(textMetrics.width * 1.1, 160 * scaleRatio);
+          const lineY = subY + Math.max(6 * scaleRatio, subtitleFontSize * 0.32);
           const lineGrad = ctx.createLinearGradient(
             canvasW / 2 - lineW / 2,
             0,
@@ -816,7 +841,7 @@ export async function renderCollageToCanvas(
           lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
           ctx.fillStyle = lineGrad;
-          ctx.fillRect(canvasW / 2 - lineW / 2, lineY, lineW, 1.5 * exportScale);
+          ctx.fillRect(canvasW / 2 - lineW / 2, lineY, lineW, 1.5 * scaleRatio);
         }
       }
 
@@ -886,13 +911,14 @@ export async function renderCollageToCanvas(
       ctx.restore();
     } else if (np.headline) {
       ctx.save();
-      // baseFontSize: Tỉ lệ chuẩn theo canvasW để chữ to, rõ và sắc nét tuyệt đối khi xuất ảnh
-      const baseFontSize = ((np.fontSize || 35) / 500) * canvasW;
+      // baseFontSize quy đổi theo scaleRatio khớp chính xác 100% với màn hình xem trước
+      const baseFontSize = (np.fontSize || 35) * scaleRatio;
       const isBoldStyle = np.style === 'bold-headline';
+      const headlineFont = np.fontFamily || (isBoldStyle ? 'Anton, Montserrat, sans-serif' : '"Playfair Display", serif');
+      const fontStylePrefix = (!np.fontFamily && !isBoldStyle) ? 'italic ' : '';
+      const fontWeightPrefix = isBoldStyle ? '900 ' : '700 ';
 
-      ctx.font = isBoldStyle
-        ? `900 ${baseFontSize}px Anton, Montserrat, sans-serif`
-        : `italic 700 ${baseFontSize}px "Playfair Display", serif`;
+      ctx.font = `${fontStylePrefix}${fontWeightPrefix}${baseFontSize}px ${headlineFont}`;
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
@@ -1211,32 +1237,56 @@ export async function renderCollageToCanvas(
     ctx.save();
     const tx = (textItem.x / 100) * canvasW;
     const ty = (textItem.y / 100) * canvasH;
-    const fSize = (textItem.fontSize || 24) * exportScale;
+    const fSize = (textItem.fontSize || 24) * scaleRatio;
 
-    const fontStyle = textItem.fontStyle === 'italic' ? 'italic' : '';
-    const fontWeight = textItem.fontWeight === 'bold' ? 'bold' : 'normal';
-    ctx.font = `${fontStyle} ${fontWeight} ${fSize}px ${textItem.fontFamily || 'Montserrat, sans-serif'}`;
+    const fontStylePrefix = textItem.fontStyle === 'italic' ? 'italic ' : '';
+    const fontWeightPrefix = textItem.fontWeight === 'bold' ? 'bold ' : 'normal ';
+    const cleanFontFamily = textItem.fontFamily || 'Montserrat, sans-serif';
+    ctx.font = `${fontStylePrefix}${fontWeightPrefix}${fSize}px ${cleanFontFamily}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
     if (textItem.bgBox) {
       const textMetrics = ctx.measureText(textItem.text);
-      const paddingX = 14 * exportScale;
-      const paddingY = 6 * exportScale;
+      const paddingX = 14 * scaleRatio;
+      const paddingY = 6 * scaleRatio;
       const boxW = textMetrics.width + paddingX * 2;
       const boxH = fSize + paddingY * 2;
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      drawRoundedRect(ctx, tx - boxW / 2, ty - boxH / 2, boxW, boxH, 8 * exportScale);
+      drawRoundedRect(ctx, tx - boxW / 2, ty - boxH / 2, boxW, boxH, 8 * scaleRatio);
       ctx.fill();
     } else {
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-      ctx.shadowBlur = 4 * exportScale;
-      ctx.shadowOffsetY = 2 * exportScale;
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+      ctx.shadowBlur = 6 * scaleRatio;
+      ctx.shadowOffsetY = 2 * scaleRatio;
     }
 
     ctx.fillStyle = textItem.color || '#ffffff';
     ctx.fillText(textItem.text, tx, ty);
+    ctx.restore();
+  }
+
+  // 5. Render Polaroid Frame Caption & Photobooth Date
+  if (config.frameStyle === 'polaroid' && config.captionText) {
+    ctx.save();
+    const capSize = 24 * scaleRatio;
+    ctx.font = `bold ${capSize}px Caveat, cursive`;
+    ctx.fillStyle = '#262626';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(config.captionText, canvasW / 2, canvasH - 35 * scaleRatio);
+    ctx.restore();
+  }
+
+  if (config.frameStyle === 'photobooth' && config.dateText) {
+    ctx.save();
+    const dateSize = 12 * scaleRatio;
+    ctx.font = `600 ${dateSize}px Montserrat, sans-serif`;
+    ctx.fillStyle = '#525252';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(config.dateText, canvasW / 2, canvasH - 18 * scaleRatio);
     ctx.restore();
   }
 }
