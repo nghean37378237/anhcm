@@ -275,9 +275,11 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
   const renderTopEmblem = (np: NewsPosterConfig) => {
     if (!np.showTopEmblem) return null;
     const isLeft = np.topEmblemPosition === 'top-left';
+    const hasTopBadges = np.showTopBadge || np.showFollowButton;
+    const topPosition = hasTopBadges ? 'top-13 sm:top-14' : 'top-3.5';
     return (
       <div
-        className={`absolute top-3.5 z-30 pointer-events-auto ${
+        className={`absolute ${topPosition} z-30 pointer-events-auto ${
           isLeft ? 'left-3.5' : 'right-3.5'
         }`}
       >
@@ -796,33 +798,32 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
           {/* News Poster Overlay Layer (Tỷ lệ 3:4 chuẩn tin tức / báo chí / tưởng niệm) */}
           {config.newsPoster?.enabled && (
             <>
-              {/* Top Badges (cho báo chí) */}
-              {config.newsPoster.style !== 'tribute-rip' &&
-                (config.newsPoster.showTopBadge || config.newsPoster.showFollowButton) && (
-                  <div className="absolute top-3 inset-x-3.5 flex justify-between items-start pointer-events-none z-20">
-                    {config.newsPoster.showTopBadge ? (
-                      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-neutral-950/85 backdrop-blur-md border border-amber-500/40 shadow-xl pointer-events-auto">
-                        <div className="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400">
-                          <Award className="w-3 h-3" />
-                        </div>
-                        <div className="text-[9px] font-black uppercase tracking-wider text-neutral-100 whitespace-pre-line leading-tight text-left">
-                          {config.newsPoster.topBadgeText || 'HM MEDIA'}
-                        </div>
+              {/* Top Badges (Chung cho tất cả các mẫu ảnh: HM MEDIA góc trái & FOLLOW US góc phải) */}
+              {(config.newsPoster.showTopBadge || config.newsPoster.showFollowButton) && (
+                <div className="absolute top-3 inset-x-3.5 flex justify-between items-start pointer-events-none z-20">
+                  {config.newsPoster.showTopBadge ? (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-950/90 backdrop-blur-md border border-amber-500/50 shadow-xl pointer-events-auto">
+                      <div className="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500/60 flex items-center justify-center text-amber-400">
+                        <Award className="w-3.5 h-3.5" />
                       </div>
-                    ) : (
-                      <div />
-                    )}
+                      <div className="text-[9.5px] font-black uppercase tracking-wider text-white whitespace-pre-line leading-tight text-left">
+                        {config.newsPoster.topBadgeText || 'HM MEDIA'}
+                      </div>
+                    </div>
+                  ) : (
+                    <div />
+                  )}
 
-                    {config.newsPoster.showFollowButton && (
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-950/85 backdrop-blur-md border border-white/25 shadow-xl pointer-events-auto">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-white">
-                          {config.newsPoster.followButtonText || 'FOLLOW US'}
-                        </span>
-                        <MousePointerClick className="w-3.5 h-3.5 text-white animate-pulse" />
-                      </div>
-                    )}
-                  </div>
-                )}
+                  {config.newsPoster.showFollowButton && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-950/90 backdrop-blur-md border border-white/25 shadow-xl pointer-events-auto">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-white">
+                        {config.newsPoster.followButtonText || 'FOLLOW US'}
+                      </span>
+                      <MousePointerClick className="w-3.5 h-3.5 text-white animate-pulse" />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Top Emblem (Huy hiệu tròn quân nhân / tàu chiến cho mẫu Tưởng niệm REST IN PEACE) */}
               {config.newsPoster.style === 'tribute-rip' && renderTopEmblem(config.newsPoster)}

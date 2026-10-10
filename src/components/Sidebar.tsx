@@ -272,10 +272,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             {/* 2 comparison columns */}
                             <div className="absolute inset-y-0 left-0 w-[49%] bg-amber-500/40 rounded-[1px] border-r border-neutral-950" />
                             <div className="absolute inset-y-0 right-0 w-[49%] bg-amber-500/30 rounded-[1px]" />
-                            <div className="absolute top-1 left-1 px-1 py-0.2 bg-black/85 rounded text-[6px] font-black text-amber-300">
+                            <div className="absolute top-4 left-1 px-1 py-0.2 bg-black/85 rounded text-[5px] font-black text-amber-300 z-10">
                               THEN
                             </div>
-                            <div className="absolute top-1 right-1 px-1 py-0.2 bg-black/85 rounded text-[6px] font-black text-white">
+                            <div className="absolute top-4 right-1 px-1 py-0.2 bg-black/85 rounded text-[5px] font-black text-white z-10">
                               NOW
                             </div>
                           </>
@@ -283,10 +283,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           <>
                             {/* Tribute portrait representation */}
                             <div className="absolute inset-0 bg-neutral-800/80" />
-                            {/* Top right circular emblem */}
-                            <div className="absolute right-1 top-1 w-3.5 h-3.5 rounded-full border border-white bg-black flex items-center justify-center text-[6px] text-white z-20">
-                              ⚓
-                            </div>
                             {/* Solid black bottom with REST IN PEACE and ribbon */}
                             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/95 to-transparent flex flex-col items-center justify-end pb-0.5 px-0.5 z-20">
                               <span className="text-[5.5px] font-black font-serif text-white leading-none tracking-wider mb-0.5">
@@ -320,6 +316,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <div className="w-3/5 h-0.5 bg-neutral-200 rounded-full" />
                           </div>
                         )}
+
+                        {/* Universal Top Logo Header Bar (HM MEDIA & FOLLOW) across ALL template previews */}
+                        <div className="absolute top-1 inset-x-1 flex justify-between items-center z-30 pointer-events-none">
+                          <div className="flex items-center gap-0.5 px-1 py-0.5 rounded-full bg-black/90 border border-amber-500/60 shadow-sm">
+                            <span className="w-1 h-1 rounded-full bg-amber-400 inline-block" />
+                            <span className="text-[5px] font-black text-white leading-none tracking-tighter">HM</span>
+                          </div>
+                          <div className="px-1 py-0.5 rounded-full bg-black/90 border border-white/30 shadow-sm">
+                            <span className="text-[5px] font-black text-white leading-none tracking-tighter">FOLLOW</span>
+                          </div>
+                        </div>
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-[10px] font-bold text-amber-300 truncate">
@@ -2027,80 +2034,104 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         </div>
                       )}
                     </div>
-
-                    {/* Top Badge */}
-                    <div className="pt-2 border-t border-neutral-800 space-y-2">
-                      <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
-                        <span>Huy hiệu logo tròn góc trái</span>
-                        <input
-                          type="checkbox"
-                          checked={config.newsPoster.showTopBadge}
-                          onChange={(e) =>
-                            onUpdateConfig({
-                              newsPoster: {
-                                ...config.newsPoster!,
-                                showTopBadge: e.target.checked,
-                              },
-                            })
-                          }
-                          className="accent-amber-500 w-4 h-4 rounded"
-                        />
-                      </label>
-                      {config.newsPoster.showTopBadge && (
-                        <input
-                          type="text"
-                          value={config.newsPoster.topBadgeText || ''}
-                          onChange={(e) =>
-                            onUpdateConfig({
-                              newsPoster: {
-                                ...config.newsPoster!,
-                                topBadgeText: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="HM MEDIA"
-                          className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 text-xs text-neutral-100"
-                        />
-                      )}
-                    </div>
-
-                    {/* Follow Button */}
-                    <div className="pt-2 border-t border-neutral-800 space-y-2">
-                      <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
-                        <span>Nút &quot;FOLLOW US&quot; góc phải</span>
-                        <input
-                          type="checkbox"
-                          checked={config.newsPoster.showFollowButton}
-                          onChange={(e) =>
-                            onUpdateConfig({
-                              newsPoster: {
-                                ...config.newsPoster!,
-                                showFollowButton: e.target.checked,
-                              },
-                            })
-                          }
-                          className="accent-amber-500 w-4 h-4 rounded"
-                        />
-                      </label>
-                      {config.newsPoster.showFollowButton && (
-                        <input
-                          type="text"
-                          value={config.newsPoster.followButtonText || ''}
-                          onChange={(e) =>
-                            onUpdateConfig({
-                              newsPoster: {
-                                ...config.newsPoster!,
-                                followButtonText: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="FOLLOW US"
-                          className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 text-xs text-neutral-100"
-                        />
-                      )}
-                    </div>
                   </div>
                 )}
+
+                {/* Logo & Thanh tiêu đề trên cùng (Dùng chung cho tất cả các mẫu ảnh) */}
+                <div className="space-y-3 bg-neutral-950/40 p-3.5 rounded-xl border border-neutral-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block">
+                      Logo & Thanh tiêu đề trên cùng
+                    </span>
+                    <span className="text-[10px] text-amber-400 font-medium px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30">
+                      Chung cho tất cả mẫu ảnh
+                    </span>
+                  </div>
+
+                  {/* Top Badge: HM MEDIA */}
+                  <div className="space-y-2">
+                    <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-400 text-sm">🏅</span>
+                        <div>
+                          <span className="font-semibold text-white block">Logo góc trái (HM MEDIA)</span>
+                          <span className="text-[10px] text-neutral-400 block">Huy hiệu tròn viền vàng + tên thương hiệu</span>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={config.newsPoster.showTopBadge}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              showTopBadge: e.target.checked,
+                            },
+                          })
+                        }
+                        className="accent-amber-500 w-4 h-4 rounded cursor-pointer"
+                      />
+                    </label>
+                    {config.newsPoster.showTopBadge && (
+                      <input
+                        type="text"
+                        value={config.newsPoster.topBadgeText || ''}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              topBadgeText: e.target.value,
+                            },
+                          })
+                        }
+                        placeholder="HM MEDIA"
+                        className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500"
+                      />
+                    )}
+                  </div>
+
+                  {/* Follow Button: FOLLOW US */}
+                  <div className="pt-2 border-t border-neutral-800 space-y-2">
+                    <label className="flex items-center justify-between text-xs text-neutral-200 cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white text-sm">👆</span>
+                        <div>
+                          <span className="font-semibold text-white block">Nút góc phải (FOLLOW US)</span>
+                          <span className="text-[10px] text-neutral-400 block">Nút theo dõi bo tròn bo viền nổi bật</span>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={config.newsPoster.showFollowButton}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              showFollowButton: e.target.checked,
+                            },
+                          })
+                        }
+                        className="accent-amber-500 w-4 h-4 rounded cursor-pointer"
+                      />
+                    </label>
+                    {config.newsPoster.showFollowButton && (
+                      <input
+                        type="text"
+                        value={config.newsPoster.followButtonText || ''}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              followButtonText: e.target.value,
+                            },
+                          })
+                        }
+                        placeholder="FOLLOW US"
+                        className="w-full bg-neutral-900 border border-neutral-700 rounded-lg p-2 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500"
+                      />
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>

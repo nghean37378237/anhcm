@@ -547,12 +547,13 @@ export async function renderCollageToCanvas(
     const padSide = 28 * exportScale;
 
     // Top Emblem Badge (cho Mẫu Tưởng niệm REST IN PEACE)
-    if (isTribute && (np.showTopEmblem ?? true)) {
+    const hasTopBadges = Boolean(np.showTopBadge || np.showFollowButton);
+    if (isTribute && np.showTopEmblem) {
       ctx.save();
       const isLeft = np.topEmblemPosition === 'top-left';
-      const emblemR = 22 * exportScale;
-      const emblemCx = isLeft ? padSide + emblemR : canvasW - padSide - emblemR;
-      const emblemCy = padTop + emblemR;
+      const emblemR = 20 * exportScale;
+      const emblemCx = isLeft ? padSide + emblemR + 2 * exportScale : canvasW - padSide - emblemR - 2 * exportScale;
+      const emblemCy = padTop + (hasTopBadges ? 52 * exportScale : emblemR);
 
       // Dark circle with white ring
       ctx.beginPath();
@@ -632,66 +633,74 @@ export async function renderCollageToCanvas(
       ctx.restore();
     }
 
-    // Logo Badge (Top Left - cho tin tức báo chí)
-    if (!isTribute && np.showTopBadge) {
+    // Logo Badge (Top Left - HM MEDIA pill) - Chung cho tất cả các mẫu ảnh
+    if (np.showTopBadge) {
       ctx.save();
-      const badgeText = np.topBadgeText || 'HM MEDIA';
-      const lines = badgeText.split('\n');
-      const badgeR = 34 * exportScale;
-      const badgeCenterX = padSide + badgeR;
-      const badgeCenterY = padTop + badgeR;
+      const badgeText = (np.topBadgeText || 'HM MEDIA').toUpperCase();
+      const pillH = 28 * exportScale;
+      const iconR = 9.5 * exportScale;
+      ctx.font = `900 ${9.5 * exportScale}px Montserrat, sans-serif`;
+      const textWidth = ctx.measureText(badgeText).width;
+      const pillW = iconR * 2 + textWidth + 24 * exportScale;
+      const pillX = padSide + 2 * exportScale;
+      const pillY = padTop + 8 * exportScale;
 
-      // Outer circle
-      ctx.beginPath();
-      ctx.arc(badgeCenterX, badgeCenterY, badgeR, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(15, 15, 15, 0.85)';
+      // Draw rounded pill background
+      drawRoundedRect(ctx, pillX, pillY, pillW, pillH, pillH / 2);
+      ctx.fillStyle = 'rgba(10, 10, 10, 0.90)';
       ctx.fill();
-      ctx.lineWidth = 1.5 * exportScale;
-      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1 * exportScale;
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.55)'; // golden border
       ctx.stroke();
 
-      // Mini star / emblem
+      // Golden circular emblem on left of pill
+      const circleCenterX = pillX + iconR + 5 * exportScale;
+      const circleCenterY = pillY + pillH / 2;
+      ctx.beginPath();
+      ctx.arc(circleCenterX, circleCenterY, iconR, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.22)';
+      ctx.fill();
+      ctx.lineWidth = 1 * exportScale;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.stroke();
+
+      // Mini golden medal/ribbon icon in circle
       ctx.fillStyle = '#f59e0b';
       ctx.font = `${10 * exportScale}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('★', badgeCenterX, badgeCenterY - 12 * exportScale);
+      ctx.fillText('🏅', circleCenterX, circleCenterY);
 
-      // Text in badge
-      ctx.fillStyle = '#f1f5f9';
-      ctx.font = `bold ${8 * exportScale}px Montserrat, sans-serif`;
-      if (lines.length === 1) {
-        ctx.fillText(lines[0].toUpperCase(), badgeCenterX, badgeCenterY + 4 * exportScale);
-      } else {
-        lines.forEach((line, idx) => {
-          ctx.fillText(
-            line.toUpperCase(),
-            badgeCenterX,
-            badgeCenterY + (idx === 0 ? -1 * exportScale : 9 * exportScale)
-          );
-        });
-      }
+      // Text beside icon
+      ctx.fillStyle = '#ffffff';
+      ctx.font = `900 ${9.5 * exportScale}px Montserrat, sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(badgeText, circleCenterX + iconR + 6 * exportScale, pillY + pillH / 2);
+
       ctx.restore();
     }
 
-    // Follow Button (Top Right - cho tin tức báo chí)
-    if (!isTribute && np.showFollowButton) {
+    // Follow Button (Top Right - FOLLOW US pill) - Chung cho tất cả các mẫu ảnh
+    if (np.showFollowButton) {
       ctx.save();
       const btnText = (np.followButtonText || 'FOLLOW US').toUpperCase();
       const btnH = 28 * exportScale;
-      const btnW = 95 * exportScale;
-      const btnX = canvasW - padSide - btnW;
+      ctx.font = `900 ${9.5 * exportScale}px Montserrat, sans-serif`;
+      const btnTextW = ctx.measureText(btnText).width;
+      const btnW = btnTextW + 36 * exportScale;
+      const btnX = canvasW - padSide - btnW - 2 * exportScale;
       const btnY = padTop + 8 * exportScale;
 
-      drawRoundedRect(ctx, btnX, btnY, btnW, btnH, 14 * exportScale);
-      ctx.fillStyle = 'rgba(10, 10, 10, 0.85)';
+      drawRoundedRect(ctx, btnX, btnY, btnW, btnH, btnH / 2);
+      ctx.fillStyle = 'rgba(10, 10, 10, 0.90)';
       ctx.fill();
       ctx.lineWidth = 1 * exportScale;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${10 * exportScale}px Montserrat, sans-serif`;
+      ctx.font = `900 ${9.5 * exportScale}px Montserrat, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(`${btnText} 👆`, btnX + btnW / 2, btnY + btnH / 2);
