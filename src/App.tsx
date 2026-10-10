@@ -138,6 +138,7 @@ export default function App() {
             headlineColor: newLayout.newsPosterDefault.headlineColor ?? prev.newsPoster?.headlineColor ?? '#FFFFFF',
             highlightColor: newLayout.newsPosterDefault.highlightColor ?? prev.newsPoster?.highlightColor ?? '#FACC15',
             fontSize: prev.newsPoster?.fontSize ?? newLayout.newsPosterDefault.fontSize ?? 34,
+            headlineLineGap: prev.newsPoster?.headlineLineGap ?? newLayout.newsPosterDefault.headlineLineGap ?? 2,
             fontFamily: prev.newsPoster?.fontFamily || newLayout.newsPosterDefault.fontFamily,
             gradientHeight: newLayout.newsPosterDefault.gradientHeight ?? prev.newsPoster?.gradientHeight ?? 38,
             gradientOpacity: newLayout.newsPosterDefault.gradientOpacity ?? prev.newsPoster?.gradientOpacity ?? 0.94,

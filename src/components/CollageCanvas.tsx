@@ -257,18 +257,62 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
     // ribbon viewBox is 100x140 -> width = size * (100 / 140)
     const ribbonWidth = Math.round(size * (100 / 140));
     switch (symbol) {
-      case 'ribbon':
+      case 'ribbon': {
+        const isWhite = !color || color === '#FFFFFF' || color.toLowerCase() === '#fff';
         return (
           <svg
             viewBox="0 0 100 140"
-            style={{ width: `${ribbonWidth}px`, height: `${size}px`, color }}
-            className="drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] transition-all"
-            fill="currentColor"
+            style={{ width: `${ribbonWidth}px`, height: `${size}px` }}
+            className="filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] transition-all select-none"
+            aria-label="Ruy băng tưởng niệm"
           >
-            {/* Elegant Awareness / Mourning ribbon */}
-            <path d="M50 6 C28 6, 16 25, 16 48 C16 66, 25 83, 37 99 L13 134 C11 137, 14 141, 18 139 L47 116 L50 120 L53 116 L82 139 C86 141, 89 137, 87 134 L63 99 C75 83, 84 66, 84 48 C84 25, 72 6, 50 6 Z M50 23 C62 23, 68 34, 68 48 C68 60, 61 74, 52 89 C43 74, 32 60, 32 48 C32 34, 38 23, 50 23 Z" />
+            <defs>
+              <linearGradient id="tributeRibbonSilk" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="35%" stopColor="#F8FAFC" />
+                <stop offset="70%" stopColor="#E2E8F0" />
+                <stop offset="100%" stopColor="#CBD5E1" />
+              </linearGradient>
+              <linearGradient id="tributeRibbonFront" x1="15%" y1="10%" x2="85%" y2="90%">
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="50%" stopColor="#F1F5F9" />
+                <stop offset="100%" stopColor="#E2E8F0" />
+              </linearGradient>
+            </defs>
+
+            {/* 1. Base Ribbon: Hai dải đuôi xòe đều xuống dưới + vòm uốn cong trên + khoảng trống giọt lệ */}
+            <path
+              d="M18,136 L38,123 C42,114 46,104 50,94 C54,104 58,114 62,123 L82,136 C74,122 64,111 52,102 C34,88 18,70 18,48 C18,22 32,6 50,6 C68,6 82,22 82,48 C82,70 66,88 48,102 C36,111 26,122 18,136 Z M50,22 C40,22 34,30 34,48 C34,66 42,80 50,90 C58,80 66,66 66,48 C66,30 60,22 50,22 Z"
+              fill={isWhite ? 'url(#tributeRibbonSilk)' : color}
+              fillRule="evenodd"
+            />
+
+            {/* 2. Dải ruy băng vắt chéo đè lên trên (từ trên bên trái vòng xuống đuôi bên phải) */}
+            <path
+              d="M18,48 C18,70 34,88 52,102 C64,111 74,122 82,136 L62,123 C58,114 54,104 50,94 C48,84 42,66 34,48 L18,48 Z"
+              fill={isWhite ? 'url(#tributeRibbonFront)' : color}
+            />
+
+            {/* 3. Nếp gấp bóng đổ 3D ở điểm giao nhau (ngã tư vắt chéo ruy băng) */}
+            <path
+              d="M33,74 C39,81 45,88 50,94"
+              stroke="rgba(0, 0, 0, 0.42)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              fill="none"
+            />
+
+            {/* 4. Viền bóng sáng satin thanh lịch dọc theo mép vải */}
+            <path
+              d="M34,73 C40,80 46,87 51,93"
+              stroke="rgba(255, 255, 255, 0.85)"
+              strokeWidth="0.8"
+              strokeLinecap="round"
+              fill="none"
+            />
           </svg>
         );
+      }
       case 'candle':
         return <span style={{ fontSize: `${size * 0.75}px` }} className="filter drop-shadow leading-none">🕯️</span>;
       case 'rose':
@@ -895,8 +939,9 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                         config.newsPoster.headline.split('\n').map((line, lIdx) => (
                           <div
                             key={lIdx}
-                            className={lIdx === 0 ? 'tracking-[0.05em]' : 'tracking-[0.14em] mt-0.5'}
+                            className={lIdx === 0 ? 'tracking-[0.05em]' : 'tracking-[0.14em]'}
                             style={{
+                              marginTop: lIdx === 0 ? 0 : `${config.newsPoster?.headlineLineGap ?? 2}px`,
                               fontSize: `${
                                 lIdx === 0
                                   ? config.newsPoster?.fontSize || 48

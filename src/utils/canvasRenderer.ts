@@ -796,11 +796,18 @@ export async function renderCollageToCanvas(
       const bottomPad = 22 * scaleRatio;
 
       const headlineLines = np.headline ? np.headline.split('\n') : ['REST', 'IN PEACE'];
-      const headlineLineH = baseFontSize * 1.05;
+      const lineGapPx = (np.headlineLineGap ?? 2) * scaleRatio;
 
-      // firstLineY: Baseline of first line of headline
+      // Tính toán chiều cao chính xác của toàn bộ khối tiêu đề (khớp 100% với CSS mt-0.5 / 2px)
+      let headlineTotalH = 0;
+      for (let i = 1; i < headlineLines.length; i++) {
+        const nextFSize = Math.round(baseFontSize * 0.72);
+        headlineTotalH += lineGapPx + (nextFSize * 0.71);
+      }
+
+      // firstLineY: Đường gióng chân (baseline) của dòng tiêu đề đầu tiên
       const firstLineY =
-        canvasH - bottomPad - ribbonH - subH - (headlineLines.length - 1) * headlineLineH;
+        canvasH - bottomPad - ribbonH - subH - headlineTotalH;
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
@@ -811,11 +818,15 @@ export async function renderCollageToCanvas(
       const hasOutline = np.textOutline ?? true;
       const outlineLineWidth = Math.max(3.5 * exportScale, baseFontSize * 0.08);
 
-      // Draw Primary Headline (REST IN PEACE)
+      // Vẽ dòng tiêu đề chính (REST IN PEACE): SÁT NHAU, KHÔNG BỊ CÁCH XA NHAU KHI XUẤT ẢNH
+      let currentBaselineY = firstLineY;
       headlineLines.forEach((lineText, idx) => {
-        const lineY = firstLineY + idx * headlineLineH;
         const currentFontSize = idx === 0 ? baseFontSize : Math.round(baseFontSize * 0.72);
         ctx.font = getSafeCanvasFont(headlineFontFamily, currentFontSize, '900');
+
+        if ('letterSpacing' in ctx) {
+          (ctx as any).letterSpacing = idx === 0 ? '0.05em' : '0.14em';
+        }
 
         const upperText = lineText.toUpperCase();
         if (hasOutline) {
@@ -823,19 +834,28 @@ export async function renderCollageToCanvas(
           ctx.strokeStyle = '#000000';
           ctx.lineWidth = outlineLineWidth;
           ctx.lineJoin = 'round';
-          ctx.strokeText(upperText, canvasW / 2, lineY);
+          ctx.strokeText(upperText, canvasW / 2, currentBaselineY);
           ctx.restore();
         }
 
         ctx.fillStyle = np.headlineColor || '#ffffff';
-        ctx.fillText(upperText, canvasW / 2, lineY);
+        ctx.fillText(upperText, canvasW / 2, currentBaselineY);
+
+        if (idx < headlineLines.length - 1) {
+          const nextFontSize = Math.round(baseFontSize * 0.72);
+          currentBaselineY += lineGapPx + (nextFontSize * 0.71);
+        }
       });
 
-      const headlineBottomY = firstLineY + (headlineLines.length - 1) * headlineLineH;
+      if ('letterSpacing' in ctx) {
+        (ctx as any).letterSpacing = '0px';
+      }
+
+      const headlineBottomY = currentBaselineY + 2 * scaleRatio;
 
       // Draw White Divider between Big Headline and Small Subtitle (dấu gạch trắng giữa 2 chữ)
       if (hasTitleDivider) {
-        const midDividerY = headlineBottomY + 3.5 * scaleRatio;
+        const midDividerY = headlineBottomY + 5 * scaleRatio;
         const dividerW = Math.min(canvasW * 0.44, 200 * scaleRatio);
         const lineGrad = ctx.createLinearGradient(
           canvasW / 2 - dividerW / 2,
@@ -858,10 +878,14 @@ export async function renderCollageToCanvas(
       if (hasSubtitle && np.subtitle) {
         const subY =
           headlineBottomY +
-          (hasTitleDivider ? 8.5 * scaleRatio : 4 * scaleRatio) +
+          (hasTitleDivider ? 10 * scaleRatio : 5 * scaleRatio) +
           subtitleFontSize * 0.72;
 
         ctx.font = getSafeCanvasFont(subtitleFontFamily, subtitleFontSize, '600');
+        if ('letterSpacing' in ctx) {
+          (ctx as any).letterSpacing = '0.16em';
+        }
+
         ctx.fillStyle = np.subtitleColor || '#ffffff';
         const subUpper = np.subtitle.toUpperCase();
 
@@ -873,6 +897,10 @@ export async function renderCollageToCanvas(
           ctx.restore();
         }
         ctx.fillText(subUpper, canvasW / 2, subY);
+
+        if ('letterSpacing' in ctx) {
+          (ctx as any).letterSpacing = '0px';
+        }
 
         subUnderlineY = subY;
 
@@ -899,42 +927,97 @@ export async function renderCollageToCanvas(
         }
       }
 
-      // Draw Memorial Ribbon (Ruy băng trắng)
+      // Draw Memorial Ribbon (Ruy băng trắng mẫu thực tế với nếp vắt 3D & 2 đuôi xòe đều)
       if (hasRibbon) {
         const ribbonTopY = subUnderlineY + 8 * scaleRatio;
-        const symPx = symbolBasePx * exportScale;
+        const symPx = symbolBasePx;
         if (np.bottomSymbol === 'ribbon' || !np.bottomSymbol) {
           ctx.save();
-          ctx.fillStyle = np.bottomSymbolColor || '#FFFFFF';
           ctx.translate(canvasW / 2, ribbonTopY);
           const ribbonScale = symPx / 140;
           ctx.scale(ribbonScale, ribbonScale);
           ctx.translate(-50, 0);
 
+          const ribbonColor = np.bottomSymbolColor || '#FFFFFF';
+          const isWhiteRibbon = ribbonColor === '#FFFFFF' || ribbonColor.toLowerCase() === '#fff';
+
+          // Màu bóng lụa satin cho ruy băng
+          let baseFillStyle: string | CanvasGradient = ribbonColor;
+          let frontFillStyle: string | CanvasGradient = ribbonColor;
+
+          if (isWhiteRibbon) {
+            const gradBase = ctx.createLinearGradient(0, 0, 100, 140);
+            gradBase.addColorStop(0, '#FFFFFF');
+            gradBase.addColorStop(0.35, '#F8FAFC');
+            gradBase.addColorStop(0.7, '#E2E8F0');
+            gradBase.addColorStop(1, '#CBD5E1');
+            baseFillStyle = gradBase;
+
+            const gradFront = ctx.createLinearGradient(15, 10, 85, 90);
+            gradFront.addColorStop(0, '#FFFFFF');
+            gradFront.addColorStop(0.5, '#F1F5F9');
+            gradFront.addColorStop(1, '#E2E8F0');
+            frontFillStyle = gradFront;
+          }
+
+          // 1. Khung thân ruy băng chính (Hai đuôi vát xòe mở rộng + vòm cong tròn trên + khe giọt lệ)
+          ctx.fillStyle = baseFillStyle;
           ctx.beginPath();
-          ctx.moveTo(50, 6);
-          ctx.bezierCurveTo(28, 6, 16, 25, 16, 48);
-          ctx.bezierCurveTo(16, 66, 25, 83, 37, 99);
-          ctx.lineTo(13, 134);
-          ctx.bezierCurveTo(11, 137, 14, 141, 18, 139);
-          ctx.lineTo(47, 116);
-          ctx.lineTo(50, 120);
-          ctx.lineTo(53, 116);
-          ctx.lineTo(82, 139);
-          ctx.bezierCurveTo(86, 141, 89, 137, 87, 134);
-          ctx.lineTo(63, 99);
-          ctx.bezierCurveTo(75, 83, 84, 66, 84, 48);
-          ctx.bezierCurveTo(84, 25, 72, 6, 50, 6);
+          // Đường bao ngoài hai đuôi và vòm trên
+          ctx.moveTo(18, 136);
+          ctx.lineTo(38, 123);
+          ctx.bezierCurveTo(42, 114, 46, 104, 50, 94);
+          ctx.bezierCurveTo(54, 104, 58, 114, 62, 123);
+          ctx.lineTo(82, 136);
+          ctx.bezierCurveTo(74, 122, 64, 111, 52, 102);
+          ctx.bezierCurveTo(34, 88, 18, 70, 18, 48);
+          ctx.bezierCurveTo(18, 22, 32, 6, 50, 6);
+          ctx.bezierCurveTo(68, 6, 82, 22, 82, 48);
+          ctx.bezierCurveTo(82, 70, 66, 88, 48, 102);
+          ctx.bezierCurveTo(36, 111, 26, 122, 18, 136);
           ctx.closePath();
 
-          ctx.moveTo(50, 23);
-          ctx.bezierCurveTo(62, 23, 68, 34, 68, 48);
-          ctx.bezierCurveTo(68, 60, 61, 74, 52, 89);
-          ctx.bezierCurveTo(43, 74, 32, 60, 32, 48);
-          ctx.bezierCurveTo(32, 34, 38, 23, 50, 23);
+          // Lỗ rỗng giọt lệ ở giữa
+          ctx.moveTo(50, 22);
+          ctx.bezierCurveTo(40, 22, 34, 30, 34, 48);
+          ctx.bezierCurveTo(34, 66, 42, 80, 50, 90);
+          ctx.bezierCurveTo(58, 80, 66, 66, 66, 48);
+          ctx.bezierCurveTo(66, 30, 60, 22, 50, 22);
           ctx.closePath();
 
           ctx.fill('evenodd');
+
+          // 2. Dải vải vắt chéo đè lên trên (Top-left vắt chéo qua tâm xuống đuôi bên phải)
+          ctx.fillStyle = frontFillStyle;
+          ctx.beginPath();
+          ctx.moveTo(18, 48);
+          ctx.bezierCurveTo(18, 70, 34, 88, 52, 102);
+          ctx.bezierCurveTo(64, 111, 74, 122, 82, 136);
+          ctx.lineTo(62, 123);
+          ctx.bezierCurveTo(58, 114, 54, 104, 50, 94);
+          ctx.bezierCurveTo(48, 84, 42, 66, 34, 48);
+          ctx.closePath();
+          ctx.fill();
+
+          // 3. Đường nếp gấp bóng đổ 3D tại ngã tư vắt chéo
+          ctx.save();
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.42)';
+          ctx.lineWidth = 2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(33, 74);
+          ctx.bezierCurveTo(39, 81, 45, 88, 50, 94);
+          ctx.stroke();
+
+          // 4. Đường viền bóng sáng lụa satin
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(34, 73);
+          ctx.bezierCurveTo(40, 80, 46, 87, 51, 93);
+          ctx.stroke();
+          ctx.restore();
+
           ctx.restore();
         } else if (np.bottomSymbol === 'candle') {
           ctx.font = `${Math.round(symPx * 0.75)}px sans-serif`;

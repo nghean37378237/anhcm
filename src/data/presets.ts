@@ -209,6 +209,7 @@ export const COLLAGE_LAYOUTS: CollageLayout[] = [
       headlineColor: '#FFFFFF',
       highlightColor: '#FFFFFF',
       fontSize: 48,
+      headlineLineGap: 2,
       gradientHeight: 46,
       gradientOpacity: 1.0,
       showTopBadge: true,

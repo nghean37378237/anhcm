@@ -1263,6 +1263,66 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           </button>
                         ))}
                       </div>
+
+                      {/* Khoảng cách giữa 2 dòng tiêu đề */}
+                      <div className="mt-2.5 pt-2 border-t border-neutral-800/80 space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-[11px] font-medium text-neutral-300">
+                            Khoảng cách 2 dòng chữ:
+                          </span>
+                          <span className="text-[10px] text-amber-400 font-mono font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                            {config.newsPoster.headlineLineGap ?? 2}px {((config.newsPoster.headlineLineGap ?? 2) === 2) ? '(Chuẩn mẫu)' : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-neutral-500 font-mono">0px</span>
+                          <input
+                            type="range"
+                            min="0"
+                            max="16"
+                            step="1"
+                            value={config.newsPoster.headlineLineGap ?? 2}
+                            onChange={(e) =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  headlineLineGap: parseInt(e.target.value, 10),
+                                },
+                              })
+                            }
+                            className="flex-1 accent-amber-400 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+                          />
+                          <span className="text-[10px] text-neutral-500 font-mono">16px</span>
+                        </div>
+                        <div className="flex gap-1.5">
+                          {[
+                            { label: 'Sát nhau (0px)', val: 0 },
+                            { label: 'Chuẩn mẫu (2px)', val: 2 },
+                            { label: 'Vừa (4px)', val: 4 },
+                            { label: 'Rộng (8px)', val: 8 },
+                          ].map((opt) => (
+                            <button
+                              key={opt.val}
+                              type="button"
+                              onClick={() =>
+                                onUpdateConfig({
+                                  newsPoster: {
+                                    ...config.newsPoster!,
+                                    headlineLineGap: opt.val,
+                                  },
+                                })
+                              }
+                              className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                                (config.newsPoster?.headlineLineGap ?? 2) === opt.val
+                                  ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                  : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                              }`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Subtitle / Description (e.g. 'LAST ROSIE THE RIVETER OF WWII') */}
