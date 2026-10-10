@@ -64,8 +64,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       if (!hiddenCanvasRef.current) return;
       try {
         const previewEl = document.getElementById('collage-preview-container');
-        const pWidth = (previewWidth && previewWidth > 100) ? previewWidth : (previewEl && previewEl.clientWidth > 100 ? previewEl.clientWidth : 480);
-        const pHeight = (previewHeight && previewHeight > 100) ? previewHeight : (previewEl && previewEl.clientHeight > 100 ? previewEl.clientHeight : 640);
+        const pWidth = previewEl && previewEl.clientWidth > 100 ? previewEl.clientWidth : (previewWidth && previewWidth > 100 ? previewWidth : 480);
+        const pHeight = previewEl && previewEl.clientHeight > 100 ? previewEl.clientHeight : (previewHeight && previewHeight > 100 ? previewHeight : 640);
 
         await renderCollageToCanvas(hiddenCanvasRef.current, {
           layout,

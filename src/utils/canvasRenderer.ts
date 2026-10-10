@@ -606,25 +606,25 @@ export async function renderCollageToCanvas(
     ctx.fillStyle = grad;
     ctx.fillRect(0, gradStartY, canvasW, gradH);
 
-    // B. Top Badges & Emblems
-    const padTop = 28 * exportScale;
-    const padSide = 28 * exportScale;
+    // B. Top Badges & Emblems (Khớp tỉ lệ chính xác với màn hình xem trước)
+    const padTop = 12 * scaleRatio;
+    const padSide = 14 * scaleRatio;
 
     // Top Emblem Badge (cho Mẫu Tưởng niệm REST IN PEACE)
     const hasTopBadges = Boolean(np.showTopBadge || np.showFollowButton);
     if (isTribute && np.showTopEmblem) {
       ctx.save();
       const isLeft = np.topEmblemPosition === 'top-left';
-      const emblemR = 20 * exportScale;
-      const emblemCx = isLeft ? padSide + emblemR + 2 * exportScale : canvasW - padSide - emblemR - 2 * exportScale;
-      const emblemCy = padTop + (hasTopBadges ? 52 * exportScale : emblemR);
+      const emblemR = 18 * scaleRatio;
+      const emblemCx = isLeft ? padSide + emblemR : canvasW - padSide - emblemR;
+      const emblemCy = padTop + (hasTopBadges ? 46 * scaleRatio : emblemR);
 
       // Dark circle with white ring
       ctx.beginPath();
       ctx.arc(emblemCx, emblemCy, emblemR, 0, Math.PI * 2);
       ctx.fillStyle = '#050505';
       ctx.fill();
-      ctx.lineWidth = 2 * exportScale;
+      ctx.lineWidth = 2 * scaleRatio;
       ctx.strokeStyle = '#FFFFFF';
       ctx.stroke();
 
@@ -689,7 +689,7 @@ export async function renderCollageToCanvas(
         ctx.restore();
       } else if (np.topEmblemIcon === 'star') {
         ctx.fillStyle = '#facc15';
-        ctx.font = `${18 * exportScale}px sans-serif`;
+        ctx.font = `${18 * scaleRatio}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('⭐', emblemCx, emblemCy);
@@ -697,74 +697,74 @@ export async function renderCollageToCanvas(
       ctx.restore();
     }
 
-    // Logo Badge (Top Left - HM MEDIA pill) - Chung cho tất cả các mẫu ảnh
+    // Logo Badge (Top Left - HM MEDIA pill) - Chuẩn kích thước và vị trí theo scaleRatio
     if (np.showTopBadge) {
       ctx.save();
       const badgeText = (np.topBadgeText || 'HM MEDIA').toUpperCase();
-      const pillH = 28 * exportScale;
-      const iconR = 9.5 * exportScale;
-      ctx.font = `900 ${9.5 * exportScale}px Montserrat, sans-serif`;
+      const pillH = 28 * scaleRatio;
+      const iconR = 9.5 * scaleRatio;
+      ctx.font = `900 ${9.5 * scaleRatio}px Montserrat, sans-serif`;
       const textWidth = ctx.measureText(badgeText).width;
-      const pillW = iconR * 2 + textWidth + 24 * exportScale;
-      const pillX = padSide + 2 * exportScale;
-      const pillY = padTop + 8 * exportScale;
+      const pillW = iconR * 2 + textWidth + 24 * scaleRatio;
+      const pillX = padSide;
+      const pillY = padTop;
 
       // Draw rounded pill background
       drawRoundedRect(ctx, pillX, pillY, pillW, pillH, pillH / 2);
       ctx.fillStyle = 'rgba(10, 10, 10, 0.90)';
       ctx.fill();
-      ctx.lineWidth = 1 * exportScale;
+      ctx.lineWidth = 1 * scaleRatio;
       ctx.strokeStyle = 'rgba(245, 158, 11, 0.55)'; // golden border
       ctx.stroke();
 
       // Golden circular emblem on left of pill
-      const circleCenterX = pillX + iconR + 5 * exportScale;
+      const circleCenterX = pillX + iconR + 5 * scaleRatio;
       const circleCenterY = pillY + pillH / 2;
       ctx.beginPath();
       ctx.arc(circleCenterX, circleCenterY, iconR, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(245, 158, 11, 0.22)';
       ctx.fill();
-      ctx.lineWidth = 1 * exportScale;
+      ctx.lineWidth = 1 * scaleRatio;
       ctx.strokeStyle = '#f59e0b';
       ctx.stroke();
 
-      // Mini golden medal/ribbon icon in circle
+      // Mini golden medal icon in circle
       ctx.fillStyle = '#f59e0b';
-      ctx.font = `${10 * exportScale}px sans-serif`;
+      ctx.font = `${10 * scaleRatio}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('🏅', circleCenterX, circleCenterY);
 
       // Text beside icon
       ctx.fillStyle = '#ffffff';
-      ctx.font = `900 ${9.5 * exportScale}px Montserrat, sans-serif`;
+      ctx.font = `900 ${9.5 * scaleRatio}px Montserrat, sans-serif`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(badgeText, circleCenterX + iconR + 6 * exportScale, pillY + pillH / 2);
+      ctx.fillText(badgeText, circleCenterX + iconR + 6 * scaleRatio, pillY + pillH / 2);
 
       ctx.restore();
     }
 
-    // Follow Button (Top Right - FOLLOW US pill) - Chung cho tất cả các mẫu ảnh
+    // Follow Button (Top Right - FOLLOW US pill)
     if (np.showFollowButton) {
       ctx.save();
       const btnText = (np.followButtonText || 'FOLLOW US').toUpperCase();
-      const btnH = 28 * exportScale;
-      ctx.font = `900 ${9.5 * exportScale}px Montserrat, sans-serif`;
+      const btnH = 28 * scaleRatio;
+      ctx.font = `900 ${9.5 * scaleRatio}px Montserrat, sans-serif`;
       const btnTextW = ctx.measureText(btnText).width;
-      const btnW = btnTextW + 36 * exportScale;
-      const btnX = canvasW - padSide - btnW - 2 * exportScale;
-      const btnY = padTop + 8 * exportScale;
+      const btnW = btnTextW + 36 * scaleRatio;
+      const btnX = canvasW - padSide - btnW;
+      const btnY = padTop;
 
       drawRoundedRect(ctx, btnX, btnY, btnW, btnH, btnH / 2);
       ctx.fillStyle = 'rgba(10, 10, 10, 0.90)';
       ctx.fill();
-      ctx.lineWidth = 1 * exportScale;
+      ctx.lineWidth = 1 * scaleRatio;
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
-      ctx.font = `900 ${9.5 * exportScale}px Montserrat, sans-serif`;
+      ctx.font = `900 ${9.5 * scaleRatio}px Montserrat, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(`${btnText} 👆`, btnX + btnW / 2, btnY + btnH / 2);
@@ -784,30 +784,39 @@ export async function renderCollageToCanvas(
       const hasSubtitle = Boolean(np.subtitle);
       const hasRibbon = (np.bottomSymbol ?? 'ribbon') !== 'none';
       const hasTitleDivider = (np.showTitleDivider ?? true) && hasSubtitle;
-      
-      const symbolBasePx = (np.bottomSymbolSize || 36) * scaleRatio;
-      const ribbonH = hasRibbon ? (symbolBasePx + 8 * scaleRatio) : 0;
+      const hasSubUnderline = hasSubtitle && (np.showSubtitleUnderline ?? true);
 
-      // Khoảng cách chuẩn xác khớp 100% với khung xem trước CSS, không bị cách xa nhau
-      const midDivSpace = hasTitleDivider ? 7 * scaleRatio : 0;
-      const subUnderlineSpace = (hasSubtitle && (np.showSubtitleUnderline ?? true)) ? 6 * scaleRatio : 0;
-      const subTextSpace = hasSubtitle ? (subtitleFontSize * 0.85 + 4 * scaleRatio) : 0;
-      const subH = hasSubtitle ? (midDivSpace + subTextSpace + subUnderlineSpace) : 0;
-      const bottomPad = 22 * scaleRatio;
+      // 1. Vị trí Ruy Băng (Ruy băng neo sát đáy khung: bottom-3.5 = 14px)
+      const symPx = (np.bottomSymbolSize || 36) * scaleRatio;
+      const ribbonH = hasRibbon ? symPx : 0;
+      const ribbonBottomY = canvasH - 14 * scaleRatio;
+      const ribbonTopY = ribbonBottomY - ribbonH;
 
+      // 2. Vị trí Dòng phụ đề & Đường gạch chân (phía trên Ruy Băng)
+      const subGapAboveRibbon = hasRibbon ? 10 * scaleRatio : 0;
+      const subUnderlineY = ribbonTopY - subGapAboveRibbon;
+      const subY = hasSubUnderline ? subUnderlineY - 4 * scaleRatio : subUnderlineY;
+      const subCapTopY = hasSubtitle ? subY - subtitleFontSize * 0.72 : subUnderlineY;
+
+      // 3. Vị trí Đường gạch trắng phân cách (giữa tiêu đề to và phụ đề nhỏ)
+      const dividerGapBelow = hasSubtitle ? 6 * scaleRatio : 0;
+      const midDividerY = subCapTopY - dividerGapBelow;
+      const dividerGapAbove = hasTitleDivider ? 6 * scaleRatio : (hasSubtitle ? 6 * scaleRatio : 0);
+      const headlineBottomY = hasTitleDivider ? midDividerY - dividerGapAbove : subCapTopY - dividerGapAbove;
+
+      // 4. Vị trí các dòng tiêu đề chính (Tính gióng ngược từ đáy headlineBottomY lên để không bao giờ bị hở khoảng cách)
       const headlineLines = np.headline ? np.headline.split('\n') : ['REST', 'IN PEACE'];
       const lineGapPx = (np.headlineLineGap ?? 2) * scaleRatio;
+      const lineFontSizes = headlineLines.map((_, idx) =>
+        idx === 0 ? baseFontSize : Math.round(baseFontSize * 0.72)
+      );
 
-      // Tính toán chiều cao chính xác của toàn bộ khối tiêu đề (khớp 100% với CSS mt-0.5 / 2px)
-      let headlineTotalH = 0;
-      for (let i = 1; i < headlineLines.length; i++) {
-        const nextFSize = Math.round(baseFontSize * 0.72);
-        headlineTotalH += lineGapPx + (nextFSize * 0.71);
+      const lineBaselines = new Array<number>(headlineLines.length);
+      const lastIdx = headlineLines.length - 1;
+      lineBaselines[lastIdx] = headlineBottomY;
+      for (let i = lastIdx - 1; i >= 0; i--) {
+        lineBaselines[i] = lineBaselines[i + 1] - (lineFontSizes[i + 1] * 0.72) - lineGapPx;
       }
-
-      // firstLineY: Đường gióng chân (baseline) của dòng tiêu đề đầu tiên
-      const firstLineY =
-        canvasH - bottomPad - ribbonH - subH - headlineTotalH;
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
@@ -818,10 +827,10 @@ export async function renderCollageToCanvas(
       const hasOutline = np.textOutline ?? true;
       const outlineLineWidth = Math.max(3.5 * exportScale, baseFontSize * 0.08);
 
-      // Vẽ dòng tiêu đề chính (REST IN PEACE): SÁT NHAU, KHÔNG BỊ CÁCH XA NHAU KHI XUẤT ẢNH
-      let currentBaselineY = firstLineY;
+      // Vẽ các dòng tiêu đề chính (REST IN PEACE): SÁT NHAU CHUẨN XÁC 100% NHƯ PREVIEW
       headlineLines.forEach((lineText, idx) => {
-        const currentFontSize = idx === 0 ? baseFontSize : Math.round(baseFontSize * 0.72);
+        const currentFontSize = lineFontSizes[idx];
+        const currentBaselineY = lineBaselines[idx];
         ctx.font = getSafeCanvasFont(headlineFontFamily, currentFontSize, '900');
 
         if ('letterSpacing' in ctx) {
@@ -840,22 +849,14 @@ export async function renderCollageToCanvas(
 
         ctx.fillStyle = np.headlineColor || '#ffffff';
         ctx.fillText(upperText, canvasW / 2, currentBaselineY);
-
-        if (idx < headlineLines.length - 1) {
-          const nextFontSize = Math.round(baseFontSize * 0.72);
-          currentBaselineY += lineGapPx + (nextFontSize * 0.71);
-        }
       });
 
       if ('letterSpacing' in ctx) {
         (ctx as any).letterSpacing = '0px';
       }
 
-      const headlineBottomY = currentBaselineY + 2 * scaleRatio;
-
       // Draw White Divider between Big Headline and Small Subtitle (dấu gạch trắng giữa 2 chữ)
       if (hasTitleDivider) {
-        const midDividerY = headlineBottomY + 5 * scaleRatio;
         const dividerW = Math.min(canvasW * 0.44, 200 * scaleRatio);
         const lineGrad = ctx.createLinearGradient(
           canvasW / 2 - dividerW / 2,
@@ -873,14 +874,7 @@ export async function renderCollageToCanvas(
       }
 
       // Draw Subtitle (e.g. 'LAST ROSIE THE RIVETER OF WWII')
-      // ĐẶT SÁT VỚI DÒNG TIÊU ĐỀ CHÍNH, KHÔNG BỊ CÁCH XA NHAU KHI XUẤT ẢNH
-      let subUnderlineY = headlineBottomY;
       if (hasSubtitle && np.subtitle) {
-        const subY =
-          headlineBottomY +
-          (hasTitleDivider ? 10 * scaleRatio : 5 * scaleRatio) +
-          subtitleFontSize * 0.72;
-
         ctx.font = getSafeCanvasFont(subtitleFontFamily, subtitleFontSize, '600');
         if ('letterSpacing' in ctx) {
           (ctx as any).letterSpacing = '0.16em';
@@ -902,14 +896,10 @@ export async function renderCollageToCanvas(
           (ctx as any).letterSpacing = '0px';
         }
 
-        subUnderlineY = subY;
-
         // Subtitle underline
-        if (np.showSubtitleUnderline ?? true) {
+        if (hasSubUnderline) {
           const textMetrics = ctx.measureText(subUpper);
           const lineW = Math.max(textMetrics.width * 1.08, 160 * scaleRatio);
-          const lineY = subY + 3.5 * scaleRatio;
-          subUnderlineY = lineY;
 
           const lineGrad = ctx.createLinearGradient(
             canvasW / 2 - lineW / 2,
@@ -923,14 +913,12 @@ export async function renderCollageToCanvas(
           lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
           ctx.fillStyle = lineGrad;
-          ctx.fillRect(canvasW / 2 - lineW / 2, lineY, lineW, 1.5 * scaleRatio);
+          ctx.fillRect(canvasW / 2 - lineW / 2, subUnderlineY, lineW, 1.5 * scaleRatio);
         }
       }
 
       // Draw Memorial Ribbon (Ruy băng trắng mẫu thực tế với nếp vắt 3D & 2 đuôi xòe đều)
       if (hasRibbon) {
-        const ribbonTopY = subUnderlineY + 8 * scaleRatio;
-        const symPx = symbolBasePx;
         if (np.bottomSymbol === 'ribbon' || !np.bottomSymbol) {
           ctx.save();
           ctx.translate(canvasW / 2, ribbonTopY);
