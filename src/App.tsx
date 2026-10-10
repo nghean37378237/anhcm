@@ -99,6 +99,7 @@ export default function App() {
   const [texts, setTexts] = useState<TextOverlay[]>([]);
   const [stickers, setStickers] = useState<StickerOverlay[]>([]);
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
+  const [previewSize, setPreviewSize] = useState<{ width: number; height: number }>({ width: 480, height: 640 });
 
   // Mobile View Switcher: 'preview' | 'tools'
   const [mobileView, setMobileView] = useState<'preview' | 'tools'>('preview');
@@ -129,28 +130,30 @@ export default function App() {
         : prev.comparison ? { ...prev.comparison, enabled: false } : undefined,
       newsPoster: newLayout.newsPosterDefault
         ? {
+            ...newLayout.newsPosterDefault,
             enabled: true,
             style: newLayout.newsPosterDefault.style || prev.newsPoster?.style || 'bold-headline',
             headline: newLayout.newsPosterDefault.headline ?? prev.newsPoster?.headline ?? '',
             highlightWords: newLayout.newsPosterDefault.highlightWords ?? prev.newsPoster?.highlightWords ?? '',
             headlineColor: newLayout.newsPosterDefault.headlineColor ?? prev.newsPoster?.headlineColor ?? '#FFFFFF',
             highlightColor: newLayout.newsPosterDefault.highlightColor ?? prev.newsPoster?.highlightColor ?? '#FACC15',
-            fontSize: newLayout.newsPosterDefault.fontSize ?? prev.newsPoster?.fontSize ?? 34,
-            fontFamily: newLayout.newsPosterDefault.fontFamily ?? prev.newsPoster?.fontFamily,
+            fontSize: prev.newsPoster?.fontSize ?? newLayout.newsPosterDefault.fontSize ?? 34,
+            fontFamily: prev.newsPoster?.fontFamily || newLayout.newsPosterDefault.fontFamily,
             gradientHeight: newLayout.newsPosterDefault.gradientHeight ?? prev.newsPoster?.gradientHeight ?? 38,
             gradientOpacity: newLayout.newsPosterDefault.gradientOpacity ?? prev.newsPoster?.gradientOpacity ?? 0.94,
-            showTopBadge: newLayout.newsPosterDefault.showTopBadge ?? prev.newsPoster?.showTopBadge ?? true,
-            topBadgeText: newLayout.newsPosterDefault.topBadgeText || prev.newsPoster?.topBadgeText || 'HM MEDIA',
-            showFollowButton: newLayout.newsPosterDefault.showFollowButton ?? prev.newsPoster?.showFollowButton ?? true,
-            followButtonText: newLayout.newsPosterDefault.followButtonText || prev.newsPoster?.followButtonText || 'FOLLOW US',
+            // Tất cả mẫu ảnh đều giữ chung logo & nút follow đã chọn
+            showTopBadge: prev.newsPoster?.showTopBadge ?? true,
+            topBadgeText: prev.newsPoster?.topBadgeText || newLayout.newsPosterDefault.topBadgeText || 'HM MEDIA',
+            showFollowButton: prev.newsPoster?.showFollowButton ?? true,
+            followButtonText: prev.newsPoster?.followButtonText || newLayout.newsPosterDefault.followButtonText || 'FOLLOW US',
             showDiamondDivider: newLayout.newsPosterDefault.showDiamondDivider ?? prev.newsPoster?.showDiamondDivider ?? false,
             dividerPosition: newLayout.newsPosterDefault.dividerPosition ?? prev.newsPoster?.dividerPosition ?? 'top',
             subtitle: newLayout.newsPosterDefault.subtitle ?? prev.newsPoster?.subtitle ?? '',
-            subtitleFontSize: newLayout.newsPosterDefault.subtitleFontSize ?? prev.newsPoster?.subtitleFontSize ?? 13,
-            subtitleFontFamily: newLayout.newsPosterDefault.subtitleFontFamily ?? prev.newsPoster?.subtitleFontFamily,
+            subtitleFontSize: prev.newsPoster?.subtitleFontSize ?? newLayout.newsPosterDefault.subtitleFontSize ?? 13,
+            subtitleFontFamily: prev.newsPoster?.subtitleFontFamily || newLayout.newsPosterDefault.subtitleFontFamily,
             subtitleColor: newLayout.newsPosterDefault.subtitleColor ?? prev.newsPoster?.subtitleColor ?? '#FFFFFF',
-            showTitleDivider: newLayout.newsPosterDefault.showTitleDivider ?? prev.newsPoster?.showTitleDivider ?? true,
-            showSubtitleUnderline: newLayout.newsPosterDefault.showSubtitleUnderline ?? prev.newsPoster?.showSubtitleUnderline ?? true,
+            showTitleDivider: prev.newsPoster?.showTitleDivider ?? newLayout.newsPosterDefault.showTitleDivider ?? true,
+            showSubtitleUnderline: prev.newsPoster?.showSubtitleUnderline ?? newLayout.newsPosterDefault.showSubtitleUnderline ?? true,
             bottomSymbol: newLayout.newsPosterDefault.bottomSymbol ?? prev.newsPoster?.bottomSymbol ?? 'ribbon',
             bottomSymbolSize: newLayout.newsPosterDefault.bottomSymbolSize ?? prev.newsPoster?.bottomSymbolSize ?? 36,
             bottomSymbolColor: newLayout.newsPosterDefault.bottomSymbolColor ?? prev.newsPoster?.bottomSymbolColor ?? '#FFFFFF',
@@ -158,7 +161,25 @@ export default function App() {
             topEmblemPosition: newLayout.newsPosterDefault.topEmblemPosition ?? prev.newsPoster?.topEmblemPosition ?? 'top-right',
             topEmblemIcon: newLayout.newsPosterDefault.topEmblemIcon ?? prev.newsPoster?.topEmblemIcon ?? 'ship',
           }
-        : prev.newsPoster,
+        : {
+            ...(prev.newsPoster || {
+              enabled: true,
+              style: 'bold-headline',
+              headline: '',
+              highlightWords: '',
+              headlineColor: '#FFFFFF',
+              highlightColor: '#FACC15',
+              fontSize: 34,
+              gradientHeight: 38,
+              gradientOpacity: 0.94,
+              showDiamondDivider: false,
+            }),
+            showTopBadge: prev.newsPoster?.showTopBadge ?? true,
+            topBadgeText: prev.newsPoster?.topBadgeText || 'HM MEDIA',
+            showFollowButton: prev.newsPoster?.showFollowButton ?? true,
+            followButtonText: prev.newsPoster?.followButtonText || 'FOLLOW US',
+            showDiamondDivider: prev.newsPoster?.showDiamondDivider ?? false,
+          },
     }));
 
     // Preserve existing images when switching layouts
@@ -415,158 +436,37 @@ export default function App() {
   const handleSelectModel1 = () => {
     if (model1Layout) {
       handleSelectLayout(model1Layout);
-      handleUpdateConfig({
-        aspectRatio: '3:4',
-        gap: 6,
-        padding: 0,
-        borderRadius: 0,
-        bgColor: '#ffffff',
-        newsPoster: {
-          enabled: true,
-          style: 'bold-headline',
-          headline:
-            'JOHNNY DEPP SAYS HE WAS "SURPRISED" BY TIM BURTON\'S CASTING FOR EDWARD SCISSORHANDS',
-          highlightWords: 'JOHNNY DEPP, EDWARD SCISSORHANDS, SURPRISED',
-          headlineColor: '#FFFFFF',
-          highlightColor: '#FACC15',
-          fontSize: 35,
-          gradientHeight: 38,
-          gradientOpacity: 0.94,
-          showTopBadge: true,
-          topBadgeText: 'HM MEDIA',
-          showFollowButton: true,
-          followButtonText: 'FOLLOW US',
-          showDiamondDivider: true,
-        },
-      });
     }
   };
 
   const handleSelectModel2 = () => {
     if (model2Layout) {
       handleSelectLayout(model2Layout);
-      handleUpdateConfig({
-        aspectRatio: '3:4',
-        gap: 0,
-        padding: 0,
-        borderRadius: 0,
-        bgColor: '#ffffff',
-        newsPoster: {
-          enabled: true,
-          style: 'editorial-serif',
-          headline:
-            "Iris West Never Needed Super-Speed to Become One of The Flash's Strongest Voices",
-          highlightWords: "Iris West, The Flash's Strongest Voices",
-          headlineColor: '#FFFFFF',
-          highlightColor: '#F5D061',
-          fontSize: 35,
-          gradientHeight: 38,
-          gradientOpacity: 0.94,
-          showTopBadge: true,
-          topBadgeText: 'HM MEDIA',
-          showFollowButton: true,
-          followButtonText: 'FOLLOW US',
-          showDiamondDivider: true,
-        },
-      });
     }
   };
 
   const handleSelectModel3 = () => {
     if (model3Layout) {
       handleSelectLayout(model3Layout);
-      handleUpdateConfig({
-        aspectRatio: '3:4',
-        gap: 0,
-        padding: 0,
-        borderRadius: 0,
-        bgColor: '#ffffff',
-        newsPoster: {
-          enabled: true,
-          style: 'bold-headline',
-          headline:
-            'JOHNNY DEPP WAS LOVINGLY SURPRISED TO MEET A LITTLE FAN DRESSED AS HIS ICONIC EDWARD SCISSORHANDS',
-          highlightWords: 'JOHNNY DEPP, EDWARD SCISSORHANDS, SURPRISED',
-          headlineColor: '#FFFFFF',
-          highlightColor: '#FACC15',
-          fontSize: 34,
-          gradientHeight: 38,
-          gradientOpacity: 0.94,
-          showTopBadge: true,
-          topBadgeText: 'HM MEDIA',
-          showFollowButton: true,
-          followButtonText: 'FOLLOW US',
-          showDiamondDivider: true,
-        },
-      });
     }
   };
 
   const handleSelectModel4 = () => {
     if (model4Layout) {
       handleSelectLayout(model4Layout);
-      handleUpdateConfig({
-        aspectRatio: '3:4',
-        gap: 0,
-        padding: 0,
-        borderRadius: 0,
-        bgColor: '#ffffff',
-        newsPoster: {
-          enabled: true,
-          style: 'bold-headline',
-          headline:
-            'JOHNNY DEPP WAS LOVINGLY SURPRISED TO MEET A LITTLE FAN DRESSED AS HIS ICONIC EDWARD SCISSORHANDS',
-          highlightWords: 'JOHNNY DEPP, EDWARD SCISSORHANDS, SURPRISED',
-          headlineColor: '#FFFFFF',
-          highlightColor: '#FACC15',
-          fontSize: 34,
-          gradientHeight: 38,
-          gradientOpacity: 0.94,
-          showTopBadge: true,
-          topBadgeText: 'HM MEDIA',
-          showFollowButton: true,
-          followButtonText: 'FOLLOW US',
-          showDiamondDivider: true,
-        },
-      });
     }
   };
 
   const handleSelectModel5 = () => {
     if (model5Layout) {
       handleSelectLayout(model5Layout);
-      handleUpdateConfig({
-        aspectRatio: '3:4',
-        gap: 6,
-        padding: 0,
-        borderRadius: 0,
-        bgColor: '#000000',
-        comparison: {
-          enabled: true,
-          leftLabel: 'THEN',
-          rightLabel: 'NOW',
-          showLabels: true,
-          labelPosition: 'top',
-          showVsBadge: false,
-          centerDivider: 'gap',
-        },
-        newsPoster: {
-          enabled: true,
-          style: 'bold-headline',
-          headline: 'THEN & NOW: THE INCREDIBLE TRANSFORMATION OVER THE YEARS',
-          highlightWords: 'THEN & NOW, INCREDIBLE TRANSFORMATION, YEARS',
-          headlineColor: '#FFFFFF',
-          highlightColor: '#FACC15',
-          fontSize: 34,
-          gradientHeight: 38,
-          gradientOpacity: 0.94,
-          showTopBadge: true,
-          topBadgeText: 'HM MEDIA',
-          showFollowButton: true,
-          followButtonText: 'FOLLOW US',
-          showDiamondDivider: true,
-        },
-      });
+    }
+  };
+
+  const tributeLayout = COLLAGE_LAYOUTS.find((l) => l.id === 'layout-tribute-rip');
+  const handleSelectModelTribute = () => {
+    if (tributeLayout) {
+      handleSelectLayout(tributeLayout);
     }
   };
 
@@ -597,6 +497,7 @@ export default function App() {
         onSelectModel3={handleSelectModel3}
         onSelectModel4={handleSelectModel4}
         onSelectModel5={handleSelectModel5}
+        onSelectModelTribute={handleSelectModelTribute}
         activePhotosCount={activePhotosCount}
         totalSlotsCount={currentLayout.slots.length}
       />
@@ -659,6 +560,7 @@ export default function App() {
             onUpdateConfig={handleUpdateConfig}
             onRemoveText={handleRemoveText}
             onRemoveSticker={handleRemoveSticker}
+            onContainerResize={(w, h) => setPreviewSize({ width: w, height: h })}
           />
         </main>
       </div>
@@ -698,6 +600,8 @@ export default function App() {
         config={config}
         texts={texts}
         stickers={stickers}
+        previewWidth={previewSize.width}
+        previewHeight={previewSize.height}
       />
     </div>
   );

@@ -42,7 +42,7 @@ export interface NewsPosterConfig {
   topBadgeText: string;
   showFollowButton: boolean;
   followButtonText: string;
-  showDiamondDivider: boolean;
+  showDiamondDivider?: boolean;
   dividerPosition?: 'top' | 'bottom' | 'both'; // 'top' = phía trên chữ để phân cách ảnh và chữ; 'bottom'; 'both'
   // Các trường bổ sung cho Mẫu Tưởng niệm Tri ân (REST IN PEACE / MEMORIAL)
   subtitle?: string; // Dòng phụ đề (e.g. 'LAST ROSIE THE RIVETER OF WWII')

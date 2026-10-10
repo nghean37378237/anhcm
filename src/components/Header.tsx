@@ -23,6 +23,7 @@ interface HeaderProps {
   onSelectModel3?: () => void;
   onSelectModel4?: () => void;
   onSelectModel5?: () => void;
+  onSelectModelTribute?: () => void;
   activePhotosCount: number;
   totalSlotsCount: number;
 }
@@ -39,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectModel3,
   onSelectModel4,
   onSelectModel5,
+  onSelectModelTribute,
   activePhotosCount,
   totalSlotsCount,
 }) => {
@@ -128,6 +130,18 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <span className="text-[10px] font-black text-amber-400">⚡</span>
           Mẫu 5 (Then & Now)
+        </button>
+        <button
+          onClick={onSelectModelTribute}
+          className={`px-2 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+            layout.id === 'layout-tribute-rip'
+              ? 'bg-amber-500 text-neutral-950 font-bold shadow'
+              : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+          }`}
+          title="Mẫu Tưởng Niệm / Tri Ân (REST IN PEACE • Ruy băng trắng)"
+        >
+          <span>🎗️</span>
+          <span>Tưởng Niệm (RIP)</span>
         </button>
       </div>
 

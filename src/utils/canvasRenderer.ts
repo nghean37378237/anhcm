@@ -29,6 +29,45 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+// Safely build Canvas 2D font string with properly quoted font families and matching weights
+export function getSafeCanvasFont(
+  familyString: string,
+  sizePx: number,
+  preferredWeight: 'bold' | '900' | '800' | '700' | '600' | 'normal' | '500' = '700',
+  isItalic = false
+): string {
+  if (!familyString) return `${isItalic ? 'italic ' : ''}${preferredWeight} ${Math.round(sizePx)}px Montserrat, sans-serif`;
+
+  const primaryName = (familyString.split(',')[0] || '').replace(/['"]/g, '').trim().toLowerCase();
+
+  let safeWeight: string = preferredWeight;
+  if (primaryName === 'anton') {
+    // Anton is a single-weight 400 font in Google Fonts
+    safeWeight = '400';
+  } else if (
+    primaryName.includes('caveat') ||
+    primaryName.includes('dancing script') ||
+    primaryName.includes('plus jakarta') ||
+    primaryName.includes('oswald')
+  ) {
+    safeWeight = preferredWeight === 'normal' ? '600' : '700';
+  } else if (primaryName.includes('playfair display')) {
+    safeWeight = preferredWeight === 'normal' ? '600' : (preferredWeight === 'bold' ? '700' : preferredWeight);
+  }
+
+  // Quote individual font names containing spaces (e.g. "Playfair Display", "Dancing Script")
+  const formattedFamily = familyString
+    .split(',')
+    .map((part) => {
+      const clean = part.trim().replace(/^['"]|['"]$/g, '');
+      return clean.includes(' ') ? `"${clean}"` : clean;
+    })
+    .join(', ');
+
+  const italicStr = isItalic ? 'italic ' : '';
+  return `${italicStr}${safeWeight} ${Math.round(sizePx)}px ${formattedFamily}`;
+}
+
 // 3x3 Convolution Unsharp Mask for image sharpening
 function applySharpenKernel(
   ctx: CanvasRenderingContext2D,
@@ -123,14 +162,18 @@ export async function renderCollageToCanvas(
         document.fonts.load('700 48px "Playfair Display"'),
         document.fonts.load('600 48px "Playfair Display"'),
         document.fonts.load('italic 700 48px "Playfair Display"'),
-        document.fonts.load('900 48px Anton'),
+        document.fonts.load('400 48px Anton'),
+        document.fonts.load('bold 48px Anton'),
         document.fonts.load('900 48px Montserrat'),
         document.fonts.load('800 48px Montserrat'),
         document.fonts.load('700 48px Montserrat'),
+        document.fonts.load('600 48px Montserrat'),
         document.fonts.load('700 48px Oswald'),
+        document.fonts.load('600 48px Oswald'),
         document.fonts.load('700 48px Caveat'),
         document.fonts.load('700 48px "Dancing Script"'),
         document.fonts.load('700 48px "Plus Jakarta Sans"'),
+        document.fonts.load('600 48px "Plus Jakarta Sans"'),
         document.fonts.ready,
       ]);
     } catch (e) {
@@ -735,20 +778,25 @@ export async function renderCollageToCanvas(
       const baseFontSize = (np.fontSize || 48) * scaleRatio;
       const subtitleFontSize = (np.subtitleFontSize || 13) * scaleRatio;
 
-      const headlineFontFamily = np.fontFamily || '"Playfair Display", Georgia, serif';
-      const subtitleFontFamily = np.subtitleFontFamily || np.fontFamily || '"Playfair Display", Georgia, serif';
+      const headlineFontFamily = np.fontFamily || 'Playfair Display, Georgia, serif';
+      const subtitleFontFamily = np.subtitleFontFamily || np.fontFamily || 'Playfair Display, Georgia, serif';
 
       const hasSubtitle = Boolean(np.subtitle);
       const hasRibbon = (np.bottomSymbol ?? 'ribbon') !== 'none';
       const hasTitleDivider = (np.showTitleDivider ?? true) && hasSubtitle;
-      const midDivH = hasTitleDivider ? 12 * scaleRatio : 0;
+      
       const symbolBasePx = (np.bottomSymbolSize || 36) * scaleRatio;
-      const ribbonH = hasRibbon ? (symbolBasePx + 10 * scaleRatio) : 0;
-      const subH = hasSubtitle ? subtitleFontSize * 1.4 + 14 * scaleRatio + midDivH : 0;
-      const bottomPad = 24 * scaleRatio;
+      const ribbonH = hasRibbon ? (symbolBasePx + 8 * scaleRatio) : 0;
+
+      // Khoảng cách chuẩn xác khớp 100% với khung xem trước CSS, không bị cách xa nhau
+      const midDivSpace = hasTitleDivider ? 7 * scaleRatio : 0;
+      const subUnderlineSpace = (hasSubtitle && (np.showSubtitleUnderline ?? true)) ? 6 * scaleRatio : 0;
+      const subTextSpace = hasSubtitle ? (subtitleFontSize * 0.85 + 4 * scaleRatio) : 0;
+      const subH = hasSubtitle ? (midDivSpace + subTextSpace + subUnderlineSpace) : 0;
+      const bottomPad = 22 * scaleRatio;
 
       const headlineLines = np.headline ? np.headline.split('\n') : ['REST', 'IN PEACE'];
-      const headlineLineH = baseFontSize * 1.06;
+      const headlineLineH = baseFontSize * 1.05;
 
       // firstLineY: Baseline of first line of headline
       const firstLineY =
@@ -767,7 +815,7 @@ export async function renderCollageToCanvas(
       headlineLines.forEach((lineText, idx) => {
         const lineY = firstLineY + idx * headlineLineH;
         const currentFontSize = idx === 0 ? baseFontSize : Math.round(baseFontSize * 0.72);
-        ctx.font = `900 ${currentFontSize}px ${headlineFontFamily}`;
+        ctx.font = getSafeCanvasFont(headlineFontFamily, currentFontSize, '900');
 
         const upperText = lineText.toUpperCase();
         if (hasOutline) {
@@ -785,9 +833,9 @@ export async function renderCollageToCanvas(
 
       const headlineBottomY = firstLineY + (headlineLines.length - 1) * headlineLineH;
 
-      // Draw Divider between Big Headline and Small Subtitle (như phía dưới)
+      // Draw White Divider between Big Headline and Small Subtitle (dấu gạch trắng giữa 2 chữ)
       if (hasTitleDivider) {
-        const midDividerY = headlineBottomY + 8 * scaleRatio;
+        const midDividerY = headlineBottomY + 3.5 * scaleRatio;
         const dividerW = Math.min(canvasW * 0.44, 200 * scaleRatio);
         const lineGrad = ctx.createLinearGradient(
           canvasW / 2 - dividerW / 2,
@@ -796,8 +844,8 @@ export async function renderCollageToCanvas(
           0
         );
         lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-        lineGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0.85)');
-        lineGrad.addColorStop(0.7, 'rgba(255, 255, 255, 0.85)');
+        lineGrad.addColorStop(0.2, 'rgba(255, 255, 255, 0.88)');
+        lineGrad.addColorStop(0.8, 'rgba(255, 255, 255, 0.88)');
         lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
         ctx.fillStyle = lineGrad;
@@ -805,13 +853,15 @@ export async function renderCollageToCanvas(
       }
 
       // Draw Subtitle (e.g. 'LAST ROSIE THE RIVETER OF WWII')
+      // ĐẶT SÁT VỚI DÒNG TIÊU ĐỀ CHÍNH, KHÔNG BỊ CÁCH XA NHAU KHI XUẤT ẢNH
+      let subUnderlineY = headlineBottomY;
       if (hasSubtitle && np.subtitle) {
         const subY =
           headlineBottomY +
-          (hasTitleDivider ? midDivH : 0) +
-          subtitleFontSize * 1.1 +
-          6 * scaleRatio;
-        ctx.font = `600 ${subtitleFontSize}px ${subtitleFontFamily}`;
+          (hasTitleDivider ? 8.5 * scaleRatio : 4 * scaleRatio) +
+          subtitleFontSize * 0.72;
+
+        ctx.font = getSafeCanvasFont(subtitleFontFamily, subtitleFontSize, '600');
         ctx.fillStyle = np.subtitleColor || '#ffffff';
         const subUpper = np.subtitle.toUpperCase();
 
@@ -824,11 +874,15 @@ export async function renderCollageToCanvas(
         }
         ctx.fillText(subUpper, canvasW / 2, subY);
 
+        subUnderlineY = subY;
+
         // Subtitle underline
         if (np.showSubtitleUnderline ?? true) {
           const textMetrics = ctx.measureText(subUpper);
-          const lineW = Math.max(textMetrics.width * 1.1, 160 * scaleRatio);
-          const lineY = subY + Math.max(6 * scaleRatio, subtitleFontSize * 0.32);
+          const lineW = Math.max(textMetrics.width * 1.08, 160 * scaleRatio);
+          const lineY = subY + 3.5 * scaleRatio;
+          subUnderlineY = lineY;
+
           const lineGrad = ctx.createLinearGradient(
             canvasW / 2 - lineW / 2,
             0,
@@ -836,8 +890,8 @@ export async function renderCollageToCanvas(
             0
           );
           lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-          lineGrad.addColorStop(0.3, 'rgba(255, 255, 255, 0.85)');
-          lineGrad.addColorStop(0.7, 'rgba(255, 255, 255, 0.85)');
+          lineGrad.addColorStop(0.2, 'rgba(255, 255, 255, 0.88)');
+          lineGrad.addColorStop(0.8, 'rgba(255, 255, 255, 0.88)');
           lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
           ctx.fillStyle = lineGrad;
@@ -847,7 +901,7 @@ export async function renderCollageToCanvas(
 
       // Draw Memorial Ribbon (Ruy băng trắng)
       if (hasRibbon) {
-        const ribbonTopY = canvasH - bottomPad - ribbonH + 6 * exportScale;
+        const ribbonTopY = subUnderlineY + 8 * scaleRatio;
         const symPx = symbolBasePx * exportScale;
         if (np.bottomSymbol === 'ribbon' || !np.bottomSymbol) {
           ctx.save();
@@ -914,11 +968,11 @@ export async function renderCollageToCanvas(
       // baseFontSize quy đổi theo scaleRatio khớp chính xác 100% với màn hình xem trước
       const baseFontSize = (np.fontSize || 35) * scaleRatio;
       const isBoldStyle = np.style === 'bold-headline';
-      const headlineFont = np.fontFamily || (isBoldStyle ? 'Anton, Montserrat, sans-serif' : '"Playfair Display", serif');
-      const fontStylePrefix = (!np.fontFamily && !isBoldStyle) ? 'italic ' : '';
-      const fontWeightPrefix = isBoldStyle ? '900 ' : '700 ';
+      const headlineFont = np.fontFamily || (isBoldStyle ? 'Anton, Montserrat, sans-serif' : 'Playfair Display, serif');
+      const isItalic = (!np.fontFamily && !isBoldStyle);
+      const prefWeight = isBoldStyle ? '900' : '700';
 
-      ctx.font = `${fontStylePrefix}${fontWeightPrefix}${baseFontSize}px ${headlineFont}`;
+      ctx.font = getSafeCanvasFont(headlineFont, baseFontSize, prefWeight as any, isItalic);
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
@@ -1061,6 +1115,62 @@ export async function renderCollageToCanvas(
       // Draw Bottom Divider if enabled
       if (hasBottomDivider) {
         drawDiamondDivider(bottomDividerY);
+      }
+
+      // Draw Subtitle & Title Divider for non-tribute style if subtitle exists
+      if (np.subtitle) {
+        const subFontSize = (np.subtitleFontSize || 13) * scaleRatio;
+        const subFamily = np.subtitleFontFamily || np.fontFamily || 'Montserrat, sans-serif';
+        const lastLineY = firstLineY + (lines.length - 1) * lineHeight;
+
+        if (np.showTitleDivider ?? true) {
+          const midDividerY = lastLineY + 4 * scaleRatio;
+          const dividerW = Math.min(canvasW * 0.44, 200 * scaleRatio);
+          const lineGrad = ctx.createLinearGradient(
+            canvasW / 2 - dividerW / 2,
+            0,
+            canvasW / 2 + dividerW / 2,
+            0
+          );
+          lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+          lineGrad.addColorStop(0.2, 'rgba(255, 255, 255, 0.88)');
+          lineGrad.addColorStop(0.8, 'rgba(255, 255, 255, 0.88)');
+          lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = lineGrad;
+          ctx.fillRect(canvasW / 2 - dividerW / 2, midDividerY, dividerW, 1.5 * scaleRatio);
+        }
+
+        const subY = lastLineY + (np.showTitleDivider ? 9 * scaleRatio : 4.5 * scaleRatio) + subFontSize * 0.72;
+        ctx.font = getSafeCanvasFont(subFamily, subFontSize, '600');
+        ctx.fillStyle = np.subtitleColor || '#ffffff';
+        const subUpper = np.subtitle.toUpperCase();
+
+        if (hasOutline) {
+          ctx.save();
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = Math.max(2 * exportScale, subFontSize * 0.08);
+          ctx.strokeText(subUpper, canvasW / 2, subY);
+          ctx.restore();
+        }
+        ctx.fillText(subUpper, canvasW / 2, subY);
+
+        if (np.showSubtitleUnderline ?? true) {
+          const textMetrics = ctx.measureText(subUpper);
+          const lineW = Math.max(textMetrics.width * 1.08, 160 * scaleRatio);
+          const lineY = subY + 3.5 * scaleRatio;
+          const lineGrad = ctx.createLinearGradient(
+            canvasW / 2 - lineW / 2,
+            0,
+            canvasW / 2 + lineW / 2,
+            0
+          );
+          lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+          lineGrad.addColorStop(0.2, 'rgba(255, 255, 255, 0.88)');
+          lineGrad.addColorStop(0.8, 'rgba(255, 255, 255, 0.88)');
+          lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = lineGrad;
+          ctx.fillRect(canvasW / 2 - lineW / 2, lineY, lineW, 1.5 * scaleRatio);
+        }
       }
 
       ctx.restore();
@@ -1239,10 +1349,10 @@ export async function renderCollageToCanvas(
     const ty = (textItem.y / 100) * canvasH;
     const fSize = (textItem.fontSize || 24) * scaleRatio;
 
-    const fontStylePrefix = textItem.fontStyle === 'italic' ? 'italic ' : '';
-    const fontWeightPrefix = textItem.fontWeight === 'bold' ? 'bold ' : 'normal ';
+    const isItalic = textItem.fontStyle === 'italic';
+    const prefWeight = textItem.fontWeight === 'bold' ? 'bold' : 'normal';
     const cleanFontFamily = textItem.fontFamily || 'Montserrat, sans-serif';
-    ctx.font = `${fontStylePrefix}${fontWeightPrefix}${fSize}px ${cleanFontFamily}`;
+    ctx.font = getSafeCanvasFont(cleanFontFamily, fSize, prefWeight, isItalic);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 

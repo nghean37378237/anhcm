@@ -1820,6 +1820,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           ))}
                         </div>
                       </div>
+
+                      {/* Dòng phụ đề nhỏ (Dưới tiêu đề) */}
+                      <div className="space-y-1.5 pt-2 border-t border-neutral-800/80">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-semibold text-neutral-300 block">
+                            Dòng phụ đề nhỏ (Dưới tiêu đề to)
+                          </label>
+                          {config.newsPoster.subtitle && (
+                            <span className="text-[10px] text-amber-400 font-bold font-mono">
+                              {config.newsPoster.subtitleFontSize || 13}px
+                            </span>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          value={config.newsPoster.subtitle || ''}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                subtitle: e.target.value,
+                              },
+                            })
+                          }
+                          placeholder="VD: PHỤ ĐỀ / DIỄN VIÊN / NGUỒN TIN..."
+                          className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 uppercase tracking-wider"
+                        />
+                        {config.newsPoster.subtitle && (
+                          <div className="flex items-center justify-between pt-1">
+                            <label className="flex items-center gap-1.5 text-[11px] text-neutral-300 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={config.newsPoster.showTitleDivider ?? true}
+                                onChange={(e) =>
+                                  onUpdateConfig({
+                                    newsPoster: {
+                                      ...config.newsPoster!,
+                                      showTitleDivider: e.target.checked,
+                                    },
+                                  })
+                                }
+                                className="accent-amber-500 w-3.5 h-3.5 rounded cursor-pointer"
+                              />
+                              <span>Gạch trắng giữa 2 tiêu đề (To & Nhỏ)</span>
+                            </label>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}

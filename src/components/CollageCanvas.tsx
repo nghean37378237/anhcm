@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   ZoomIn,
   ZoomOut,
@@ -44,6 +44,7 @@ interface CollageCanvasProps {
   onUpdateConfig: (updates: Partial<CanvasConfig>) => void;
   onRemoveText: (id: string) => void;
   onRemoveSticker: (id: string) => void;
+  onContainerResize?: (width: number, height: number) => void;
 }
 
 export const CollageCanvas: React.FC<CollageCanvasProps> = ({
@@ -61,12 +62,28 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
   onUpdateConfig,
   onRemoveText,
   onRemoveSticker,
+  onContainerResize,
 }) => {
   const [draggedSlotIdx, setDraggedSlotIdx] = useState<number | null>(null);
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef<{ x: number; y: number; initialOffsetX: number; initialOffsetY: number } | null>(null);
   const [showSlotFilterMenu, setShowSlotFilterMenu] = useState(false);
   const [showSharpenMenu, setShowSharpenMenu] = useState(false);
+
+  // Monitor exact container width for 100% pixel-matching export
+  useEffect(() => {
+    const el = document.getElementById('collage-preview-container');
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 50 && entry.contentRect.height > 50) {
+          onContainerResize?.(entry.contentRect.width, entry.contentRect.height);
+        }
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [onContainerResize]);
 
   const activeSlot = selectedSlotIndex !== null ? slots[selectedSlotIndex] : null;
 
@@ -1030,6 +1047,33 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                           />
                         </div>
                       )}
+
+                    {/* Divider between Big Headline and Small Subtitle for all styles if subtitle present */}
+                    {(config.newsPoster.showTitleDivider ?? true) && config.newsPoster.subtitle && (
+                      <div className="h-[1.5px] w-44 sm:w-56 bg-gradient-to-r from-transparent via-white/85 to-transparent my-1.5 sm:my-2 shadow-sm" />
+                    )}
+
+                    {/* Subtitle / Description if present */}
+                    {config.newsPoster.subtitle && (
+                      <div className="flex flex-col items-center mt-0.5 sm:mt-1 w-full max-w-[94%]">
+                        <span
+                          className="uppercase tracking-[0.16em] font-medium text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
+                          style={{
+                            fontSize: `${config.newsPoster.subtitleFontSize || 13}px`,
+                            color: config.newsPoster.subtitleColor || '#ffffff',
+                            fontFamily:
+                              config.newsPoster.subtitleFontFamily ||
+                              config.newsPoster.fontFamily ||
+                              "'Playfair Display', Georgia, serif",
+                          }}
+                        >
+                          {config.newsPoster.subtitle}
+                        </span>
+                        {(config.newsPoster.showSubtitleUnderline ?? true) && (
+                          <div className="h-[1.5px] w-52 sm:w-68 bg-gradient-to-r from-transparent via-white/85 to-transparent mt-1 shadow-sm" />
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </div>

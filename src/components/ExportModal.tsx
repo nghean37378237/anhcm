@@ -30,6 +30,8 @@ interface ExportModalProps {
   config: CanvasConfig;
   texts: TextOverlay[];
   stickers: StickerOverlay[];
+  previewWidth?: number;
+  previewHeight?: number;
 }
 
 export const ExportModal: React.FC<ExportModalProps> = ({
@@ -40,6 +42,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   config,
   texts,
   stickers,
+  previewWidth,
+  previewHeight,
 }) => {
   const [exportScale, setExportScale] = useState<number>(2); // 2x = 2K
   const [format, setFormat] = useState<'png' | 'jpeg'>('png');
@@ -60,8 +64,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       if (!hiddenCanvasRef.current) return;
       try {
         const previewEl = document.getElementById('collage-preview-container');
-        const previewWidth = previewEl && previewEl.clientWidth > 100 ? previewEl.clientWidth : 480;
-        const previewHeight = previewEl && previewEl.clientHeight > 100 ? previewEl.clientHeight : 640;
+        const pWidth = (previewWidth && previewWidth > 100) ? previewWidth : (previewEl && previewEl.clientWidth > 100 ? previewEl.clientWidth : 480);
+        const pHeight = (previewHeight && previewHeight > 100) ? previewHeight : (previewEl && previewEl.clientHeight > 100 ? previewEl.clientHeight : 640);
 
         await renderCollageToCanvas(hiddenCanvasRef.current, {
           layout,
@@ -70,8 +74,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           texts,
           stickers,
           exportScale,
-          previewWidth,
-          previewHeight,
+          previewWidth: pWidth,
+          previewHeight: pHeight,
         });
 
         if (isMounted && hiddenCanvasRef.current) {
