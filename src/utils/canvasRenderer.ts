@@ -794,47 +794,76 @@ export async function renderCollageToCanvas(
 
       // 2. Vị trí Dòng phụ đề & Đường gạch chân (phía trên Ruy Băng)
       const subGapAboveRibbon = hasRibbon ? 10 * scaleRatio : 0;
-      const subUnderlineY = ribbonTopY - subGapAboveRibbon;
-      const subY = hasSubUnderline ? subUnderlineY - 4 * scaleRatio : subUnderlineY;
-      const subCapTopY = hasSubtitle ? subY - subtitleFontSize * 0.72 : subUnderlineY;
+      const nextBlockBottom = hasRibbon ? (ribbonTopY - subGapAboveRibbon) : ribbonBottomY;
+
+      // Subtitle position calculation (khớp 100% với CSS trong CollageCanvas.tsx)
+      let subUnderlineY = 0;
+      let subBaselineY = 0;
+      let subBoxTop = nextBlockBottom;
+
+      if (hasSubtitle) {
+        if (hasSubUnderline) {
+          subUnderlineY = nextBlockBottom - 1.5 * scaleRatio;
+          subBaselineY = subUnderlineY - 4 * scaleRatio - 0.2 * subtitleFontSize;
+          subBoxTop = subBaselineY - 0.85 * subtitleFontSize;
+        } else {
+          subBaselineY = nextBlockBottom - 0.2 * subtitleFontSize;
+          subBoxTop = subBaselineY - 0.85 * subtitleFontSize;
+        }
+      }
 
       // 3. Vị trí Đường gạch trắng phân cách (giữa tiêu đề to và phụ đề nhỏ)
-      const dividerGapBelow = hasSubtitle ? 6 * scaleRatio : 0;
-      const midDividerY = subCapTopY - dividerGapBelow;
-      const dividerGapAbove = hasTitleDivider ? 6 * scaleRatio : (hasSubtitle ? 6 * scaleRatio : 0);
-      const headlineBottomY = hasTitleDivider ? midDividerY - dividerGapAbove : subCapTopY - dividerGapAbove;
+      let midDividerY = 0;
+      let headlineBlockBottom = nextBlockBottom;
 
-      // 4. Vị trí các dòng tiêu đề chính (Tính gióng ngược từ đáy headlineBottomY lên để không bao giờ bị hở khoảng cách)
+      if (hasTitleDivider && hasSubtitle) {
+        // Divider có margin: my-1.5 = 6px trên & 6px dưới
+        midDividerY = subBoxTop - 2 * scaleRatio - 6 * scaleRatio - 1.5 * scaleRatio;
+        headlineBlockBottom = midDividerY - 6 * scaleRatio;
+      } else if (hasSubtitle) {
+        headlineBlockBottom = subBoxTop - 2 * scaleRatio;
+      }
+
+      // 4. Vị trí các dòng tiêu đề chính (Tính toán chính xác theo mô hình CSS Line-Box)
       const headlineLines = np.headline ? np.headline.split('\n') : ['REST', 'IN PEACE'];
       const lineGapPx = (np.headlineLineGap ?? 2) * scaleRatio;
       const lineFontSizes = headlineLines.map((_, idx) =>
         idx === 0 ? baseFontSize : Math.round(baseFontSize * 0.72)
       );
 
+      // Chiều cao CSS line box (line-height = 1.05)
+      const lineBoxHeights = lineFontSizes.map((fSize) => fSize * 1.05);
+
+      // Tính toán vị trí từng dòng từ dưới lên trên khớp 100% với preview DOM flow
       const lineBaselines = new Array<number>(headlineLines.length);
-      const lastIdx = headlineLines.length - 1;
-      lineBaselines[lastIdx] = headlineBottomY;
-      for (let i = lastIdx - 1; i >= 0; i--) {
-        lineBaselines[i] = lineBaselines[i + 1] - (lineFontSizes[i + 1] * 0.72) - lineGapPx;
+      let currentBoxBottom = headlineBlockBottom;
+
+      for (let i = headlineLines.length - 1; i >= 0; i--) {
+        const boxH = lineBoxHeights[i];
+        const fSize = lineFontSizes[i];
+        // Baseline nằm trên đáy box một đoạn (1.05 - 0.845) * fSize = 0.205 * fSize
+        lineBaselines[i] = currentBoxBottom - 0.205 * fSize;
+        const currentBoxTop = currentBoxBottom - boxH;
+        currentBoxBottom = currentBoxTop - lineGapPx;
       }
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
       ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-      ctx.shadowBlur = 12 * exportScale;
-      ctx.shadowOffsetY = 4 * exportScale;
+      ctx.shadowBlur = 8 * scaleRatio;
+      ctx.shadowOffsetY = 2 * scaleRatio;
 
       const hasOutline = np.textOutline ?? true;
-      const outlineLineWidth = Math.max(3.5 * exportScale, baseFontSize * 0.08);
 
-      // Vẽ các dòng tiêu đề chính (REST IN PEACE): SÁT NHAU CHUẨN XÁC 100% NHƯ PREVIEW
+      // Vẽ các dòng tiêu đề chính (REST IN PEACE): Khớp 100% tỉ lệ và khoảng cách như màn hình xem trước
       headlineLines.forEach((lineText, idx) => {
         const currentFontSize = lineFontSizes[idx];
         const currentBaselineY = lineBaselines[idx];
+        const outlineLineWidth = Math.max(3 * scaleRatio, currentFontSize * 0.075);
         ctx.font = getSafeCanvasFont(headlineFontFamily, currentFontSize, '900');
 
         if ('letterSpacing' in ctx) {
-          (ctx as any).letterSpacing = idx === 0 ? '0.05em' : '0.14em';
+          (ctx as any).letterSpacing = `${currentFontSize * (idx === 0 ? 0.05 : 0.14)}px`;
         }
 
         const upperText = lineText.toUpperCase();
@@ -856,7 +885,7 @@ export async function renderCollageToCanvas(
       }
 
       // Draw White Divider between Big Headline and Small Subtitle (dấu gạch trắng giữa 2 chữ)
-      if (hasTitleDivider) {
+      if (hasTitleDivider && hasSubtitle) {
         const dividerW = Math.min(canvasW * 0.44, 200 * scaleRatio);
         const lineGrad = ctx.createLinearGradient(
           canvasW / 2 - dividerW / 2,
@@ -877,7 +906,7 @@ export async function renderCollageToCanvas(
       if (hasSubtitle && np.subtitle) {
         ctx.font = getSafeCanvasFont(subtitleFontFamily, subtitleFontSize, '600');
         if ('letterSpacing' in ctx) {
-          (ctx as any).letterSpacing = '0.16em';
+          (ctx as any).letterSpacing = `${subtitleFontSize * 0.16}px`;
         }
 
         ctx.fillStyle = np.subtitleColor || '#ffffff';
@@ -886,11 +915,11 @@ export async function renderCollageToCanvas(
         if (hasOutline) {
           ctx.save();
           ctx.strokeStyle = '#000000';
-          ctx.lineWidth = Math.max(2 * exportScale, subtitleFontSize * 0.08);
-          ctx.strokeText(subUpper, canvasW / 2, subY);
+          ctx.lineWidth = Math.max(2 * scaleRatio, subtitleFontSize * 0.08);
+          ctx.strokeText(subUpper, canvasW / 2, subBaselineY);
           ctx.restore();
         }
-        ctx.fillText(subUpper, canvasW / 2, subY);
+        ctx.fillText(subUpper, canvasW / 2, subBaselineY);
 
         if ('letterSpacing' in ctx) {
           (ctx as any).letterSpacing = '0px';
@@ -1050,8 +1079,8 @@ export async function renderCollageToCanvas(
 
       // Drop shadow for crisp readability
       ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-      ctx.shadowBlur = 12 * exportScale;
-      ctx.shadowOffsetY = 4 * exportScale;
+      ctx.shadowBlur = 8 * scaleRatio;
+      ctx.shadowOffsetY = 2 * scaleRatio;
 
       // Word wrapping logic
       const maxTextW = canvasW * 0.92;
@@ -1082,19 +1111,19 @@ export async function renderCollageToCanvas(
       const hasTopDivider = np.showDiamondDivider && (dividerPos === 'top' || dividerPos === 'both');
       const hasBottomDivider = np.showDiamondDivider && (dividerPos === 'bottom' || dividerPos === 'both');
 
-      const topDividerSpace = hasTopDivider ? 28 * exportScale : 0;
-      const bottomDividerSpace = hasBottomDivider ? 24 * exportScale : 0;
+      const topDividerSpace = hasTopDivider ? 24 * scaleRatio : 0;
+      const bottomDividerSpace = hasBottomDivider ? 20 * scaleRatio : 0;
 
-      const bottomPad = 28 * exportScale;
+      const bottomPad = 14 * scaleRatio;
       const textBlockH = (lines.length - 1) * lineHeight;
 
       // firstLineY: Baseline of first line of headline
       const firstLineY = canvasH - bottomPad - bottomDividerSpace - textBlockH;
-      const topDividerY = firstLineY - baseFontSize * 0.85 - 12 * exportScale;
-      const bottomDividerY = canvasH - bottomPad - 6 * exportScale;
+      const topDividerY = firstLineY - baseFontSize * 0.85 - 12 * scaleRatio;
+      const bottomDividerY = canvasH - bottomPad - 6 * scaleRatio;
 
       const hasOutline = np.textOutline ?? true;
-      const outlineLineWidth = Math.max(3.5 * exportScale, baseFontSize * 0.08);
+      const outlineLineWidth = Math.max(3 * scaleRatio, baseFontSize * 0.08);
 
       // Helper to draw diamond divider (— ◆ —)
       const drawDiamondDivider = (dividerY: number) => {
@@ -1102,10 +1131,10 @@ export async function renderCollageToCanvas(
         ctx.shadowColor = 'transparent';
         const dividerColor = np.highlightColor || '#f5d061';
         ctx.strokeStyle = dividerColor;
-        ctx.lineWidth = 1.4 * exportScale;
+        ctx.lineWidth = 1.4 * scaleRatio;
 
-        const lineLen = 50 * exportScale;
-        const gap = 12 * exportScale;
+        const lineLen = 50 * scaleRatio;
+        const gap = 12 * scaleRatio;
 
         // Left line
         ctx.beginPath();
@@ -1121,7 +1150,7 @@ export async function renderCollageToCanvas(
 
         // Centered diamond
         ctx.fillStyle = dividerColor;
-        ctx.font = `${12 * exportScale}px sans-serif`;
+        ctx.font = `${12 * scaleRatio}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('◆', canvasW / 2, dividerY);
@@ -1265,47 +1294,47 @@ export async function renderCollageToCanvas(
       if (pos === 'bottom') {
         badgeY = canvasH * 0.58; // 58% height, safely in chest / lower photo area
       } else if (pos === 'above-headline') {
-        badgeY = canvasH - (canvasH * (config.newsPoster?.gradientHeight || 38)) / 100 - 20 * exportScale;
+        badgeY = canvasH - (canvasH * (config.newsPoster?.gradientHeight || 38)) / 100 - 20 * scaleRatio;
       } else if (pos === 'top-bar') {
-        badgeY = 26 * exportScale;
+        badgeY = 26 * scaleRatio;
       } else {
         const hasTopBadges = !!(config.newsPoster?.showTopBadge || config.newsPoster?.showFollowButton);
-        badgeY = hasTopBadges ? 92 * exportScale : 34 * exportScale;
+        badgeY = hasTopBadges ? 92 * scaleRatio : 34 * scaleRatio;
       }
     }
 
     const bSize = config.comparison?.badgeSize || 'normal';
     const sizeMultiplier = bSize === 'xl' ? 1.45 : bSize === 'large' ? 1.22 : 1.0;
-    const badgeFontPx = Math.round(11 * sizeMultiplier * exportScale);
+    const badgeFontPx = Math.round(11 * sizeMultiplier * scaleRatio);
 
-    const pillH = (styleType === 'minimal' ? 22 : 28) * sizeMultiplier * exportScale;
+    const pillH = (styleType === 'minimal' ? 22 : 28) * sizeMultiplier * scaleRatio;
     const pillRadius = (styleType === 'minimal' ? 6 : pillH / 2);
-    const marginSide = 20 * exportScale;
+    const marginSide = 20 * scaleRatio;
 
     // A. Left Label (THEN)
     const leftText = (config.comparison?.leftLabel || 'THEN').toUpperCase();
     ctx.font = `900 ${badgeFontPx}px Montserrat, sans-serif`;
     const leftMetrics = ctx.measureText(leftText);
-    const pillPaddingExtra = (styleType === 'minimal' ? 24 : 38) * sizeMultiplier * exportScale;
+    const pillPaddingExtra = (styleType === 'minimal' ? 24 : 38) * sizeMultiplier * scaleRatio;
     const leftPillW = leftMetrics.width + pillPaddingExtra;
     const leftPillX = isOuter ? marginSide : canvasW / 4 - leftPillW / 2;
     const leftPillY = badgeY - pillH / 2;
 
     // Drop shadow
     ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-    ctx.shadowBlur = 14 * exportScale;
-    ctx.shadowOffsetY = 4 * exportScale;
+    ctx.shadowBlur = 10 * scaleRatio;
+    ctx.shadowOffsetY = 3 * scaleRatio;
 
     drawRoundedRect(ctx, leftPillX, leftPillY, leftPillW, pillH, pillRadius);
     ctx.fillStyle = 'rgba(10, 10, 10, 0.95)';
     ctx.fill();
-    ctx.lineWidth = (styleType === 'minimal' ? 2.5 : 2) * exportScale;
+    ctx.lineWidth = (styleType === 'minimal' ? 2.5 : 2) * scaleRatio;
     ctx.strokeStyle = '#f59e0b';
     ctx.stroke();
 
     ctx.shadowColor = 'transparent';
-    const dotR = 3.5 * sizeMultiplier * exportScale;
-    const dotMargin = 14 * sizeMultiplier * exportScale;
+    const dotR = 3.5 * sizeMultiplier * scaleRatio;
+    const dotMargin = 14 * sizeMultiplier * scaleRatio;
     if (styleType === 'pill') {
       // Inner dot
       ctx.beginPath();
@@ -1317,7 +1346,7 @@ export async function renderCollageToCanvas(
       ctx.fillStyle = '#fde68a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(leftText, leftPillX + dotMargin + 9 * sizeMultiplier * exportScale, badgeY);
+      ctx.fillText(leftText, leftPillX + dotMargin + 9 * sizeMultiplier * scaleRatio, badgeY);
     } else {
       ctx.fillStyle = '#fde68a';
       ctx.textAlign = 'center';
@@ -1334,13 +1363,13 @@ export async function renderCollageToCanvas(
     const rightPillY = badgeY - pillH / 2;
 
     ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-    ctx.shadowBlur = 14 * exportScale;
-    ctx.shadowOffsetY = 4 * exportScale;
+    ctx.shadowBlur = 10 * scaleRatio;
+    ctx.shadowOffsetY = 3 * scaleRatio;
 
     drawRoundedRect(ctx, rightPillX, rightPillY, rightPillW, pillH, pillRadius);
     ctx.fillStyle = 'rgba(10, 10, 10, 0.95)';
     ctx.fill();
-    ctx.lineWidth = (styleType === 'minimal' ? 2.5 : 2) * exportScale;
+    ctx.lineWidth = (styleType === 'minimal' ? 2.5 : 2) * scaleRatio;
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.stroke();
 
@@ -1356,7 +1385,7 @@ export async function renderCollageToCanvas(
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(rightText, rightPillX + dotMargin + 9 * sizeMultiplier * exportScale, badgeY);
+      ctx.fillText(rightText, rightPillX + dotMargin + 9 * sizeMultiplier * scaleRatio, badgeY);
     } else {
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
@@ -1366,26 +1395,26 @@ export async function renderCollageToCanvas(
 
     // C. Optional Center VS Badge
     if (config.comparison?.showVsBadge) {
-      const vsR = 15 * exportScale;
+      const vsR = 15 * scaleRatio;
       const vsCenterX = canvasW / 2;
       const vsCenterY = badgeY;
 
       ctx.save();
       ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-      ctx.shadowBlur = 16 * exportScale;
-      ctx.shadowOffsetY = 4 * exportScale;
+      ctx.shadowBlur = 12 * scaleRatio;
+      ctx.shadowOffsetY = 3 * scaleRatio;
 
       ctx.beginPath();
       ctx.arc(vsCenterX, vsCenterY, vsR, 0, Math.PI * 2);
       ctx.fillStyle = '#f59e0b';
       ctx.fill();
-      ctx.lineWidth = 2 * exportScale;
+      ctx.lineWidth = 2 * scaleRatio;
       ctx.strokeStyle = '#ffffff';
       ctx.stroke();
 
       ctx.shadowColor = 'transparent';
       ctx.fillStyle = '#09090b';
-      ctx.font = `900 ${10 * exportScale}px Montserrat, sans-serif`;
+      ctx.font = `900 ${10 * scaleRatio}px Montserrat, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(config.comparison?.vsText || 'VS', vsCenterX, vsCenterY);
@@ -1400,7 +1429,7 @@ export async function renderCollageToCanvas(
     ctx.save();
     const sx = (sticker.x / 100) * canvasW;
     const sy = (sticker.y / 100) * canvasH;
-    const size = (sticker.size || 40) * exportScale;
+    const size = (sticker.size || 40) * scaleRatio;
 
     ctx.translate(sx, sy);
     if (sticker.rotation) {
