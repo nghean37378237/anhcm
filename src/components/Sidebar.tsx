@@ -60,6 +60,8 @@ interface SidebarProps {
   onUpdateSlot?: (index: number, updates: Partial<SlotState>) => void;
   onApplySharpen: (sharpenValue: number, all: boolean) => void;
   onUpdateLayoutSlot?: (slotIndex: number, updates: Partial<import('../types').LayoutSlot>) => void;
+  onUpdateLayoutSlots?: (slots: import('../types').LayoutSlot[], newPhotoCount?: number) => void;
+  onToggleCircleCount?: (count: number) => void;
 }
 
 type TabType = 'layout' | 'news' | 'photos' | 'canvas' | 'filters' | 'decor';
@@ -87,10 +89,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onUpdateSlot,
   onApplySharpen,
   onUpdateLayoutSlot,
+  onUpdateLayoutSlots,
+  onToggleCircleCount,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('layout');
   const [layoutFilter, setLayoutFilter] = useState<LayoutCategory>('all');
   const [applyFilterToAll, setApplyFilterToAll] = useState<boolean>(true);
+  const [activeCircleTab, setActiveCircleTab] = useState<number>(1); // 1 = Hình tròn #1 (Lớn), 2 = Hình tròn #2 (Nhỏ)
 
   // Text input state
   const [inputText, setInputText] = useState('');
@@ -770,122 +775,309 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             )}
 
-            {/* ⭐ BỘ ĐIỀU CHỈNH ẢNH TRÒN ĐIỂM NHẤN (Khi đang chọn Mẫu 4) */}
-            {currentLayout.isCircleAccent && onUpdateLayoutSlot && (
-              <div className="p-3 rounded-xl bg-neutral-900/90 border border-amber-500/40 space-y-3 shadow-md">
+            {/* ⭐ BỘ ĐIỀU CHỈNH ẢNH TRÒN ĐIỂM NHẤN (Hỗ trợ 1 hoặc 2 hình tròn với kích thước khác nhau) */}
+            {currentLayout.isCircleAccent && (
+              <div className="p-3.5 rounded-xl bg-neutral-900/90 border border-amber-500/40 space-y-3.5 shadow-md">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-neutral-900" />
                     <span>TÙY CHỈNH ẢNH TRÒN ĐIỂM NHẤN</span>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-semibold border border-amber-400/30">
-                    Ô #2
+                    {currentLayout.slots.length > 2 ? '2 Hình tròn' : '1 Hình tròn'}
                   </span>
                 </div>
 
-                {/* Vị trí nhanh */}
+                {/* Chọn số lượng hình tròn: 1 hình tròn HOẶC 2 hình tròn (kích thước khác nhau) */}
                 <div>
                   <label className="text-[11px] font-semibold text-neutral-300 block mb-1.5">
-                    Vị trí ảnh tròn
+                    Số lượng hình tròn:
                   </label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {[
-                      { label: 'Trên phải', x: 62, y: 11 },
-                      { label: 'Trên trái', x: 6, y: 11 },
-                      { label: 'Giữa phải', x: 62, y: 30 },
-                      { label: 'Giữa trái', x: 6, y: 30 },
-                      { label: 'Dưới phải', x: 62, y: 48 },
-                      { label: 'Dưới trái', x: 6, y: 48 },
-                    ].map((pos) => {
-                      const circleSlot = currentLayout.slots[1];
-                      const isCurrentPos = circleSlot && circleSlot.x === pos.x && circleSlot.y === pos.y;
-                      return (
-                        <button
-                          key={pos.label}
-                          onClick={() => {
-                            onUpdateLayoutSlot(1, { x: pos.x, y: pos.y });
-                          }}
-                          className={`py-1 px-1 text-[10px] rounded-lg border font-medium transition-all ${
-                            isCurrentPos
-                              ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
-                              : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-800'
-                          }`}
-                        >
-                          {pos.label}
-                        </button>
-                      );
-                    })}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onToggleCircleCount?.(1)}
+                      className={`py-1.5 px-2 rounded-lg border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        currentLayout.slots.length <= 2
+                          ? 'border-amber-400 bg-amber-500/20 text-amber-300 shadow-sm ring-1 ring-amber-400/30'
+                          : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-800'
+                      }`}
+                    >
+                      <span className="w-3 h-3 rounded-full border border-current inline-block shrink-0" />
+                      <span>1 Hình tròn</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onToggleCircleCount?.(2)}
+                      className={`py-1.5 px-2 rounded-lg border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        currentLayout.slots.length > 2
+                          ? 'border-amber-400 bg-amber-500/20 text-amber-300 shadow-sm ring-1 ring-amber-400/30'
+                          : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-800'
+                      }`}
+                    >
+                      <span className="flex items-center -space-x-1 shrink-0">
+                        <span className="w-3 h-3 rounded-full border border-current inline-block bg-amber-400/30" />
+                        <span className="w-2.5 h-2.5 rounded-full border border-current inline-block bg-amber-400/50" />
+                      </span>
+                      <span>2 Hình tròn (Lớn + Nhỏ)</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Kích thước ảnh tròn */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-semibold text-neutral-300">
-                      Kích thước ảnh tròn
+                {/* Bố cục nhanh khi bật 2 hình tròn */}
+                {currentLayout.slots.length > 2 && onUpdateLayoutSlots && (
+                  <div>
+                    <label className="text-[11px] font-semibold text-neutral-300 block mb-1.5">
+                      Bố cục 2 hình tròn mẫu:
                     </label>
-                    <span className="text-[10px] text-amber-400 font-semibold">
-                      {Math.round(currentLayout.slots[1]?.w || 32)}%
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {[
-                      { label: 'Nhỏ (26%)', w: 26, h: 19.5 },
-                      { label: 'Vừa (32%)', w: 32, h: 24 },
-                      { label: 'Lớn (38%)', w: 38, h: 28.5 },
-                    ].map((sz) => {
-                      const circleSlot = currentLayout.slots[1];
-                      const isCurrentSize = circleSlot && circleSlot.w === sz.w;
-                      return (
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {[
+                        {
+                          label: 'Phải so le (Lớn trên, nhỏ dưới)',
+                          slots: [
+                            currentLayout.slots[0],
+                            { ...currentLayout.slots[1], x: 62, y: 8, w: 33, h: 24.75, label: 'Ảnh tròn #1 (Lớn)' },
+                            { ...currentLayout.slots[2], x: 68, y: 31, w: 26, h: 19.5, label: 'Ảnh tròn #2 (Nhỏ)' },
+                          ],
+                        },
+                        {
+                          label: 'Trái & Phải (Đối xứng 2 bên)',
+                          slots: [
+                            currentLayout.slots[0],
+                            { ...currentLayout.slots[1], x: 6, y: 10, w: 31, h: 23.25, label: 'Ảnh tròn #1 (Lớn)' },
+                            { ...currentLayout.slots[2], x: 65, y: 10, w: 26, h: 19.5, label: 'Ảnh tròn #2 (Nhỏ)' },
+                          ],
+                        },
+                        {
+                          label: 'Hai hình tròn bên trái',
+                          slots: [
+                            currentLayout.slots[0],
+                            { ...currentLayout.slots[1], x: 6, y: 8, w: 33, h: 24.75, label: 'Ảnh tròn #1 (Lớn)' },
+                            { ...currentLayout.slots[2], x: 10, y: 31, w: 26, h: 19.5, label: 'Ảnh tròn #2 (Nhỏ)' },
+                          ],
+                        },
+                        {
+                          label: 'Lồng nhẹ góc phải (Huy hiệu đôi)',
+                          slots: [
+                            currentLayout.slots[0],
+                            { ...currentLayout.slots[1], x: 56, y: 10, w: 33, h: 24.75, label: 'Ảnh tròn #1 (Lớn)' },
+                            { ...currentLayout.slots[2], x: 72, y: 22, w: 24, h: 18, label: 'Ảnh tròn #2 (Nhỏ)' },
+                          ],
+                        },
+                      ].map((preset) => (
                         <button
-                          key={sz.label}
-                          onClick={() => {
-                            onUpdateLayoutSlot(1, { w: sz.w, h: sz.h });
-                          }}
-                          className={`py-1 px-1 text-[10px] rounded-lg border font-medium transition-all ${
-                            isCurrentSize
-                              ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
-                              : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-800'
-                          }`}
+                          key={preset.label}
+                          type="button"
+                          onClick={() => onUpdateLayoutSlots(preset.slots, 3)}
+                          className="py-1 px-1.5 text-[10px] rounded-lg border border-neutral-800 bg-neutral-950 text-neutral-300 hover:text-amber-300 hover:bg-neutral-800 transition-colors text-left truncate"
                         >
-                          {sz.label}
+                          {preset.label}
                         </button>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Độ dày viền trắng */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-[11px] font-semibold text-neutral-300">
-                      Độ dày viền tròn
-                    </label>
-                    <span className="text-[10px] text-neutral-400">
-                      {(currentLayout.slots[1]?.borderWidth ?? 4)}px
-                    </span>
+                {/* Tab chọn hình tròn để tùy chỉnh chi tiết */}
+                {currentLayout.slots.length > 2 && (
+                  <div className="flex border-b border-neutral-800 pb-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setActiveCircleTab(1)}
+                      className={`flex-1 py-1 text-[11px] font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                        activeCircleTab === 1
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40'
+                          : 'text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      <span>Hình tròn #1 (Lớn)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveCircleTab(2)}
+                      className={`flex-1 py-1 text-[11px] font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
+                        activeCircleTab === 2
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40'
+                          : 'text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-amber-300" />
+                      <span>Hình tròn #2 (Nhỏ)</span>
+                    </button>
                   </div>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {[0, 2, 4, 6].map((bw) => {
-                      const isCurrentBw = (currentLayout.slots[1]?.borderWidth ?? 4) === bw;
-                      return (
-                        <button
-                          key={bw}
-                          onClick={() => {
-                            onUpdateLayoutSlot(1, { borderWidth: bw });
-                          }}
-                          className={`py-1 px-1 text-[10px] rounded-lg border font-medium transition-all ${
-                            isCurrentBw
-                              ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
-                              : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-800'
-                          }`}
-                        >
-                          {bw === 0 ? 'Không viền' : `${bw}px`}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                )}
+
+                {/* Tùy chỉnh chi tiết cho hình tròn đang chọn (slot 1 hoặc slot 2) */}
+                {(() => {
+                  const targetSlotIdx = currentLayout.slots.length > 2 ? activeCircleTab : 1;
+                  const currentCircleSlot = currentLayout.slots[targetSlotIdx] || currentLayout.slots[1];
+                  if (!currentCircleSlot || !onUpdateLayoutSlot) return null;
+
+                  return (
+                    <div className="space-y-3 pt-1">
+                      {/* Vị trí nhanh */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-[11px] font-semibold text-neutral-300">
+                            Vị trí hình tròn {currentLayout.slots.length > 2 ? `#${targetSlotIdx}` : ''}
+                          </label>
+                          <span className="text-[10px] text-amber-400 font-mono">
+                            X: {currentCircleSlot.x}% • Y: {currentCircleSlot.y}%
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            { label: 'Trên phải', x: 62, y: targetSlotIdx === 2 ? 31 : 8 },
+                            { label: 'Trên trái', x: targetSlotIdx === 2 ? 10 : 6, y: targetSlotIdx === 2 ? 31 : 8 },
+                            { label: 'Giữa phải', x: 62, y: 30 },
+                            { label: 'Giữa trái', x: 6, y: 30 },
+                            { label: 'Dưới phải', x: 62, y: 46 },
+                            { label: 'Dưới trái', x: 6, y: 46 },
+                          ].map((pos) => {
+                            const isCurrentPos =
+                              currentCircleSlot.x === pos.x && currentCircleSlot.y === pos.y;
+                            return (
+                              <button
+                                key={pos.label}
+                                type="button"
+                                onClick={() => {
+                                  onUpdateLayoutSlot(targetSlotIdx, { x: pos.x, y: pos.y });
+                                }}
+                                className={`py-1 px-1 text-[10px] rounded-lg border font-medium transition-all cursor-pointer ${
+                                  isCurrentPos
+                                    ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                    : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-800'
+                                }`}
+                              >
+                                {pos.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Kích thước hình tròn */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] font-semibold text-neutral-300">
+                            Kích thước hình tròn {currentLayout.slots.length > 2 ? `#${targetSlotIdx}` : ''}
+                          </label>
+                          <span className="text-[10px] text-amber-400 font-bold font-mono">
+                            {Math.round(currentCircleSlot.w || (targetSlotIdx === 2 ? 26 : 33))}%
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-[10px] text-neutral-500 font-mono">18%</span>
+                          <input
+                            type="range"
+                            min="18"
+                            max="50"
+                            step="1"
+                            value={Math.round(currentCircleSlot.w || (targetSlotIdx === 2 ? 26 : 33))}
+                            onChange={(e) => {
+                              const newW = parseInt(e.target.value, 10);
+                              onUpdateLayoutSlot(targetSlotIdx, {
+                                w: newW,
+                                h: Number((newW * 0.75).toFixed(2)),
+                              });
+                            }}
+                            className="flex-1 accent-amber-400 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+                          />
+                          <span className="text-[10px] text-neutral-500 font-mono">50%</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            { label: 'Nhỏ (24%)', w: 24, h: 18 },
+                            { label: 'Vừa (32%)', w: 32, h: 24 },
+                            { label: 'Lớn (38%)', w: 38, h: 28.5 },
+                          ].map((sz) => {
+                            const isCurrentSize = Math.abs(currentCircleSlot.w - sz.w) < 1.5;
+                            return (
+                              <button
+                                key={sz.label}
+                                type="button"
+                                onClick={() => {
+                                  onUpdateLayoutSlot(targetSlotIdx, { w: sz.w, h: sz.h });
+                                }}
+                                className={`py-1 px-1 text-[10px] rounded-lg border font-medium transition-all cursor-pointer ${
+                                  isCurrentSize
+                                    ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                    : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-800'
+                                }`}
+                              >
+                                {sz.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Độ dày viền trắng */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] font-semibold text-neutral-300">
+                            Độ dày viền tròn
+                          </label>
+                          <span className="text-[10px] text-neutral-400 font-mono">
+                            {(currentCircleSlot.borderWidth ?? 4)}px
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {[0, 2, 4, 6].map((bw) => {
+                            const isCurrentBw = (currentCircleSlot.borderWidth ?? 4) === bw;
+                            return (
+                              <button
+                                key={bw}
+                                type="button"
+                                onClick={() => {
+                                  onUpdateLayoutSlot(targetSlotIdx, { borderWidth: bw });
+                                }}
+                                className={`py-1 px-1 text-[10px] rounded-lg border font-medium transition-all cursor-pointer ${
+                                  isCurrentBw
+                                    ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                    : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-white hover:bg-neutral-800'
+                                }`}
+                              >
+                                {bw === 0 ? 'Không viền' : `${bw}px`}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Màu viền tròn */}
+                      <div>
+                        <label className="text-[11px] font-semibold text-neutral-300 block mb-1">
+                          Màu viền tròn
+                        </label>
+                        <div className="flex items-center gap-2">
+                          {[
+                            { color: '#FFFFFF', label: 'Trắng tinh' },
+                            { color: '#FACC15', label: 'Vàng tươi' },
+                            { color: '#F5D061', label: 'Vàng kim' },
+                            { color: '#EF4444', label: 'Đỏ tươi' },
+                            { color: '#000000', label: 'Đen' },
+                          ].map((c) => {
+                            const isSelected = (currentCircleSlot.borderColor || '#FFFFFF').toLowerCase() === c.color.toLowerCase();
+                            return (
+                              <button
+                                key={c.color}
+                                type="button"
+                                onClick={() => onUpdateLayoutSlot(targetSlotIdx, { borderColor: c.color })}
+                                className={`w-6 h-6 rounded-full border-2 transition-transform cursor-pointer shadow ${
+                                  isSelected ? 'border-amber-400 scale-125' : 'border-neutral-600 hover:scale-110'
+                                }`}
+                                style={{ backgroundColor: c.color }}
+                                title={c.label}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -2032,6 +2224,67 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         />
                         <div className="w-8 h-4 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500"></div>
                       </label>
+                    </div>
+
+                    {/* Khoảng cách giữa các dòng chữ (Line Gap) */}
+                    <div className="pt-2.5 mt-2 border-t border-neutral-800 space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[11px] font-medium text-neutral-300">
+                          Khoảng cách các dòng chữ:
+                        </span>
+                        <span className="text-[10px] text-amber-400 font-mono font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                          {config.newsPoster.headlineLineGap ?? 2}px {((config.newsPoster.headlineLineGap ?? 2) === 2) ? '(Chuẩn mẫu)' : ''}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-neutral-500 font-mono">0px</span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="24"
+                          step="1"
+                          value={config.newsPoster.headlineLineGap ?? 2}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                headlineLineGap: parseInt(e.target.value, 10),
+                              },
+                            })
+                          }
+                          className="flex-1 accent-amber-400 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+                        />
+                        <span className="text-[10px] text-neutral-500 font-mono">24px</span>
+                      </div>
+                      <div className="flex gap-1.5">
+                        {[
+                          { label: 'Sát nhau (0px)', val: 0 },
+                          { label: 'Chuẩn mẫu (2px)', val: 2 },
+                          { label: 'Vừa (4px)', val: 4 },
+                          { label: 'Rộng (8px)', val: 8 },
+                          { label: 'Thoáng (12px)', val: 12 },
+                        ].map((opt) => (
+                          <button
+                            key={opt.val}
+                            type="button"
+                            onClick={() =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  headlineLineGap: opt.val,
+                                },
+                              })
+                            }
+                            className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                              (config.newsPoster?.headlineLineGap ?? 2) === opt.val
+                                ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 

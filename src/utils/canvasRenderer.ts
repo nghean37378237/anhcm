@@ -68,6 +68,50 @@ export function getSafeCanvasFont(
   return `${italicStr}${safeWeight} ${Math.round(sizePx)}px ${formattedFamily}`;
 }
 
+// Vẽ chữ với khoảng cách giữa các ký tự (letter-spacing) chính xác tuyệt đối trên mọi trình duyệt
+export function drawSpacedText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  centerX: number,
+  baselineY: number,
+  letterSpacingPx: number,
+  isStroke: boolean
+) {
+  if (!text) return;
+  if (letterSpacingPx <= 0.1) {
+    if (isStroke) ctx.strokeText(text, centerX, baselineY);
+    else ctx.fillText(text, centerX, baselineY);
+    return;
+  }
+
+  // Thử tính năng canvas letterSpacing gốc nếu trình duyệt hỗ trợ
+  if ('letterSpacing' in ctx) {
+    try {
+      (ctx as any).letterSpacing = `${letterSpacingPx}px`;
+      if (isStroke) ctx.strokeText(text, centerX, baselineY);
+      else ctx.fillText(text, centerX, baselineY);
+      (ctx as any).letterSpacing = '0px';
+      return;
+    } catch {
+      // Fallback xuống vẽ từng ký tự thủ công nếu lỗi
+    }
+  }
+
+  // Fallback vẽ từng ký tự chuẩn xác 100%
+  const chars = Array.from(text);
+  const widths = chars.map((c) => ctx.measureText(c).width);
+  const totalW = widths.reduce((sum, w) => sum + w, 0) + (chars.length - 1) * letterSpacingPx;
+  let startX = centerX - totalW / 2;
+  const prevAlign = ctx.textAlign;
+  ctx.textAlign = 'left';
+  for (let i = 0; i < chars.length; i++) {
+    if (isStroke) ctx.strokeText(chars[i], startX, baselineY);
+    else ctx.fillText(chars[i], startX, baselineY);
+    startX += widths[i] + letterSpacingPx;
+  }
+  ctx.textAlign = prevAlign;
+}
+
 // 3x3 Convolution Unsharp Mask for image sharpening
 function applySharpenKernel(
   ctx: CanvasRenderingContext2D,
@@ -540,10 +584,16 @@ export async function renderCollageToCanvas(
         ctx.arc(centerX, centerY, circleRadius, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = isDark ? '#71717a' : '#94a3b8';
-        ctx.font = `bold ${13 * exportScale}px Montserrat, sans-serif`;
+        ctx.font = `bold ${12 * exportScale}px Montserrat, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('+ Thêm ảnh tròn', centerX, centerY);
+        const circleLabel =
+          layout.slots.length > 2
+            ? i === 1
+              ? '+ Ảnh tròn #1 (Lớn)'
+              : '+ Ảnh tròn #2 (Nhỏ)'
+            : '+ Thêm ảnh tròn';
+        ctx.fillText(circleLabel, centerX, centerY);
       } else {
         ctx.fillStyle = isDark ? '#18181b' : '#f1f5f9';
         ctx.fillRect(slotX, slotY, slotW, slotH);
@@ -862,27 +912,21 @@ export async function renderCollageToCanvas(
         const outlineLineWidth = Math.max(3 * scaleRatio, currentFontSize * 0.075);
         ctx.font = getSafeCanvasFont(headlineFontFamily, currentFontSize, '900');
 
-        if ('letterSpacing' in ctx) {
-          (ctx as any).letterSpacing = `${currentFontSize * (idx === 0 ? 0.05 : 0.14)}px`;
-        }
-
+        const letterSpacingPx = currentFontSize * (idx === 0 ? 0.05 : 0.14);
         const upperText = lineText.toUpperCase();
+
         if (hasOutline) {
           ctx.save();
           ctx.strokeStyle = '#000000';
           ctx.lineWidth = outlineLineWidth;
           ctx.lineJoin = 'round';
-          ctx.strokeText(upperText, canvasW / 2, currentBaselineY);
+          drawSpacedText(ctx, upperText, canvasW / 2, currentBaselineY, letterSpacingPx, true);
           ctx.restore();
         }
 
         ctx.fillStyle = np.headlineColor || '#ffffff';
-        ctx.fillText(upperText, canvasW / 2, currentBaselineY);
+        drawSpacedText(ctx, upperText, canvasW / 2, currentBaselineY, letterSpacingPx, false);
       });
-
-      if ('letterSpacing' in ctx) {
-        (ctx as any).letterSpacing = '0px';
-      }
 
       // Draw White Divider between Big Headline and Small Subtitle (dấu gạch trắng giữa 2 chữ)
       if (hasTitleDivider && hasSubtitle) {
@@ -905,10 +949,7 @@ export async function renderCollageToCanvas(
       // Draw Subtitle (e.g. 'LAST ROSIE THE RIVETER OF WWII')
       if (hasSubtitle && np.subtitle) {
         ctx.font = getSafeCanvasFont(subtitleFontFamily, subtitleFontSize, '600');
-        if ('letterSpacing' in ctx) {
-          (ctx as any).letterSpacing = `${subtitleFontSize * 0.16}px`;
-        }
-
+        const letterSpacingPx = subtitleFontSize * 0.16;
         ctx.fillStyle = np.subtitleColor || '#ffffff';
         const subUpper = np.subtitle.toUpperCase();
 
@@ -916,14 +957,10 @@ export async function renderCollageToCanvas(
           ctx.save();
           ctx.strokeStyle = '#000000';
           ctx.lineWidth = Math.max(2 * scaleRatio, subtitleFontSize * 0.08);
-          ctx.strokeText(subUpper, canvasW / 2, subBaselineY);
+          drawSpacedText(ctx, subUpper, canvasW / 2, subBaselineY, letterSpacingPx, true);
           ctx.restore();
         }
-        ctx.fillText(subUpper, canvasW / 2, subBaselineY);
-
-        if ('letterSpacing' in ctx) {
-          (ctx as any).letterSpacing = '0px';
-        }
+        drawSpacedText(ctx, subUpper, canvasW / 2, subBaselineY, letterSpacingPx, false);
 
         // Subtitle underline
         if (hasSubUnderline) {
@@ -1082,23 +1119,32 @@ export async function renderCollageToCanvas(
       ctx.shadowBlur = 8 * scaleRatio;
       ctx.shadowOffsetY = 2 * scaleRatio;
 
-      // Word wrapping logic
-      const maxTextW = canvasW * 0.92;
-      const words = np.headline.split(/\s+/);
+      // Word wrapping logic - chuẩn xác theo kích thước khung xem trước
+      // Khung xem trước có padding inset-x-3.5 (28px) và max-w-[94%]
+      const maxTextW = Math.max(canvasW * 0.82, (canvasW - 28 * scaleRatio) * 0.94);
+      const rawParagraphs = np.headline ? np.headline.split('\n') : [];
       const lines: string[] = [];
-      let currentLine = '';
 
-      for (const word of words) {
-        const testLine = currentLine ? `${currentLine} ${word}` : word;
-        const metrics = ctx.measureText(testLine);
-        if (metrics.width > maxTextW && currentLine) {
-          lines.push(currentLine);
-          currentLine = word;
-        } else {
-          currentLine = testLine;
+      for (const para of rawParagraphs) {
+        const words = para.trim().split(/\s+/).filter(Boolean);
+        if (words.length === 0) continue;
+        let currentLine = '';
+
+        for (const word of words) {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          const metrics = ctx.measureText(isBoldStyle ? testLine.toUpperCase() : testLine);
+          if (metrics.width > maxTextW && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
         }
+        if (currentLine) lines.push(currentLine);
       }
-      if (currentLine) lines.push(currentLine);
+      if (lines.length === 0 && np.headline?.trim()) {
+        lines.push(np.headline.trim());
+      }
 
       // Parse highlight phrases
       const highlightPhrases = (np.highlightWords || '')
@@ -1106,7 +1152,9 @@ export async function renderCollageToCanvas(
         .map((w) => w.trim().toLowerCase())
         .filter(Boolean);
 
+      const lineGapPx = (np.headlineLineGap ?? 2) * scaleRatio;
       const lineHeight = baseFontSize * (isBoldStyle ? 1.15 : 1.25);
+      const lineStep = lineHeight + lineGapPx;
       const dividerPos = np.dividerPosition ?? 'top';
       const hasTopDivider = np.showDiamondDivider && (dividerPos === 'top' || dividerPos === 'both');
       const hasBottomDivider = np.showDiamondDivider && (dividerPos === 'bottom' || dividerPos === 'both');
@@ -1115,7 +1163,7 @@ export async function renderCollageToCanvas(
       const bottomDividerSpace = hasBottomDivider ? 20 * scaleRatio : 0;
 
       const bottomPad = 14 * scaleRatio;
-      const textBlockH = (lines.length - 1) * lineHeight;
+      const textBlockH = (lines.length - 1) * lineStep;
 
       // firstLineY: Baseline of first line of headline
       const firstLineY = canvasH - bottomPad - bottomDividerSpace - textBlockH;
@@ -1164,7 +1212,7 @@ export async function renderCollageToCanvas(
 
       // Render line by line, coloring highlight words
       lines.forEach((lineStr, lineIdx) => {
-        const lineY = firstLineY + lineIdx * lineHeight;
+        const lineY = firstLineY + lineIdx * lineStep;
 
         if (highlightPhrases.length === 0) {
           const textToDraw = isBoldStyle ? lineStr.toUpperCase() : lineStr;
@@ -1179,42 +1227,62 @@ export async function renderCollageToCanvas(
           ctx.fillStyle = np.headlineColor || '#ffffff';
           ctx.fillText(textToDraw, canvasW / 2, lineY);
         } else {
-          // Break line into words to draw each word with matching color
-          const lineWords = lineStr.split(' ');
-          const fullLineWidth = ctx.measureText(isBoldStyle ? lineStr.toUpperCase() : lineStr).width;
-          let currentWordX = canvasW / 2 - fullLineWidth / 2;
+          // Break line into words, then combine consecutive words of the same color into segments
+          const lineWords = lineStr.split(/\s+/).filter(Boolean);
+          interface LineSegment {
+            text: string;
+            color: string;
+          }
+          const segments: LineSegment[] = [];
 
           lineWords.forEach((word) => {
             const cleanWord = word.replace(/[^a-zA-Z0-9À-ỹ]/g, '').toLowerCase();
-            const isHighlighted = highlightPhrases.some(
+            const matchingHp = highlightPhrases.find(
               (hp) => hp === cleanWord || hp.includes(cleanWord) || cleanWord.includes(hp)
             );
+            const isHighlighted = !!matchingHp;
+            const wordColor = isHighlighted
+              ? (np.wordColorMap && matchingHp && (np.wordColorMap[matchingHp] || np.wordColorMap[cleanWord])) ||
+                (np.wordColorMap && np.wordColorMap[cleanWord]) ||
+                np.highlightColor ||
+                '#facc15'
+              : np.headlineColor || '#ffffff';
 
-            const displayWord = (isBoldStyle ? word.toUpperCase() : word) + ' ';
+            const displayWord = isBoldStyle ? word.toUpperCase() : word;
+            if (segments.length > 0 && segments[segments.length - 1].color === wordColor) {
+              segments[segments.length - 1].text += ' ' + displayWord;
+            } else {
+              segments.push({ text: displayWord, color: wordColor });
+            }
+          });
 
+          // Measure widths with proper single spacing between segments
+          const segmentWidths = segments.map((seg, sIdx) => {
+            const isLast = sIdx === segments.length - 1;
+            return ctx.measureText(seg.text + (isLast ? '' : ' ')).width;
+          });
+          const totalLineWidth = segmentWidths.reduce((sum, w) => sum + w, 0);
+          let currentSegmentX = canvasW / 2 - totalLineWidth / 2;
+
+          segments.forEach((seg, sIdx) => {
+            const isLast = sIdx === segments.length - 1;
+            const textToDraw = seg.text + (isLast ? '' : ' ');
             if (hasOutline) {
               ctx.save();
               ctx.strokeStyle = '#000000';
               ctx.lineWidth = outlineLineWidth;
               ctx.lineJoin = 'round';
-              ctx.strokeText(displayWord, currentWordX, lineY);
+              ctx.textAlign = 'left';
+              ctx.strokeText(textToDraw, currentSegmentX, lineY);
               ctx.restore();
             }
 
-            const matchingHp = highlightPhrases.find(
-              (hp) => hp === cleanWord || hp.includes(cleanWord) || cleanWord.includes(hp)
-            );
-            const wordColor =
-              (np.wordColorMap && matchingHp && (np.wordColorMap[matchingHp] || np.wordColorMap[cleanWord])) ||
-              np.highlightColor ||
-              '#facc15';
-
-            ctx.fillStyle = isHighlighted ? wordColor : np.headlineColor || '#ffffff';
-
+            ctx.fillStyle = seg.color;
             ctx.textAlign = 'left';
-            ctx.fillText(displayWord, currentWordX, lineY);
-            currentWordX += ctx.measureText(displayWord).width;
+            ctx.fillText(textToDraw, currentSegmentX, lineY);
+            currentSegmentX += segmentWidths[sIdx];
           });
+          ctx.textAlign = 'center';
         }
       });
 

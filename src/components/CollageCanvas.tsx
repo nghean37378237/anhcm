@@ -46,6 +46,7 @@ interface CollageCanvasProps {
   onRemoveText: (id: string) => void;
   onRemoveSticker: (id: string) => void;
   onContainerResize?: (width: number, height: number) => void;
+  onToggleCircleCount?: (count: number) => void;
 }
 
 export const CollageCanvas: React.FC<CollageCanvasProps> = ({
@@ -64,6 +65,7 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
   onRemoveText,
   onRemoveSticker,
   onContainerResize,
+  onToggleCircleCount,
 }) => {
   const [draggedSlotIdx, setDraggedSlotIdx] = useState<number | null>(null);
   const [isPanning, setIsPanning] = useState(false);
@@ -276,7 +278,8 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
     style: 'bold-headline' | 'editorial-serif',
     highlightColor: string,
     headlineColor: string,
-    wordColorMap?: Record<string, string>
+    wordColorMap?: Record<string, string>,
+    headlineLineGap: number = 2
   ) => {
     if (!headline) return null;
 
@@ -285,75 +288,97 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
       .map((w) => w.trim().toLowerCase())
       .filter(Boolean);
 
-    if (highlights.length === 0) {
+    const renderLineContent = (lineText: string) => {
+      if (highlights.length === 0) {
+        return (
+          <span
+            style={{ color: headlineColor || '#ffffff' }}
+            className={
+              style === 'bold-headline'
+                ? 'font-black tracking-tight uppercase'
+                : 'font-serif italic font-bold'
+            }
+          >
+            {lineText}
+          </span>
+        );
+      }
+
+      // Split words while preserving punctuation
+      const words = lineText.split(/(\s+)/);
+
       return (
-        <span
-          style={{ color: headlineColor || '#ffffff' }}
-          className={
-            style === 'bold-headline'
-              ? 'font-black tracking-tight uppercase'
-              : 'font-serif italic font-bold'
-          }
-        >
-          {headline}
-        </span>
-      );
-    }
+        <>
+          {words.map((chunk, idx) => {
+            if (/^\s+$/.test(chunk)) {
+              return <React.Fragment key={idx}>{chunk}</React.Fragment>;
+            }
 
-    // Split words while preserving punctuation
-    const words = headline.split(/(\s+)/);
+            const cleanChunk = chunk.replace(/[^a-zA-Z0-9À-ỹ]/g, '').toLowerCase();
+            const matchingHp = highlights.find(
+              (hp) => hp === cleanChunk || hp.includes(cleanChunk) || cleanChunk.includes(hp)
+            );
+            const isHighlighted = !!matchingHp;
 
-    return (
-      <>
-        {words.map((chunk, idx) => {
-          if (/^\s+$/.test(chunk)) {
-            return <React.Fragment key={idx}>{chunk}</React.Fragment>;
-          }
+            if (isHighlighted) {
+              const specificColor =
+                (wordColorMap && matchingHp && (wordColorMap[matchingHp] || wordColorMap[cleanChunk])) ||
+                (wordColorMap && wordColorMap[cleanChunk]) ||
+                highlightColor ||
+                '#facc15';
 
-          const cleanChunk = chunk.replace(/[^a-zA-Z0-9À-ỹ]/g, '').toLowerCase();
-          const matchingHp = highlights.find(
-            (hp) => hp === cleanChunk || hp.includes(cleanChunk) || cleanChunk.includes(hp)
-          );
-          const isHighlighted = !!matchingHp;
-
-          if (isHighlighted) {
-            const specificColor =
-              (wordColorMap && matchingHp && (wordColorMap[matchingHp] || wordColorMap[cleanChunk])) ||
-              (wordColorMap && wordColorMap[cleanChunk]) ||
-              highlightColor ||
-              '#facc15';
+              return (
+                <span
+                  key={idx}
+                  style={{ color: specificColor }}
+                  className={
+                    style === 'editorial-serif'
+                      ? 'italic font-serif font-bold'
+                      : 'font-black tracking-tight uppercase'
+                  }
+                >
+                  {chunk}
+                </span>
+              );
+            }
 
             return (
               <span
                 key={idx}
-                style={{ color: specificColor }}
+                style={{ color: headlineColor || '#ffffff' }}
                 className={
-                  style === 'editorial-serif'
-                    ? 'italic font-serif font-bold'
-                    : 'font-black tracking-tight uppercase'
+                  style === 'bold-headline'
+                    ? 'font-extrabold tracking-tight uppercase'
+                    : 'font-serif'
                 }
               >
                 {chunk}
               </span>
             );
-          }
+          })}
+        </>
+      );
+    };
 
-          return (
-            <span
-              key={idx}
-              style={{ color: headlineColor || '#ffffff' }}
-              className={
-                style === 'bold-headline'
-                  ? 'font-extrabold tracking-tight uppercase'
-                  : 'font-serif'
-              }
+    if (headline.includes('\n')) {
+      const paras = headline.split('\n');
+      return (
+        <>
+          {paras.map((para, pIdx) => (
+            <div
+              key={pIdx}
+              style={{
+                marginTop: pIdx === 0 ? 0 : `${headlineLineGap}px`,
+              }}
             >
-              {chunk}
-            </span>
-          );
-        })}
-      </>
-    );
+              {renderLineContent(para)}
+            </div>
+          ))}
+        </>
+      );
+    }
+
+    return renderLineContent(headline);
   };
 
   // Helper to render tribute memorial symbol (white awareness ribbon, candle, etc.)
@@ -522,7 +547,7 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
 
         {/* Slot selector for 1 photo + circular accent layout */}
         {layout.isCircleAccent && (
-          <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900/95 backdrop-blur-md border border-amber-500/40 shadow-xl text-xs">
+          <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-900/95 backdrop-blur-md border border-amber-500/40 shadow-xl text-xs whitespace-nowrap">
             <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-amber-400" />
               Chọn ảnh:
@@ -532,28 +557,61 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                 e.stopPropagation();
                 onSelectSlot(0);
               }}
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all ${
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all cursor-pointer ${
                 selectedSlotIndex === 0
                   ? 'bg-amber-500 text-neutral-950 font-bold shadow'
                   : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
               }`}
             >
-              Ảnh Nền (Toàn Khung)
+              Ảnh Nền
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onSelectSlot(1);
               }}
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
                 selectedSlotIndex === 1
                   ? 'bg-amber-500 text-neutral-950 font-bold shadow'
                   : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
               }`}
             >
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-neutral-950 inline-block" />
-              Ảnh Tròn Điểm Nhấn
+              {layout.slots.length > 2 ? 'Ảnh Tròn 1 (Lớn)' : 'Ảnh Tròn Điểm Nhấn'}
             </button>
+            {layout.slots.length > 2 && layout.slots[2]?.shape === 'circle' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectSlot(2);
+                }}
+                className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all flex items-center gap-1.5 cursor-pointer ${
+                  selectedSlotIndex === 2
+                    ? 'bg-amber-500 text-neutral-950 font-bold shadow'
+                    : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-300 border border-neutral-950 inline-block" />
+                Ảnh Tròn 2 (Nhỏ)
+              </button>
+            )}
+            {onToggleCircleCount && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleCircleCount(layout.slots.length > 2 ? 1 : 2);
+                }}
+                className={`ml-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                  layout.slots.length > 2
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-400/40 hover:bg-amber-500/30'
+                    : 'bg-neutral-800 text-neutral-300 border-neutral-700 hover:text-amber-300 hover:border-amber-400/60'
+                }`}
+                title={layout.slots.length > 2 ? 'Chuyển về 1 hình tròn' : 'Thêm hình tròn thứ 2 (kích thước khác nhau)'}
+              >
+                {layout.slots.length > 2 ? '✓ 2 Hình tròn' : '+ Thêm hình tròn thứ 2'}
+              </button>
+            )}
           </div>
         )}
 
@@ -843,6 +901,10 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                           : layout.isCircleAccent
                           ? index === 0
                             ? 'Thêm ảnh nền'
+                            : layout.slots.length > 2
+                            ? index === 1
+                              ? 'Thêm ảnh tròn #1 (Lớn)'
+                              : 'Thêm ảnh tròn #2 (Nhỏ)'
                             : 'Thêm ảnh tròn'
                           : layout.isComparison
                           ? index === 0
@@ -1168,7 +1230,8 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                         config.newsPoster.style,
                         config.newsPoster.highlightColor,
                         config.newsPoster.headlineColor,
-                        config.newsPoster.wordColorMap
+                        config.newsPoster.wordColorMap,
+                        config.newsPoster.headlineLineGap ?? 2
                       )}
                     </div>
 

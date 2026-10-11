@@ -481,6 +481,128 @@ export default function App() {
     });
   };
 
+  const handleUpdateLayoutSlots = (
+    newSlots: import('./types').LayoutSlot[],
+    newPhotoCount?: number
+  ) => {
+    setCurrentLayout((prev) => ({
+      ...prev,
+      photoCount: newPhotoCount ?? newSlots.length,
+      slots: newSlots,
+    }));
+    setSlots((prev) => {
+      if (prev.length >= newSlots.length) return prev;
+      const next = [...prev];
+      while (next.length < newSlots.length) {
+        next.push({
+          imageSrc: null,
+          scale: 1,
+          offsetX: 0,
+          offsetY: 0,
+          rotation: 0,
+          flipH: false,
+          flipV: false,
+          filter: activeFilter,
+          sharpen: 0,
+        });
+      }
+      return next;
+    });
+  };
+
+  const handleToggleCircleCount = (targetCount: number) => {
+    setCurrentLayout((prev) => {
+      if (!prev.isCircleAccent) return prev;
+      if (targetCount === 1) {
+        // Keep slot 0 and slot 1
+        const newSlots = prev.slots.slice(0, 2).map((s, idx) => ({
+          ...s,
+          label: idx === 0 ? 'Ảnh nền toàn khung' : 'Ảnh tròn điểm nhấn',
+        }));
+        return {
+          ...prev,
+          name: 'Mẫu 3:4 Báo chí (1 Ảnh + 1 Ảnh Tròn Điểm Nhấn)',
+          photoCount: 2,
+          slots: newSlots,
+        };
+      } else {
+        // Target 2 circles
+        const circleSlots = prev.slots.filter((s) => s.shape === 'circle');
+        if (circleSlots.length >= 2) return prev;
+
+        const slot0 = prev.slots[0] || {
+          id: 0,
+          x: 0,
+          y: 0,
+          w: 100,
+          h: 100,
+          zIndex: 1,
+          label: 'Ảnh nền toàn khung',
+        };
+        const slot1 = prev.slots[1] || {
+          id: 1,
+          x: 62,
+          y: 8,
+          w: 33,
+          h: 24.75,
+          zIndex: 10,
+          shape: 'circle',
+          borderWidth: 4,
+          borderColor: '#FFFFFF',
+          shadow: true,
+          label: 'Ảnh tròn #1 (Lớn)',
+        };
+        const adjustedSlot1: import('./types').LayoutSlot = {
+          ...slot1,
+          shape: 'circle',
+          w: slot1.w || 33,
+          h: (slot1.w || 33) * 0.75,
+          label: 'Ảnh tròn #1 (Lớn)',
+        };
+        const slot2: import('./types').LayoutSlot = {
+          id: 2,
+          x: 68,
+          y: 31,
+          w: 26,
+          h: 19.5, // Kích thước khác nhau 1 tí (26% so với 33%)
+          zIndex: 11,
+          shape: 'circle',
+          borderWidth: 3.5,
+          borderColor: '#FFFFFF',
+          shadow: true,
+          label: 'Ảnh tròn #2 (Nhỏ)',
+        };
+        return {
+          ...prev,
+          name: 'Mẫu 3:4 Báo chí (1 Ảnh Nền + 2 Ảnh Tròn Điểm Nhấn)',
+          photoCount: 3,
+          slots: [slot0, adjustedSlot1, slot2],
+        };
+      }
+    });
+
+    if (targetCount >= 2) {
+      setSlots((prev) => {
+        if (prev.length >= targetCount + 1) return prev;
+        const next = [...prev];
+        while (next.length < targetCount + 1) {
+          next.push({
+            imageSrc: null,
+            scale: 1,
+            offsetX: 0,
+            offsetY: 0,
+            rotation: 0,
+            flipH: false,
+            flipV: false,
+            filter: activeFilter,
+            sharpen: 0,
+          });
+        }
+        return next;
+      });
+    }
+  };
+
   const activePhotosCount = slots.filter((s) => !!s.imageSrc).length;
 
   return (
@@ -534,6 +656,8 @@ export default function App() {
             onUpdateSlot={handleUpdateSlot}
             onApplySharpen={handleApplySharpen}
             onUpdateLayoutSlot={handleUpdateLayoutSlot}
+            onUpdateLayoutSlots={handleUpdateLayoutSlots}
+            onToggleCircleCount={handleToggleCircleCount}
           />
         </div>
 
@@ -562,6 +686,7 @@ export default function App() {
             onRemoveText={handleRemoveText}
             onRemoveSticker={handleRemoveSticker}
             onContainerResize={(w, h) => setPreviewSize({ width: w, height: h })}
+            onToggleCircleCount={handleToggleCircleCount}
           />
         </main>
       </div>
