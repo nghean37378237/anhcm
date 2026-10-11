@@ -35,6 +35,7 @@ import {
   HEADLINE_FONT_OPTIONS,
   STICKER_PRESETS,
 } from '../data/presets';
+import { HeadlineHighlightEditor } from './HeadlineHighlightEditor';
 
 interface SidebarProps {
   currentLayout: CollageLayout;
@@ -1217,52 +1218,50 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="space-y-3.5">
                     {/* Headline for Tribute */}
                     <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">
-                          Tiêu đề tưởng niệm chính (Chữ Serif đậm)
-                        </label>
-                        <span className="text-[10px] text-amber-400 font-medium">Xuống dòng để căn 2 hàng</span>
-                      </div>
-                      <textarea
+                      <HeadlineHighlightEditor
+                        headline={config.newsPoster.headline}
+                        highlightWords={config.newsPoster.highlightWords}
+                        highlightColor={config.newsPoster.highlightColor || '#FACC15'}
+                        headlineColor={config.newsPoster.headlineColor || '#FFFFFF'}
+                        wordColorMap={config.newsPoster.wordColorMap}
+                        fontFamily={config.newsPoster.fontFamily}
+                        styleType="tribute-rip"
                         rows={2}
-                        value={config.newsPoster.headline}
-                        onChange={(e) =>
+                        placeholder="REST&#10;IN PEACE"
+                        onUpdateHeadline={(val) =>
                           onUpdateConfig({
                             newsPoster: {
                               ...config.newsPoster!,
-                              headline: e.target.value,
+                              headline: val,
                             },
                           })
                         }
-                        placeholder="REST&#10;IN PEACE"
-                        className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2.5 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 transition-colors font-serif uppercase tracking-widest font-bold leading-tight"
-                      />
-                      {/* Quick Tribute presets */}
-                      <div className="flex flex-wrap gap-1 mt-1.5">
-                        {[
+                        onUpdateHighlight={({ highlightWords: hw, highlightColor: hc, wordColorMap: wcm }) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              highlightWords: hw,
+                              highlightColor: hc,
+                              wordColorMap: wcm,
+                            },
+                          })
+                        }
+                        quickTemplates={[
                           { label: 'REST IN PEACE', text: 'REST\nIN PEACE' },
                           { label: 'VÔ CÙNG THƯƠNG TIẾC', text: 'VÔ CÙNG\nTHƯƠNG TIẾC' },
                           { label: 'IN LOVING MEMORY', text: 'IN LOVING\nMEMORY' },
                           { label: 'TƯỞNG NIỆM & TRI ÂN', text: 'TƯỞNG NIỆM\n& TRI ÂN' },
                           { label: 'MÃI TRONG TIM', text: 'MÃI MÃI\nTRONG TIM' },
-                        ].map((item) => (
-                          <button
-                            key={item.label}
-                            type="button"
-                            onClick={() =>
-                              onUpdateConfig({
-                                newsPoster: {
-                                  ...config.newsPoster!,
-                                  headline: item.text,
-                                },
-                              })
-                            }
-                            className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-amber-300 hover:bg-neutral-700 transition-colors cursor-pointer"
-                          >
-                            + {item.label}
-                          </button>
-                        ))}
-                      </div>
+                        ]}
+                        onSelectQuickTemplate={(item) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              headline: item.text,
+                            },
+                          })
+                        }
+                      />
 
                       {/* Khoảng cách giữa 2 dòng tiêu đề */}
                       <div className="mt-2.5 pt-2 border-t border-neutral-800/80 space-y-1.5">
@@ -1765,121 +1764,70 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 ) : (
                   /* ==================== CÁC TÙY CHỌN CHO MẪU BÁO CHÍ THÔNG THƯỜNG ==================== */
                   <>
-                    {/* Headline Textarea */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">
-                          Nội dung tiêu đề
-                        </label>
-                        <span className="text-[10px] text-neutral-500">
-                          {config.newsPoster.headline.length} ký tự
-                        </span>
-                      </div>
-                      <textarea
-                        rows={3}
-                        value={config.newsPoster.headline}
-                        onChange={(e) =>
-                          onUpdateConfig({
-                            newsPoster: {
-                              ...config.newsPoster!,
-                              headline: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="Nhập tiêu đề bài báo / tin tức nổi bật..."
-                        className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2.5 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500 transition-colors leading-relaxed"
-                      />
-                      {/* Quick Vietnamese / English templates buttons */}
-                      <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onUpdateConfig({
-                              newsPoster: {
-                                ...config.newsPoster!,
-                                headline: 'Khoảnh Khắc Đẹp Nhất Của Chuyến Đi Được Ghi Lại Hoàn Hảo',
-                                highlightWords: 'Khoảnh Khắc Đẹp Nhất, Hoàn Hảo',
-                              },
-                            })
-                          }
-                          className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-amber-300 hover:bg-neutral-700 transition-colors"
-                        >
-                          + Mẫu Kỷ Niệm
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onUpdateConfig({
-                              newsPoster: {
-                                ...config.newsPoster!,
-                                headline: 'BỘ SƯU TẬP PHONG CÁCH MÙA THU ĐẬM CHẤT ĐIỆN ẢNH VÀ NGHỆ THUẬT',
-                                highlightWords: 'BỘ SƯU TẬP, ĐIỆN ẢNH, NGHỆ THUẬT',
-                                style: 'bold-headline',
-                              },
-                            })
-                          }
-                          className="text-[10px] px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 hover:text-amber-300 hover:bg-neutral-700 transition-colors"
-                        >
-                          + Mẫu Thời Trang
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Highlight Words & Color */}
-                    <div>
-                      <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block mb-1.5">
-                        Từ khóa tô màu nổi bật (cách nhau bởi dấu phẩy)
-                      </label>
-                      <input
-                        type="text"
-                        value={config.newsPoster.highlightWords}
-                        onChange={(e) =>
-                          onUpdateConfig({
-                            newsPoster: {
-                              ...config.newsPoster!,
-                              highlightWords: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="VD: Iris West, Flash, JOHNNY DEPP"
-                        className="w-full bg-neutral-950 border border-neutral-700 rounded-xl p-2 text-xs text-neutral-100 placeholder:text-neutral-500 focus:outline-none focus:border-amber-500"
-                      />
-
-                      {/* Highlight Color Picker */}
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[11px] text-neutral-400 shrink-0">Màu từ khóa:</span>
-                        <div className="flex items-center gap-1.5">
-                          {[
-                            { color: '#FACC15', label: 'Vàng tươi' },
-                            { color: '#F5D061', label: 'Vàng kim' },
-                            { color: '#FB923C', label: 'Cam ấm' },
-                            { color: '#F87171', label: 'Đỏ son' },
-                            { color: '#38BDF8', label: 'Xanh lơ' },
-                            { color: '#4ADE80', label: 'Xanh lá' },
-                            { color: '#FFFFFF', label: 'Trắng' },
-                          ].map((c) => (
-                            <button
-                              key={c.color}
-                              type="button"
-                              onClick={() =>
-                                onUpdateConfig({
-                                  newsPoster: {
-                                    ...config.newsPoster!,
-                                    highlightColor: c.color,
-                                  },
-                                })
-                              }
-                              className={`w-5 h-5 rounded-full border transition-all ${
-                                config.newsPoster?.highlightColor === c.color
-                                  ? 'ring-2 ring-white ring-offset-1 ring-offset-neutral-900 scale-110'
-                                  : 'border-white/30'
-                              }`}
-                              style={{ backgroundColor: c.color }}
-                              title={c.label}
-                            />
-                          ))}
-                        </div>
-                      </div>
+                    <HeadlineHighlightEditor
+                      headline={config.newsPoster.headline}
+                      highlightWords={config.newsPoster.highlightWords}
+                      highlightColor={config.newsPoster.highlightColor || '#FACC15'}
+                      headlineColor={config.newsPoster.headlineColor || '#FFFFFF'}
+                      wordColorMap={config.newsPoster.wordColorMap}
+                      fontFamily={config.newsPoster.fontFamily}
+                      styleType={config.newsPoster.style}
+                      rows={3}
+                      placeholder="Nhập tiêu đề bài báo / tin tức nổi bật..."
+                      onUpdateHeadline={(val) =>
+                        onUpdateConfig({
+                          newsPoster: {
+                            ...config.newsPoster!,
+                            headline: val,
+                          },
+                        })
+                      }
+                      onUpdateHighlight={({ highlightWords: hw, highlightColor: hc, wordColorMap: wcm }) =>
+                        onUpdateConfig({
+                          newsPoster: {
+                            ...config.newsPoster!,
+                            highlightWords: hw,
+                            highlightColor: hc,
+                            wordColorMap: wcm,
+                          },
+                        })
+                      }
+                      quickTemplates={[
+                        {
+                          label: 'Mẫu Kỷ Niệm',
+                          text: 'Khoảnh Khắc Đẹp Nhất Của Chuyến Đi Được Ghi Lại Hoàn Hảo',
+                          highlightWords: 'Khoảnh Khắc Đẹp Nhất, Hoàn Hảo',
+                        },
+                        {
+                          label: 'Mẫu Thời Trang',
+                          text: 'BỘ SƯU TẬP PHONG CÁCH MÙA THU ĐẬM CHẤT ĐIỆN ẢNH VÀ NGHỆ THUẬT',
+                          highlightWords: 'BỘ SƯU TẬP, ĐIỆN ẢNH, NGHỆ THUẬT',
+                          style: 'bold-headline',
+                        },
+                        {
+                          label: 'Mẫu Điện Ảnh',
+                          text: 'JOHNNY DEPP SAYS HE WAS "SURPRISED" BY TIM BURTON\'S CASTING FOR EDWARD SCISSORHANDS',
+                          highlightWords: 'JOHNNY DEPP, EDWARD SCISSORHANDS, SURPRISED',
+                          style: 'bold-headline',
+                        },
+                        {
+                          label: 'Mẫu Biến Đổi',
+                          text: 'THEN & NOW: THE INCREDIBLE TRANSFORMATION OVER THE PAST 20 YEARS',
+                          highlightWords: 'THEN & NOW, INCREDIBLE TRANSFORMATION, YEARS',
+                          style: 'bold-headline',
+                        },
+                      ]}
+                      onSelectQuickTemplate={(item) =>
+                        onUpdateConfig({
+                          newsPoster: {
+                            ...config.newsPoster!,
+                            headline: item.text,
+                            highlightWords: item.highlightWords || '',
+                            style: item.style || config.newsPoster!.style,
+                          },
+                        })
+                      }
+                    />
 
                       {/* Dòng phụ đề nhỏ (Dưới tiêu đề) */}
                       <div className="space-y-1.5 pt-2 border-t border-neutral-800/80">
@@ -1928,7 +1876,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           </div>
                         )}
                       </div>
-                    </div>
                   </>
                 )}
 

@@ -33,6 +33,7 @@ export interface NewsPosterConfig {
   highlightWords: string; // Từ khóa tô màu nổi bật (phân tách dấu phẩy)
   headlineColor: string; // Mặc định #FFFFFF
   highlightColor: string; // Mặc định #FACC15 hoặc #F5D061
+  wordColorMap?: Record<string, string>; // Bảng màu riêng cho từng từ khóa (chọn bôi đen và chọn màu riêng)
   fontSize: number; // 18 to 75 (Cỡ chữ có thể kéo to)
   headlineLineGap?: number; // Khoảng cách giữa các dòng tiêu đề (px, mặc định 2px sát nhau)
   fontFamily?: string; // Mẫu phông chữ tiêu đề (Playfair Display, Anton, Montserrat, Oswald, Caveat...)

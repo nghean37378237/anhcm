@@ -16,6 +16,7 @@ import {
   Award,
   MousePointerClick,
   Sparkles,
+  Palette,
 } from 'lucide-react';
 import {
   AspectRatioType,
@@ -69,6 +70,101 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
   const panStartRef = useRef<{ x: number; y: number; initialOffsetX: number; initialOffsetY: number } | null>(null);
   const [showSlotFilterMenu, setShowSlotFilterMenu] = useState(false);
   const [showSharpenMenu, setShowSharpenMenu] = useState(false);
+  const [canvasSelectedText, setCanvasSelectedText] = useState<string>('');
+  const [canvasToolbarPos, setCanvasToolbarPos] = useState<{ x: number; y: number } | null>(null);
+
+  const handleApplyCanvasHighlight = (phrase: string, color: string) => {
+    if (!config.newsPoster || !phrase.trim()) return;
+    const cleanPhrase = phrase.trim();
+    const currentList = (config.newsPoster.highlightWords || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const exists = currentList.some((w) => w.toLowerCase() === cleanPhrase.toLowerCase());
+    const updatedList = exists ? currentList : [...currentList, cleanPhrase];
+
+    const newMap = { ...(config.newsPoster.wordColorMap || {}) };
+    newMap[cleanPhrase.toLowerCase()] = color;
+    const cleanKey = cleanPhrase.replace(/[^a-zA-Z0-9À-ỹ]/g, '').toLowerCase();
+    if (cleanKey) newMap[cleanKey] = color;
+
+    onUpdateConfig({
+      newsPoster: {
+        ...config.newsPoster,
+        highlightWords: updatedList.join(', '),
+        highlightColor: color,
+        wordColorMap: newMap,
+      },
+    });
+
+    setCanvasSelectedText('');
+    setCanvasToolbarPos(null);
+    window.getSelection()?.removeAllRanges();
+  };
+
+  const handleRemoveCanvasHighlight = (phrase: string) => {
+    if (!config.newsPoster || !phrase.trim()) return;
+    const cleanPhrase = phrase.trim().toLowerCase();
+    const currentList = (config.newsPoster.highlightWords || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const cleanTarget = cleanPhrase.replace(/[^a-zA-Z0-9À-ỹ]/g, '');
+    const filtered = currentList.filter((w) => {
+      const cleanW = w.replace(/[^a-zA-Z0-9À-ỹ]/g, '').toLowerCase();
+      return cleanW !== cleanTarget && !cleanTarget.includes(cleanW) && !cleanW.includes(cleanTarget);
+    });
+
+    const newMap = { ...(config.newsPoster.wordColorMap || {}) };
+    delete newMap[cleanPhrase];
+    if (cleanTarget) delete newMap[cleanTarget];
+
+    onUpdateConfig({
+      newsPoster: {
+        ...config.newsPoster,
+        highlightWords: filtered.join(', '),
+        wordColorMap: newMap,
+      },
+    });
+
+    setCanvasSelectedText('');
+    setCanvasToolbarPos(null);
+    window.getSelection()?.removeAllRanges();
+  };
+
+  const checkTextSelection = (e?: React.SyntheticEvent) => {
+    const selection = window.getSelection();
+    const text = selection ? selection.toString().trim() : '';
+    if (text.length > 0) {
+      setCanvasSelectedText(text);
+      try {
+        const range = selection?.getRangeAt(0);
+        const rangeRect = range?.getBoundingClientRect();
+        if (rangeRect) {
+          setCanvasToolbarPos({
+            x: rangeRect.left + rangeRect.width / 2,
+            y: rangeRect.top,
+          });
+          return;
+        }
+      } catch {
+        // Fallback to bounding rect
+      }
+      const el = (e?.currentTarget as HTMLElement) || document.getElementById('collage-preview-container');
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        setCanvasToolbarPos({
+          x: rect.left + rect.width / 2,
+          y: rect.top,
+        });
+      }
+    } else {
+      setCanvasSelectedText('');
+      setCanvasToolbarPos(null);
+    }
+  };
 
   // Monitor exact container width for 100% pixel-matching export
   useEffect(() => {
@@ -179,7 +275,8 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
     highlightWordsStr: string,
     style: 'bold-headline' | 'editorial-serif',
     highlightColor: string,
-    headlineColor: string
+    headlineColor: string,
+    wordColorMap?: Record<string, string>
   ) => {
     if (!headline) return null;
 
@@ -214,15 +311,22 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
           }
 
           const cleanChunk = chunk.replace(/[^a-zA-Z0-9À-ỹ]/g, '').toLowerCase();
-          const isHighlighted = highlights.some(
+          const matchingHp = highlights.find(
             (hp) => hp === cleanChunk || hp.includes(cleanChunk) || cleanChunk.includes(hp)
           );
+          const isHighlighted = !!matchingHp;
 
           if (isHighlighted) {
+            const specificColor =
+              (wordColorMap && matchingHp && (wordColorMap[matchingHp] || wordColorMap[cleanChunk])) ||
+              (wordColorMap && wordColorMap[cleanChunk]) ||
+              highlightColor ||
+              '#facc15';
+
             return (
               <span
                 key={idx}
-                style={{ color: highlightColor || '#facc15' }}
+                style={{ color: specificColor }}
                 className={
                   style === 'editorial-serif'
                     ? 'italic font-serif font-bold'
@@ -922,9 +1026,11 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
               <div className="absolute inset-x-3.5 bottom-3.5 z-20 text-center pointer-events-auto flex flex-col items-center">
                 {config.newsPoster.style === 'tribute-rip' ? (
                   /* MẪU TƯỞNG NIỆM TRI ÂN: REST IN PEACE */
-                  <div className="w-full max-w-[96%] flex flex-col items-center select-none text-center">
+                  <div className="w-full max-w-[96%] flex flex-col items-center select-text cursor-text text-center">
                     {/* Primary Big Serif Headline (REST IN PEACE) */}
                     <div
+                      onMouseUp={checkTextSelection}
+                      onTouchEnd={checkTextSelection}
                       className={`font-black uppercase text-white ${
                         config.newsPoster.textOutline ?? true
                           ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] [text-shadow:_0_1px_3px_#000,_0_2px_6px_#000]'
@@ -1037,7 +1143,9 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                       )}
 
                     <div
-                      className={`w-full max-w-[94%] leading-tight select-none transition-all ${
+                      onMouseUp={checkTextSelection}
+                      onTouchEnd={checkTextSelection}
+                      className={`w-full max-w-[94%] leading-tight select-text cursor-text relative transition-all ${
                         config.newsPoster.textOutline ?? true
                           ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] [text-shadow:_0_1px_3px_#000,_0_2px_6px_#000]'
                           : 'drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]'
@@ -1059,7 +1167,8 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                         config.newsPoster.highlightWords,
                         config.newsPoster.style,
                         config.newsPoster.highlightColor,
-                        config.newsPoster.headlineColor
+                        config.newsPoster.headlineColor,
+                        config.newsPoster.wordColorMap
                       )}
                     </div>
 
@@ -1431,6 +1540,80 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
               title="Đóng thanh công cụ"
             >
               <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* Floating Toolbar khi người dùng bôi đen chữ trực tiếp trên Canvas */}
+        {canvasSelectedText && canvasToolbarPos && (
+          <div
+            className="fixed z-50 -translate-x-1/2 -translate-y-full mb-3 bg-neutral-900/95 backdrop-blur-md border-2 border-amber-400 shadow-2xl rounded-2xl p-2.5 flex items-center gap-2 animate-in fade-in zoom-in-95 pointer-events-auto"
+            style={{
+              left: `${canvasToolbarPos.x}px`,
+              top: `${Math.max(12, canvasToolbarPos.y - 12)}px`,
+            }}
+          >
+            <div className="flex items-center gap-1.5 pr-2 border-r border-neutral-700">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-[11px] text-amber-200 font-bold whitespace-nowrap max-w-[120px] truncate">
+                "{canvasSelectedText}"
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {[
+                { color: '#FACC15', label: 'Vàng tươi' },
+                { color: '#F5D061', label: 'Vàng kim' },
+                { color: '#FB923C', label: 'Cam ấm' },
+                { color: '#EF4444', label: 'Đỏ tươi' },
+                { color: '#38BDF8', label: 'Xanh lơ' },
+                { color: '#4ADE80', label: 'Xanh lá' },
+                { color: '#C084FC', label: 'Tím nhạt' },
+                { color: '#FFFFFF', label: 'Trắng' },
+              ].map((c) => (
+                <button
+                  key={c.color}
+                  type="button"
+                  onClick={() => handleApplyCanvasHighlight(canvasSelectedText, c.color)}
+                  className="w-6 h-6 rounded-full border border-white/40 hover:scale-125 transition-transform shadow cursor-pointer"
+                  style={{ backgroundColor: c.color }}
+                  title={`Tô màu ${c.label}`}
+                />
+              ))}
+
+              <label
+                className="relative w-6 h-6 rounded-full overflow-hidden border border-neutral-500 cursor-pointer hover:scale-110 transition-transform flex items-center justify-center bg-gradient-to-tr from-pink-500 via-amber-400 to-cyan-400 shadow"
+                title="Chọn màu khác"
+              >
+                <input
+                  type="color"
+                  value={config.newsPoster?.highlightColor || '#FACC15'}
+                  onChange={(e) => handleApplyCanvasHighlight(canvasSelectedText, e.target.value)}
+                  className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                />
+                <Palette className="w-3 h-3 text-neutral-950" />
+              </label>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleRemoveCanvasHighlight(canvasSelectedText)}
+              className="text-[10px] text-red-400 hover:text-red-300 bg-red-950/80 border border-red-800/80 px-2 py-0.5 rounded cursor-pointer whitespace-nowrap ml-1"
+            >
+              ✕ Bỏ màu
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setCanvasSelectedText('');
+                setCanvasToolbarPos(null);
+                window.getSelection()?.removeAllRanges();
+              }}
+              className="text-neutral-400 hover:text-white text-xs px-1 cursor-pointer"
+              title="Đóng"
+            >
+              ✕
             </button>
           </div>
         )}

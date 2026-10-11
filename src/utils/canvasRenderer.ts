@@ -1201,9 +1201,15 @@ export async function renderCollageToCanvas(
               ctx.restore();
             }
 
-            ctx.fillStyle = isHighlighted
-              ? np.highlightColor || '#facc15'
-              : np.headlineColor || '#ffffff';
+            const matchingHp = highlightPhrases.find(
+              (hp) => hp === cleanWord || hp.includes(cleanWord) || cleanWord.includes(hp)
+            );
+            const wordColor =
+              (np.wordColorMap && matchingHp && (np.wordColorMap[matchingHp] || np.wordColorMap[cleanWord])) ||
+              np.highlightColor ||
+              '#facc15';
+
+            ctx.fillStyle = isHighlighted ? wordColor : np.headlineColor || '#ffffff';
 
             ctx.textAlign = 'left';
             ctx.fillText(displayWord, currentWordX, lineY);
