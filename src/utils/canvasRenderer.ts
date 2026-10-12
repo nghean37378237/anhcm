@@ -365,7 +365,7 @@ export async function renderCollageToCanvas(
     return zA - zB;
   });
 
-  for (const i of slotOrder) {
+  const renderSingleSlot = (i: number) => {
     const slotDef = layout.slots[i];
     const slotState = slots[i] || {
       imageSrc: null,
@@ -379,6 +379,7 @@ export async function renderCollageToCanvas(
     };
 
     const isCircle = slotDef.shape === 'circle';
+    const isFloatingSlot = (slotDef.zIndex ?? 1) >= 10 || isCircle;
 
     // Calculate slot coordinates accounting for gap
     const rawX = innerLeft + (slotDef.x / 100) * gridW;
@@ -395,13 +396,13 @@ export async function renderCollageToCanvas(
     // Apply gap inset only inside, not on outer perimeter
     const halfGap = isCircle ? 0 : gapPx / 2;
 
-    const slotX = isCircle
+    const slotX = isFloatingSlot
       ? rawX
       : touchesLeft
       ? rawX
       : rawX + halfGap;
 
-    const slotW = isCircle
+    const slotW = isFloatingSlot
       ? rawWidth
       : touchesLeft && touchesRight
       ? rawWidth
@@ -409,13 +410,13 @@ export async function renderCollageToCanvas(
       ? Math.max(1, rawWidth - halfGap)
       : Math.max(1, rawWidth - gapPx);
 
-    const slotY = isCircle
+    const slotY = isFloatingSlot
       ? rawY
       : touchesTop
       ? rawY
       : rawY + halfGap;
 
-    const slotH = isCircle
+    const slotH = isFloatingSlot
       ? rawHeight
       : touchesTop && touchesBottom
       ? rawHeight
@@ -427,17 +428,27 @@ export async function renderCollageToCanvas(
     const centerY = slotY + slotH / 2;
     const circleRadius = isCircle ? Math.min(slotW, slotH) / 2 : 0;
 
-    // Outer shadow for circle accent slot
-    if (isCircle && slotDef.shadow) {
+    // Outer shadow for circle accent slot or card thumbnail slots
+    if (slotDef.shadow) {
       ctx.save();
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
       ctx.shadowBlur = 24 * exportScale;
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 8 * exportScale;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, circleRadius, 0, Math.PI * 2);
-      ctx.fillStyle = '#000000';
-      ctx.fill();
+      if (isCircle) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, circleRadius, 0, Math.PI * 2);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+      } else {
+        const slotRadius =
+          slotDef.borderRadius !== undefined
+            ? slotDef.borderRadius * exportScale
+            : radiusPx;
+        drawRoundedRect(ctx, slotX, slotY, slotW, slotH, slotRadius);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+      }
       ctx.restore();
     }
 
@@ -450,7 +461,11 @@ export async function renderCollageToCanvas(
       ctx.closePath();
       ctx.clip();
     } else {
-      drawRoundedRect(ctx, slotX, slotY, slotW, slotH, radiusPx);
+      const slotRadius =
+        slotDef.borderRadius !== undefined
+          ? slotDef.borderRadius * exportScale
+          : radiusPx;
+      drawRoundedRect(ctx, slotX, slotY, slotW, slotH, slotRadius);
       ctx.clip();
     }
 
@@ -613,7 +628,7 @@ export async function renderCollageToCanvas(
 
     ctx.restore();
 
-    // Draw circular accent crisp border
+    // Draw circular or rectangular crisp border
     if (isCircle) {
       const borderWidth = (slotDef.borderWidth ?? 4) * exportScale;
       if (borderWidth > 0) {
@@ -625,17 +640,33 @@ export async function renderCollageToCanvas(
         ctx.stroke();
         ctx.restore();
       }
+    } else if (slotDef.borderWidth && slotDef.borderWidth > 0) {
+      const borderWidth = slotDef.borderWidth * exportScale;
+      ctx.save();
+      const slotRadius =
+        slotDef.borderRadius !== undefined
+          ? slotDef.borderRadius * exportScale
+          : radiusPx;
+      drawRoundedRect(ctx, slotX, slotY, slotW, slotH, slotRadius);
+      ctx.lineWidth = borderWidth;
+      ctx.strokeStyle = slotDef.borderColor || '#FFFFFF';
+      ctx.stroke();
+      ctx.restore();
     }
-  }
+  };
 
-  // 2.5. Render News Poster Overlays (for 3:4 viral news / editorial posters)
-  if (config.newsPoster?.enabled) {
-    const np = config.newsPoster;
+  const np = config.newsPoster;
+  const isPosterEnabled = Boolean(np?.enabled);
+
+  const drawBottomGradient = () => {
+    if (!np) return;
     ctx.save();
-
-    // A. Bottom Dark Gradient
     const isTribute = np.style === 'tribute-rip';
-    const gradH = (canvasH * (np.gradientHeight || (isTribute ? 46 : 38))) / 100;
+    const isBirthday = np.style === 'birthday-celebration';
+    const gradH =
+      (canvasH *
+        (np.gradientHeight || (isTribute ? 46 : isBirthday ? 44 : 38))) /
+      100;
     const gradStartY = canvasH - gradH;
     const grad = ctx.createLinearGradient(0, gradStartY, 0, canvasH);
     const op = np.gradientOpacity ?? 1.0;
@@ -646,6 +677,12 @@ export async function renderCollageToCanvas(
       grad.addColorStop(0.5, `rgba(0, 0, 0, ${op * 0.95})`);
       grad.addColorStop(0.72, `rgba(0, 0, 0, ${op})`);
       grad.addColorStop(1, `rgba(0, 0, 0, ${op})`);
+    } else if (isBirthday) {
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      grad.addColorStop(0.22, `rgba(0, 0, 0, ${op * 0.45})`);
+      grad.addColorStop(0.48, `rgba(0, 0, 0, ${op * 0.88})`);
+      grad.addColorStop(0.72, `rgba(0, 0, 0, ${op * 0.96})`);
+      grad.addColorStop(1, `rgba(0, 0, 0, ${op * 0.96})`);
     } else {
       grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
       grad.addColorStop(0.35, `rgba(0, 0, 0, ${op * 0.45})`);
@@ -655,31 +692,80 @@ export async function renderCollageToCanvas(
 
     ctx.fillStyle = grad;
     ctx.fillRect(0, gradStartY, canvasW, gradH);
+    ctx.restore();
+  };
+
+  if (isPosterEnabled) {
+    const bgSlots = slotOrder.filter((idx) => (layout.slots[idx].zIndex ?? 1) <= 5);
+    const fgSlots = slotOrder.filter((idx) => (layout.slots[idx].zIndex ?? 1) > 5);
+
+    for (const i of bgSlots) {
+      renderSingleSlot(i);
+    }
+
+    drawBottomGradient();
+
+    for (const i of fgSlots) {
+      renderSingleSlot(i);
+    }
+  } else {
+    for (const i of slotOrder) {
+      renderSingleSlot(i);
+    }
+  }
+
+  // 2.5. Render News Poster Overlays (for 3:4 viral news / editorial posters)
+  if (config.newsPoster?.enabled) {
+    const np = config.newsPoster;
+    ctx.save();
+
+    const isTribute = np.style === 'tribute-rip';
+    const isBirthday = np.style === 'birthday-celebration';
 
     // B. Top Badges & Emblems (Khớp tỉ lệ chính xác với màn hình xem trước)
     const padTop = 12 * scaleRatio;
     const padSide = 14 * scaleRatio;
 
-    // Top Emblem Badge (cho Mẫu Tưởng niệm REST IN PEACE)
+    // Top Emblem Badge (cho Mẫu Tưởng niệm REST IN PEACE & Mẫu Sinh Nhật)
     const hasTopBadges = Boolean(np.showTopBadge || np.showFollowButton);
-    if (isTribute && np.showTopEmblem) {
+    if ((isTribute || isBirthday) && np.showTopEmblem) {
       ctx.save();
       const isLeft = np.topEmblemPosition === 'top-left';
       const emblemR = 18 * scaleRatio;
       const emblemCx = isLeft ? padSide + emblemR : canvasW - padSide - emblemR;
       const emblemCy = padTop + (hasTopBadges ? 46 * scaleRatio : emblemR);
 
-      // Dark circle with white ring
+      // Dark circle with ring (gold for birthday, white for tribute)
       ctx.beginPath();
       ctx.arc(emblemCx, emblemCy, emblemR, 0, Math.PI * 2);
       ctx.fillStyle = '#050505';
       ctx.fill();
       ctx.lineWidth = 2 * scaleRatio;
-      ctx.strokeStyle = '#FFFFFF';
+      ctx.strokeStyle = isBirthday ? '#FACC15' : '#FFFFFF';
       ctx.stroke();
 
       // Draw emblem icon
-      if (np.topEmblemIcon === 'ship' || !np.topEmblemIcon) {
+      if (np.topEmblemIcon === 'crown') {
+        ctx.font = `${Math.round(emblemR * 1.1)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('👑', emblemCx, emblemCy + 1 * scaleRatio);
+      } else if (np.topEmblemIcon === 'cake') {
+        ctx.font = `${Math.round(emblemR * 1.1)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🎂', emblemCx, emblemCy + 1 * scaleRatio);
+      } else if (np.topEmblemIcon === 'party') {
+        ctx.font = `${Math.round(emblemR * 1.1)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🎉', emblemCx, emblemCy + 1 * scaleRatio);
+      } else if (np.topEmblemIcon === 'heart') {
+        ctx.font = `${Math.round(emblemR * 1.1)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('💖', emblemCx, emblemCy + 1 * scaleRatio);
+      } else if (np.topEmblemIcon === 'ship' || (!np.topEmblemIcon && isTribute)) {
         ctx.save();
         ctx.translate(emblemCx, emblemCy);
         const iconScale = (emblemR * 1.35) / 48;
@@ -822,29 +908,37 @@ export async function renderCollageToCanvas(
     }
 
     // C. Headline Typography
-    if (isTribute) {
+    if (isTribute || isBirthday) {
       ctx.save();
       // baseFontSize & subtitleFontSize quy đổi theo scaleRatio khớp 100% với khung xem trước thực tế
-      const baseFontSize = (np.fontSize || 48) * scaleRatio;
+      const baseFontSize =
+        (np.fontSize || (isBirthday ? 44 : 48)) * scaleRatio;
       const subtitleFontSize = (np.subtitleFontSize || 13) * scaleRatio;
 
-      const headlineFontFamily = np.fontFamily || 'Playfair Display, Georgia, serif';
-      const subtitleFontFamily = np.subtitleFontFamily || np.fontFamily || 'Playfair Display, Georgia, serif';
+      const headlineFontFamily =
+        np.fontFamily || 'Playfair Display, Georgia, serif';
+      const subtitleFontFamily =
+        np.subtitleFontFamily ||
+        np.fontFamily ||
+        'Playfair Display, Georgia, serif';
 
       const hasSubtitle = Boolean(np.subtitle);
-      const hasRibbon = (np.bottomSymbol ?? 'ribbon') !== 'none';
+      const defaultSym = isBirthday ? 'cake' : 'ribbon';
+      const hasRibbon = (np.bottomSymbol ?? defaultSym) !== 'none';
       const hasTitleDivider = (np.showTitleDivider ?? true) && hasSubtitle;
       const hasSubUnderline = hasSubtitle && (np.showSubtitleUnderline ?? true);
 
-      // 1. Vị trí Ruy Băng (Ruy băng neo sát đáy khung: bottom-3.5 = 14px)
+      // 1. Vị trí Biểu tượng đáy (Ruy Băng hoặc Bánh sinh nhật / Vương miện)
       const symPx = (np.bottomSymbolSize || 36) * scaleRatio;
       const ribbonH = hasRibbon ? symPx : 0;
       const ribbonBottomY = canvasH - 14 * scaleRatio;
       const ribbonTopY = ribbonBottomY - ribbonH;
 
-      // 2. Vị trí Dòng phụ đề & Đường gạch chân (phía trên Ruy Băng)
+      // 2. Vị trí Dòng phụ đề & Đường gạch chân (phía trên Biểu tượng)
       const subGapAboveRibbon = hasRibbon ? 10 * scaleRatio : 0;
-      const nextBlockBottom = hasRibbon ? (ribbonTopY - subGapAboveRibbon) : ribbonBottomY;
+      const nextBlockBottom = hasRibbon
+        ? ribbonTopY - subGapAboveRibbon
+        : ribbonBottomY;
 
       // Subtitle position calculation (khớp 100% với CSS trong CollageCanvas.tsx)
       let subUnderlineY = 0;
@@ -854,7 +948,8 @@ export async function renderCollageToCanvas(
       if (hasSubtitle) {
         if (hasSubUnderline) {
           subUnderlineY = nextBlockBottom - 1.5 * scaleRatio;
-          subBaselineY = subUnderlineY - 4 * scaleRatio - 0.2 * subtitleFontSize;
+          subBaselineY =
+            subUnderlineY - 4 * scaleRatio - 0.2 * subtitleFontSize;
           subBoxTop = subBaselineY - 0.85 * subtitleFontSize;
         } else {
           subBaselineY = nextBlockBottom - 0.2 * subtitleFontSize;
@@ -862,27 +957,39 @@ export async function renderCollageToCanvas(
         }
       }
 
-      // 3. Vị trí Đường gạch trắng phân cách (giữa tiêu đề to và phụ đề nhỏ)
+      // 3. Vị trí Đường gạch phân cách (giữa tiêu đề to và phụ đề nhỏ)
       let midDividerY = 0;
       let headlineBlockBottom = nextBlockBottom;
 
       if (hasTitleDivider && hasSubtitle) {
-        // Divider có margin: my-1.5 = 6px trên & 6px dưới
-        midDividerY = subBoxTop - 2 * scaleRatio - 6 * scaleRatio - 1.5 * scaleRatio;
+        midDividerY =
+          subBoxTop - 2 * scaleRatio - 6 * scaleRatio - 1.5 * scaleRatio;
         headlineBlockBottom = midDividerY - 6 * scaleRatio;
       } else if (hasSubtitle) {
         headlineBlockBottom = subBoxTop - 2 * scaleRatio;
       }
 
       // 4. Vị trí các dòng tiêu đề chính (Tính toán chính xác theo mô hình CSS Line-Box)
-      const headlineLines = np.headline ? np.headline.split('\n') : ['REST', 'IN PEACE'];
+      const headlineLines = np.headline
+        ? np.headline.split('\n')
+        : isBirthday
+        ? ['HAPPY BIRTHDAY', 'JENNIE']
+        : ['REST', 'IN PEACE'];
       const lineGapPx = (np.headlineLineGap ?? 2) * scaleRatio;
       const lineFontSizes = headlineLines.map((_, idx) =>
-        idx === 0 ? baseFontSize : Math.round(baseFontSize * 0.72)
+        isBirthday
+          ? idx === 0
+            ? Math.round(baseFontSize * 0.88)
+            : baseFontSize
+          : idx === 0
+          ? baseFontSize
+          : Math.round(baseFontSize * 0.72)
       );
 
-      // Chiều cao CSS line box (line-height = 1.05)
-      const lineBoxHeights = lineFontSizes.map((fSize) => fSize * 1.05);
+      // Chiều cao CSS line box (line-height = 1.08 cho birthday, 1.05 cho tribute)
+      const lineBoxHeights = lineFontSizes.map(
+        (fSize) => fSize * (isBirthday ? 1.08 : 1.05)
+      );
 
       // Tính toán vị trí từng dòng từ dưới lên trên khớp 100% với preview DOM flow
       const lineBaselines = new Array<number>(headlineLines.length);
@@ -891,7 +998,6 @@ export async function renderCollageToCanvas(
       for (let i = headlineLines.length - 1; i >= 0; i--) {
         const boxH = lineBoxHeights[i];
         const fSize = lineFontSizes[i];
-        // Baseline nằm trên đáy box một đoạn (1.05 - 0.845) * fSize = 0.205 * fSize
         lineBaselines[i] = currentBoxBottom - 0.205 * fSize;
         const currentBoxTop = currentBoxBottom - boxH;
         currentBoxBottom = currentBoxTop - lineGapPx;
@@ -905,14 +1011,25 @@ export async function renderCollageToCanvas(
 
       const hasOutline = np.textOutline ?? true;
 
-      // Vẽ các dòng tiêu đề chính (REST IN PEACE): Khớp 100% tỉ lệ và khoảng cách như màn hình xem trước
+      // Vẽ các dòng tiêu đề chính: Khớp 100% tỉ lệ và khoảng cách như màn hình xem trước
       headlineLines.forEach((lineText, idx) => {
         const currentFontSize = lineFontSizes[idx];
         const currentBaselineY = lineBaselines[idx];
-        const outlineLineWidth = Math.max(3 * scaleRatio, currentFontSize * 0.075);
+        const outlineLineWidth = Math.max(
+          3 * scaleRatio,
+          currentFontSize * 0.075
+        );
         ctx.font = getSafeCanvasFont(headlineFontFamily, currentFontSize, '900');
 
-        const letterSpacingPx = currentFontSize * (idx === 0 ? 0.05 : 0.14);
+        const letterSpacingPx =
+          currentFontSize *
+          (isBirthday
+            ? idx === 0
+              ? 0.08
+              : 0.05
+            : idx === 0
+            ? 0.05
+            : 0.14);
         const upperText = lineText.toUpperCase();
 
         if (hasOutline) {
@@ -920,15 +1037,35 @@ export async function renderCollageToCanvas(
           ctx.strokeStyle = '#000000';
           ctx.lineWidth = outlineLineWidth;
           ctx.lineJoin = 'round';
-          drawSpacedText(ctx, upperText, canvasW / 2, currentBaselineY, letterSpacingPx, true);
+          drawSpacedText(
+            ctx,
+            upperText,
+            canvasW / 2,
+            currentBaselineY,
+            letterSpacingPx,
+            true
+          );
           ctx.restore();
         }
 
-        ctx.fillStyle = np.headlineColor || '#ffffff';
-        drawSpacedText(ctx, upperText, canvasW / 2, currentBaselineY, letterSpacingPx, false);
+        const textColor = isBirthday
+          ? idx === 0
+            ? np.headlineColor || '#ffffff'
+            : np.highlightColor || '#facc15'
+          : np.headlineColor || '#ffffff';
+
+        ctx.fillStyle = textColor;
+        drawSpacedText(
+          ctx,
+          upperText,
+          canvasW / 2,
+          currentBaselineY,
+          letterSpacingPx,
+          false
+        );
       });
 
-      // Draw White Divider between Big Headline and Small Subtitle (dấu gạch trắng giữa 2 chữ)
+      // Draw Divider between Big Headline and Small Subtitle
       if (hasTitleDivider && hasSubtitle) {
         const dividerW = Math.min(canvasW * 0.44, 200 * scaleRatio);
         const lineGrad = ctx.createLinearGradient(
@@ -937,30 +1074,73 @@ export async function renderCollageToCanvas(
           canvasW / 2 + dividerW / 2,
           0
         );
-        lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-        lineGrad.addColorStop(0.2, 'rgba(255, 255, 255, 0.88)');
-        lineGrad.addColorStop(0.8, 'rgba(255, 255, 255, 0.88)');
-        lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        if (isBirthday) {
+          const goldColor = np.highlightColor || '#FACC15';
+          lineGrad.addColorStop(0, 'rgba(250, 204, 21, 0)');
+          lineGrad.addColorStop(0.2, goldColor);
+          lineGrad.addColorStop(0.8, goldColor);
+          lineGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+        } else {
+          lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+          lineGrad.addColorStop(0.2, 'rgba(255, 255, 255, 0.88)');
+          lineGrad.addColorStop(0.8, 'rgba(255, 255, 255, 0.88)');
+          lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        }
 
         ctx.fillStyle = lineGrad;
-        ctx.fillRect(canvasW / 2 - dividerW / 2, midDividerY, dividerW, 1.5 * scaleRatio);
+        ctx.fillRect(
+          canvasW / 2 - dividerW / 2,
+          midDividerY,
+          dividerW,
+          1.5 * scaleRatio
+        );
+
+        if (isBirthday) {
+          ctx.save();
+          ctx.font = `bold ${Math.round(9 * scaleRatio)}px serif`;
+          ctx.fillStyle = np.highlightColor || '#FACC15';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('★ ◆ ★', canvasW / 2, midDividerY + 1 * scaleRatio);
+          ctx.restore();
+        }
       }
 
-      // Draw Subtitle (e.g. 'LAST ROSIE THE RIVETER OF WWII')
+      // Draw Subtitle (e.g. '1996 • WISHING YOU JOY, LOVE & SUCCESS!')
       if (hasSubtitle && np.subtitle) {
-        ctx.font = getSafeCanvasFont(subtitleFontFamily, subtitleFontSize, '600');
-        const letterSpacingPx = subtitleFontSize * 0.16;
-        ctx.fillStyle = np.subtitleColor || '#ffffff';
+        ctx.font = getSafeCanvasFont(
+          subtitleFontFamily,
+          subtitleFontSize,
+          '700'
+        );
+        const letterSpacingPx =
+          subtitleFontSize * (isBirthday ? 0.12 : 0.16);
+        ctx.fillStyle =
+          np.subtitleColor || (isBirthday ? '#FDE047' : '#ffffff');
         const subUpper = np.subtitle.toUpperCase();
 
         if (hasOutline) {
           ctx.save();
           ctx.strokeStyle = '#000000';
           ctx.lineWidth = Math.max(2 * scaleRatio, subtitleFontSize * 0.08);
-          drawSpacedText(ctx, subUpper, canvasW / 2, subBaselineY, letterSpacingPx, true);
+          drawSpacedText(
+            ctx,
+            subUpper,
+            canvasW / 2,
+            subBaselineY,
+            letterSpacingPx,
+            true
+          );
           ctx.restore();
         }
-        drawSpacedText(ctx, subUpper, canvasW / 2, subBaselineY, letterSpacingPx, false);
+        drawSpacedText(
+          ctx,
+          subUpper,
+          canvasW / 2,
+          subBaselineY,
+          letterSpacingPx,
+          false
+        );
 
         // Subtitle underline
         if (hasSubUnderline) {
@@ -973,19 +1153,33 @@ export async function renderCollageToCanvas(
             canvasW / 2 + lineW / 2,
             0
           );
-          lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-          lineGrad.addColorStop(0.2, 'rgba(255, 255, 255, 0.88)');
-          lineGrad.addColorStop(0.8, 'rgba(255, 255, 255, 0.88)');
-          lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          if (isBirthday) {
+            const goldColor = np.highlightColor || '#FACC15';
+            lineGrad.addColorStop(0, 'rgba(250, 204, 21, 0)');
+            lineGrad.addColorStop(0.2, goldColor);
+            lineGrad.addColorStop(0.8, goldColor);
+            lineGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+          } else {
+            lineGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            lineGrad.addColorStop(0.2, 'rgba(255, 255, 255, 0.88)');
+            lineGrad.addColorStop(0.8, 'rgba(255, 255, 255, 0.88)');
+            lineGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          }
 
           ctx.fillStyle = lineGrad;
-          ctx.fillRect(canvasW / 2 - lineW / 2, subUnderlineY, lineW, 1.5 * scaleRatio);
+          ctx.fillRect(
+            canvasW / 2 - lineW / 2,
+            subUnderlineY,
+            lineW,
+            1.5 * scaleRatio
+          );
         }
       }
 
-      // Draw Memorial Ribbon (Ruy băng trắng mẫu thực tế với nếp vắt 3D & 2 đuôi xòe đều)
+      // Draw Bottom Symbol (Ruy băng trắng hoặc Bánh kem / Vương miện sinh nhật)
       if (hasRibbon) {
-        if (np.bottomSymbol === 'ribbon' || !np.bottomSymbol) {
+        const activeSym = np.bottomSymbol || (isBirthday ? 'cake' : 'ribbon');
+        if (activeSym === 'ribbon') {
           ctx.save();
           ctx.translate(canvasW / 2, ribbonTopY);
           const ribbonScale = symPx / 140;
@@ -993,7 +1187,8 @@ export async function renderCollageToCanvas(
           ctx.translate(-50, 0);
 
           const ribbonColor = np.bottomSymbolColor || '#FFFFFF';
-          const isWhiteRibbon = ribbonColor === '#FFFFFF' || ribbonColor.toLowerCase() === '#fff';
+          const isWhiteRibbon =
+            ribbonColor === '#FFFFFF' || ribbonColor.toLowerCase() === '#fff';
 
           // Màu bóng lụa satin cho ruy băng
           let baseFillStyle: string | CanvasGradient = ribbonColor;
@@ -1017,7 +1212,6 @@ export async function renderCollageToCanvas(
           // 1. Khung thân ruy băng chính (Hai đuôi vát xòe mở rộng + vòm cong tròn trên + khe giọt lệ)
           ctx.fillStyle = baseFillStyle;
           ctx.beginPath();
-          // Đường bao ngoài hai đuôi và vòm trên
           ctx.moveTo(18, 136);
           ctx.lineTo(38, 123);
           ctx.bezierCurveTo(42, 114, 46, 104, 50, 94);
@@ -1031,7 +1225,6 @@ export async function renderCollageToCanvas(
           ctx.bezierCurveTo(36, 111, 26, 122, 18, 136);
           ctx.closePath();
 
-          // Lỗ rỗng giọt lệ ở giữa
           ctx.moveTo(50, 22);
           ctx.bezierCurveTo(40, 22, 34, 30, 34, 48);
           ctx.bezierCurveTo(34, 66, 42, 80, 50, 90);
@@ -1073,27 +1266,48 @@ export async function renderCollageToCanvas(
           ctx.restore();
 
           ctx.restore();
-        } else if (np.bottomSymbol === 'candle') {
+        } else if (activeSym === 'cake') {
+          ctx.font = `${Math.round(symPx * 0.85)}px sans-serif`;
+          ctx.fillText('🎂', canvasW / 2, ribbonTopY + symPx * 0.7);
+        } else if (activeSym === 'crown') {
+          ctx.font = `${Math.round(symPx * 0.85)}px sans-serif`;
+          ctx.fillText('👑', canvasW / 2, ribbonTopY + symPx * 0.7);
+        } else if (activeSym === 'champagne') {
+          ctx.font = `${Math.round(symPx * 0.85)}px sans-serif`;
+          ctx.fillText('🍾', canvasW / 2, ribbonTopY + symPx * 0.7);
+        } else if (activeSym === 'balloons') {
+          ctx.font = `${Math.round(symPx * 0.85)}px sans-serif`;
+          ctx.fillText('🎈', canvasW / 2, ribbonTopY + symPx * 0.7);
+        } else if (activeSym === 'party') {
+          ctx.font = `${Math.round(symPx * 0.85)}px sans-serif`;
+          ctx.fillText('🎉', canvasW / 2, ribbonTopY + symPx * 0.7);
+        } else if (activeSym === 'gift') {
+          ctx.font = `${Math.round(symPx * 0.85)}px sans-serif`;
+          ctx.fillText('🎁', canvasW / 2, ribbonTopY + symPx * 0.7);
+        } else if (activeSym === 'heart') {
+          ctx.font = `${Math.round(symPx * 0.85)}px sans-serif`;
+          ctx.fillText('💖', canvasW / 2, ribbonTopY + symPx * 0.7);
+        } else if (activeSym === 'candle') {
           ctx.font = `${Math.round(symPx * 0.75)}px sans-serif`;
           ctx.fillText('🕯️', canvasW / 2, ribbonTopY + symPx * 0.7);
-        } else if (np.bottomSymbol === 'dove') {
+        } else if (activeSym === 'dove') {
           ctx.font = `${Math.round(symPx * 0.75)}px sans-serif`;
           ctx.fillText('🕊️', canvasW / 2, ribbonTopY + symPx * 0.7);
-        } else if (np.bottomSymbol === 'rose') {
+        } else if (activeSym === 'rose') {
           ctx.font = `${Math.round(symPx * 0.75)}px sans-serif`;
           ctx.fillText('🌹', canvasW / 2, ribbonTopY + symPx * 0.7);
-        } else if (np.bottomSymbol === 'lotus') {
+        } else if (activeSym === 'lotus') {
           ctx.font = `${Math.round(symPx * 0.75)}px sans-serif`;
           ctx.fillText('🪷', canvasW / 2, ribbonTopY + symPx * 0.7);
-        } else if (np.bottomSymbol === 'star') {
+        } else if (activeSym === 'star') {
           ctx.fillStyle = '#facc15';
           ctx.font = `${Math.round(symPx * 0.72)}px sans-serif`;
           ctx.fillText('⭐', canvasW / 2, ribbonTopY + symPx * 0.7);
-        } else if (np.bottomSymbol === 'cross') {
+        } else if (activeSym === 'cross') {
           ctx.fillStyle = '#ffffff';
           ctx.font = `${Math.round(symPx * 0.72)}px sans-serif`;
           ctx.fillText('✝️', canvasW / 2, ribbonTopY + symPx * 0.7);
-        } else if (np.bottomSymbol === 'hands') {
+        } else if (activeSym === 'hands') {
           ctx.font = `${Math.round(symPx * 0.75)}px sans-serif`;
           ctx.fillText('🙏', canvasW / 2, ribbonTopY + symPx * 0.7);
         }

@@ -17,7 +17,7 @@ interface QuickTemplate {
   label: string;
   text: string;
   highlightWords?: string;
-  style?: 'bold-headline' | 'editorial-serif' | 'tribute-rip';
+  style?: 'bold-headline' | 'editorial-serif' | 'tribute-rip' | 'birthday-celebration';
 }
 
 interface HeadlineHighlightEditorProps {
@@ -27,7 +27,7 @@ interface HeadlineHighlightEditorProps {
   headlineColor?: string;
   wordColorMap?: Record<string, string>;
   fontFamily?: string;
-  styleType?: 'bold-headline' | 'editorial-serif' | 'tribute-rip';
+  styleType?: 'bold-headline' | 'editorial-serif' | 'tribute-rip' | 'birthday-celebration';
   rows?: number;
   placeholder?: string;
   onUpdateHeadline: (headline: string) => void;

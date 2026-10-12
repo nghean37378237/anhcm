@@ -11,6 +11,7 @@ export interface LayoutSlot {
   shape?: 'rect' | 'circle';
   borderWidth?: number;
   borderColor?: string;
+  borderRadius?: number;
   shadow?: boolean;
   label?: string;
 }
@@ -28,7 +29,7 @@ export type LayoutCategory =
 
 export interface NewsPosterConfig {
   enabled: boolean;
-  style: 'bold-headline' | 'editorial-serif' | 'tribute-rip'; // Mẫu 1: Bold News; Mẫu 2: Serif sang trọng; Mẫu 3: Tưởng niệm REST IN PEACE
+  style: 'bold-headline' | 'editorial-serif' | 'tribute-rip' | 'birthday-celebration'; // Mẫu 1: Bold News; Mẫu 2: Serif sang trọng; Mẫu 3: Tưởng niệm REST IN PEACE; Mẫu 4: Sinh nhật Happy Birthday
   headline: string;
   highlightWords: string; // Từ khóa tô màu nổi bật (phân tách dấu phẩy)
   headlineColor: string; // Mặc định #FFFFFF
@@ -46,19 +47,35 @@ export interface NewsPosterConfig {
   followButtonText: string;
   showDiamondDivider?: boolean;
   dividerPosition?: 'top' | 'bottom' | 'both'; // 'top' = phía trên chữ để phân cách ảnh và chữ; 'bottom'; 'both'
-  // Các trường bổ sung cho Mẫu Tưởng niệm Tri ân (REST IN PEACE / MEMORIAL)
-  subtitle?: string; // Dòng phụ đề (e.g. 'LAST ROSIE THE RIVETER OF WWII')
+  // Các trường bổ sung cho Mẫu Tưởng niệm Tri ân (REST IN PEACE) & Mẫu Sinh Nhật (HAPPY BIRTHDAY)
+  subtitle?: string; // Dòng phụ đề (e.g. 'LAST ROSIE THE RIVETER OF WWII' hoặc '1996 • WISHING YOU JOY & SUCCESS!')
   subtitleFontSize?: number; // Cỡ chữ phụ đề (10 to 36px)
   subtitleFontFamily?: string; // Mẫu phông chữ phụ đề
   subtitleColor?: string;
-  showTitleDivider?: boolean; // Đường gạch trắng phân cách giữa tiêu đề to và phụ đề nhỏ
+  showTitleDivider?: boolean; // Đường gạch trắng / vàng phân cách giữa tiêu đề to và phụ đề nhỏ
   showSubtitleUnderline?: boolean; // Gạch chân tinh tế dưới dòng phụ đề
-  bottomSymbol?: 'ribbon' | 'candle' | 'dove' | 'rose' | 'lotus' | 'star' | 'cross' | 'hands' | 'none'; // Biểu tượng ruy băng trắng, hoa, nến...
+  bottomSymbol?:
+    | 'ribbon'
+    | 'candle'
+    | 'dove'
+    | 'rose'
+    | 'lotus'
+    | 'star'
+    | 'cross'
+    | 'hands'
+    | 'cake'
+    | 'crown'
+    | 'champagne'
+    | 'balloons'
+    | 'party'
+    | 'gift'
+    | 'heart'
+    | 'none'; // Biểu tượng ruy băng, hoa nến hoặc bánh kem sinh nhật, vương miện...
   bottomSymbolSize?: number; // Kích thước biểu tượng đáy (16 to 80px, mặc định 36px)
   bottomSymbolColor?: string;
-  showTopEmblem?: boolean; // Huy hiệu tròn góc trên (như huy hiệu tàu chiến / quân nhân trong mẫu ảnh)
+  showTopEmblem?: boolean; // Huy hiệu tròn góc trên (quân nhân hoặc vương miện sinh nhật)
   topEmblemPosition?: 'top-right' | 'top-left' | 'none';
-  topEmblemIcon?: 'ship' | 'shield' | 'star' | 'dove' | 'lotus';
+  topEmblemIcon?: 'ship' | 'shield' | 'star' | 'dove' | 'lotus' | 'crown' | 'cake' | 'party' | 'heart';
   topEmblemText?: string;
 }
 
@@ -96,6 +113,7 @@ export interface CollageLayout {
   blendTransition?: 'vertical-fade' | 'soft-dissolve' | 'none';
   isCircleAccent?: boolean;
   isComparison?: boolean;
+  isBirthdayPoster?: boolean;
   comparisonDefault?: Partial<ComparisonConfig>;
   newsPosterDefault?: Partial<NewsPosterConfig>;
 }

@@ -23,12 +23,18 @@ import {
   CanvasConfig,
   CollageLayout,
   FilterPreset,
+  LayoutSlot,
   NewsPosterConfig,
   SlotState,
   StickerOverlay,
   TextOverlay,
 } from '../types';
 import { FILTER_PRESETS } from '../data/presets';
+import {
+  BIRTHDAY_ARRANGEMENTS,
+  generateBirthdaySlots,
+  detectBirthdayArrangement,
+} from '../utils/birthdayLayouts';
 
 interface CollageCanvasProps {
   layout: CollageLayout;
@@ -47,6 +53,8 @@ interface CollageCanvasProps {
   onRemoveSticker: (id: string) => void;
   onContainerResize?: (width: number, height: number) => void;
   onToggleCircleCount?: (count: number) => void;
+  onToggleBirthdaySmallCount?: (count: 3 | 4) => void;
+  onUpdateLayoutSlots?: (newSlots: LayoutSlot[], newPhotoCount?: number) => void;
 }
 
 export const CollageCanvas: React.FC<CollageCanvasProps> = ({
@@ -66,6 +74,8 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
   onRemoveSticker,
   onContainerResize,
   onToggleCircleCount,
+  onToggleBirthdaySmallCount,
+  onUpdateLayoutSlots,
 }) => {
   const [draggedSlotIdx, setDraggedSlotIdx] = useState<number | null>(null);
   const [isPanning, setIsPanning] = useState(false);
@@ -456,25 +466,54 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
         return <span style={{ fontSize: `${size * 0.75}px` }} className="filter drop-shadow text-white leading-none">✝️</span>;
       case 'hands':
         return <span style={{ fontSize: `${size * 0.75}px` }} className="filter drop-shadow leading-none">🙏</span>;
+      case 'cake':
+        return <span style={{ fontSize: `${size * 0.85}px` }} className="filter drop-shadow leading-none">🎂</span>;
+      case 'crown':
+        return <span style={{ fontSize: `${size * 0.85}px` }} className="filter drop-shadow leading-none">👑</span>;
+      case 'champagne':
+        return <span style={{ fontSize: `${size * 0.85}px` }} className="filter drop-shadow leading-none">🍾</span>;
+      case 'balloons':
+        return <span style={{ fontSize: `${size * 0.85}px` }} className="filter drop-shadow leading-none">🎈</span>;
+      case 'party':
+        return <span style={{ fontSize: `${size * 0.85}px` }} className="filter drop-shadow leading-none">🎉</span>;
+      case 'gift':
+        return <span style={{ fontSize: `${size * 0.85}px` }} className="filter drop-shadow leading-none">🎁</span>;
+      case 'heart':
+        return <span style={{ fontSize: `${size * 0.85}px` }} className="filter drop-shadow leading-none">💖</span>;
       default:
         return null;
     }
   };
 
-  // Helper to render top emblem badge (ship silhouette on waves, star, shield, etc.)
+  // Helper to render top emblem badge (ship silhouette on waves, star, shield, crown, etc.)
   const renderTopEmblem = (np: NewsPosterConfig) => {
     if (!np.showTopEmblem) return null;
     const isLeft = np.topEmblemPosition === 'top-left';
     const hasTopBadges = np.showTopBadge || np.showFollowButton;
     const topPosition = hasTopBadges ? 'top-13 sm:top-14' : 'top-3.5';
+    const isBirthday = np.style === 'birthday-celebration';
     return (
       <div
         className={`absolute ${topPosition} z-30 pointer-events-auto ${
           isLeft ? 'left-3.5' : 'right-3.5'
         }`}
       >
-        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/95 border-2 border-white flex items-center justify-center shadow-2xl p-1.5 transition-transform hover:scale-105">
-          {np.topEmblemIcon === 'ship' ? (
+        <div
+          className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-black/95 flex items-center justify-center shadow-2xl p-1.5 transition-transform hover:scale-105 ${
+            isBirthday
+              ? 'border-2 border-amber-400 shadow-[0_0_12px_rgba(250,204,21,0.5)]'
+              : 'border-2 border-white'
+          }`}
+        >
+          {np.topEmblemIcon === 'crown' ? (
+            <span className="text-base sm:text-lg leading-none">👑</span>
+          ) : np.topEmblemIcon === 'cake' ? (
+            <span className="text-base sm:text-lg leading-none">🎂</span>
+          ) : np.topEmblemIcon === 'party' ? (
+            <span className="text-base sm:text-lg leading-none">🎉</span>
+          ) : np.topEmblemIcon === 'heart' ? (
+            <span className="text-base sm:text-lg leading-none">💖</span>
+          ) : np.topEmblemIcon === 'ship' ? (
             <svg viewBox="0 0 48 48" className="w-full h-full text-white fill-current">
               {/* Battleship / Warship silhouette with waves */}
               <path d="M24 7 L26 12 L28 12 L29 17 L33 17 L33 20 L35 20 L35 23 L39 24 L41 28 L7 28 L9 24 L13 20 L15 20 L15 17 L19 17 L20 12 L22 12 Z" />
@@ -651,6 +690,100 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
           </div>
         )}
 
+        {/* Quick Birthday Small Photos Position & Layout Toolbar */}
+        {(layout.isBirthdayPoster || layout.id.startsWith('layout-birthday')) && onUpdateLayoutSlots && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-xl mx-auto mb-2.5 p-2 rounded-2xl bg-neutral-900/95 border border-amber-500/40 shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-2 z-20 text-xs"
+          >
+            {/* Vị trí ảnh nhỏ (Dọc phải, Dọc trái, Ngang dưới, Ngang trên, Lưới 2x2, Chia 2 bên, So le) */}
+            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+              <span className="text-amber-400 font-bold flex items-center gap-1 text-[11px] shrink-0">
+                <span>🎂</span>
+                <span className="hidden sm:inline">Vị trí ảnh nhỏ:</span>
+                <span className="sm:hidden">Vị trí:</span>
+              </span>
+
+              <div className="flex items-center gap-1 bg-neutral-950/80 p-0.5 rounded-xl border border-neutral-800/80 overflow-x-auto max-w-full">
+                {BIRTHDAY_ARRANGEMENTS.map((arr) => {
+                  const currentArr = detectBirthdayArrangement(layout.slots);
+                  const isArrActive = currentArr === arr.id;
+                  return (
+                    <button
+                      key={arr.id}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const smallCount = layout.slots.length > 4 ? 4 : 3;
+                        const newSlots = generateBirthdaySlots(smallCount, arr.id, layout.slots);
+                        onUpdateLayoutSlots(newSlots, smallCount + 1);
+                      }}
+                      className={`px-2 py-1 rounded-lg text-[10.5px] font-medium flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap ${
+                        isArrActive
+                          ? 'bg-amber-400 text-neutral-950 font-bold shadow-sm'
+                          : 'text-neutral-400 hover:text-white hover:bg-neutral-850'
+                      }`}
+                      title={arr.description}
+                    >
+                      <span className="text-xs">{arr.icon}</span>
+                      <span>{arr.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Toggle 3 ảnh vs 4 ảnh */}
+            <div className="flex items-center gap-1.5 shrink-0 pl-1 border-l border-neutral-800">
+              <span className="text-neutral-400 text-[10px]">Số lượng:</span>
+              <div className="flex items-center bg-neutral-950/80 p-0.5 rounded-lg border border-neutral-800">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onToggleBirthdaySmallCount) {
+                      onToggleBirthdaySmallCount(3);
+                    } else {
+                      const currentArr = detectBirthdayArrangement(layout.slots);
+                      const newSlots = generateBirthdaySlots(3, currentArr, layout.slots);
+                      onUpdateLayoutSlots(newSlots, 4);
+                    }
+                  }}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                    layout.slots.length <= 4
+                      ? 'bg-amber-400 text-neutral-950 shadow-sm'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                  title="Đổi thành 3 ảnh nhỏ kỷ niệm"
+                >
+                  3 ảnh
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onToggleBirthdaySmallCount) {
+                      onToggleBirthdaySmallCount(4);
+                    } else {
+                      const currentArr = detectBirthdayArrangement(layout.slots);
+                      const newSlots = generateBirthdaySlots(4, currentArr, layout.slots);
+                      onUpdateLayoutSlots(newSlots, 5);
+                    }
+                  }}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                    layout.slots.length >= 5
+                      ? 'bg-amber-400 text-neutral-950 shadow-sm'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                  title="Đổi thành 4 ảnh nhỏ kỷ niệm"
+                >
+                  4 ảnh
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Main Canvas Card */}
         <div
           id="collage-preview-container"
@@ -788,20 +921,21 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
 
                     const gapVal = config.gap ?? 0;
                     const halfGap = gapVal / 2;
+                    const isFloatingSlot = (slotDef.zIndex ?? 1) >= 10 || isCircle;
 
-                    const slotLeft = isCircle
+                    const slotLeft = isFloatingSlot
                       ? `${slotDef.x}%`
                       : touchesLeft
                       ? `${slotDef.x}%`
                       : `calc(${slotDef.x}% + ${halfGap}px)`;
 
-                    const slotTop = isCircle
+                    const slotTop = isFloatingSlot
                       ? `${slotDef.y}%`
                       : touchesTop
                       ? `${slotDef.y}%`
                       : `calc(${slotDef.y}% + ${halfGap}px)`;
 
-                    const slotWidth = isCircle
+                    const slotWidth = isFloatingSlot
                       ? `${slotDef.w}%`
                       : touchesLeft && touchesRight
                       ? `${slotDef.w}%`
@@ -809,7 +943,7 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                       ? `calc(${slotDef.w}% - ${halfGap}px)`
                       : `calc(${slotDef.w}% - ${gapVal}px)`;
 
-                    const slotHeight = isCircle
+                    const slotHeight = isFloatingSlot
                       ? `${slotDef.h}%`
                       : touchesTop && touchesBottom
                       ? `${slotDef.h}%`
@@ -817,16 +951,30 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                       ? `calc(${slotDef.h}% - ${halfGap}px)`
                       : `calc(${slotDef.h}% - ${gapVal}px)`;
 
+                    const slotRadius = isCircle
+                      ? '9999px'
+                      : slotDef.borderRadius !== undefined
+                      ? `${slotDef.borderRadius}px`
+                      : `${config.borderRadius ?? 0}px`;
+
+                    const slotBorder = isCircle
+                      ? `${slotDef.borderWidth ?? 4}px solid ${slotDef.borderColor || '#FFFFFF'}`
+                      : slotDef.borderWidth
+                      ? `${slotDef.borderWidth}px solid ${slotDef.borderColor || '#FFFFFF'}`
+                      : undefined;
+
+                    const slotShadow = (isCircle || slotDef.shadow)
+                      ? '0 12px 28px -4px rgba(0, 0, 0, 0.75), 0 4px 10px -2px rgba(0, 0, 0, 0.5)'
+                      : undefined;
+
                     return {
                       left: slotLeft,
                       top: slotTop,
                       width: slotWidth,
                       height: slotHeight,
-                      borderRadius: isCircle ? '9999px' : `${config.borderRadius ?? 0}px`,
-                      border: isCircle ? `${slotDef.borderWidth ?? 4}px solid ${slotDef.borderColor || '#FFFFFF'}` : undefined,
-                      boxShadow: isCircle
-                        ? '0 12px 32px -4px rgba(0, 0, 0, 0.75), 0 4px 10px -2px rgba(0, 0, 0, 0.5)'
-                        : undefined,
+                      borderRadius: slotRadius,
+                      border: slotBorder,
+                      boxShadow: slotShadow,
                       zIndex: isSelected ? 35 : (slotDef.zIndex || (isCircle ? 10 : 1)),
                       backgroundColor: slot.imageSrc ? 'transparent' : isDarkCanvas ? '#18181b' : '#f8fafc',
                     };
@@ -836,7 +984,11 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                     <div
                       className="w-full h-full relative overflow-hidden flex items-center justify-center"
                       style={{
-                        borderRadius: isCircle ? '9999px' : undefined,
+                        borderRadius: isCircle
+                          ? '9999px'
+                          : slotDef.borderRadius !== undefined
+                          ? `${slotDef.borderRadius}px`
+                          : undefined,
                         filter: filterDef?.cssFilter !== 'none' ? filterDef?.cssFilter : undefined,
                         ...maskStyle,
                       }}
@@ -854,6 +1006,13 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                           })`,
                         }}
                       />
+
+                      {/* Small badge for Birthday small photos */}
+                      {layout.isBirthdayPoster && index > 0 && (
+                        <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-full bg-black/80 backdrop-blur-sm border border-amber-400/60 text-[9px] font-black text-amber-300 pointer-events-none z-10 shadow">
+                          #{index}
+                        </div>
+                      )}
 
                       {/* Pan Drag Indicator when selected */}
                       {isSelected && (
@@ -877,6 +1036,13 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                           ? 'border-neutral-700/80 text-neutral-400 hover:text-amber-400 hover:border-amber-400/60 hover:bg-neutral-800/40'
                           : 'border-neutral-300 text-neutral-500 hover:text-amber-600 hover:border-amber-500 hover:bg-neutral-100'
                       }`}
+                      style={{
+                        borderRadius: isCircle
+                          ? '9999px'
+                          : slotDef.borderRadius !== undefined
+                          ? `${slotDef.borderRadius}px`
+                          : undefined,
+                      }}
                     >
                       <div
                         className={`w-7 h-7 rounded-full shadow-sm flex items-center justify-center transition-colors ${
@@ -894,7 +1060,11 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                             : 'text-neutral-500 group-hover:text-amber-600'
                         }`}
                       >
-                        {layout.isBlendedOverlap
+                        {layout.isBirthdayPoster
+                          ? index === 0
+                            ? 'Ảnh chân dung chính'
+                            : `Ảnh nhỏ #${index}`
+                          : layout.isBlendedOverlap
                           ? index === 0
                             ? 'Ảnh #1 (Trên)'
                             : 'Ảnh #2 (Dưới)'
@@ -1052,8 +1222,10 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                 </div>
               )}
 
-              {/* Top Emblem (Huy hiệu tròn quân nhân / tàu chiến cho mẫu Tưởng niệm REST IN PEACE) */}
-              {config.newsPoster.style === 'tribute-rip' && renderTopEmblem(config.newsPoster)}
+              {/* Top Emblem (Huy hiệu tròn quân nhân / vương miện sinh nhật) */}
+              {(config.newsPoster.style === 'tribute-rip' ||
+                config.newsPoster.style === 'birthday-celebration') &&
+                renderTopEmblem(config.newsPoster)}
 
               {/* Bottom Dark Gradient Fade */}
               <div
@@ -1061,7 +1233,11 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                 style={{
                   height: `${
                     config.newsPoster.gradientHeight ??
-                    (config.newsPoster.style === 'tribute-rip' ? 46 : 38)
+                    (config.newsPoster.style === 'tribute-rip'
+                      ? 46
+                      : config.newsPoster.style === 'birthday-celebration'
+                      ? 44
+                      : 38)
                   }%`,
                   background:
                     config.newsPoster.style === 'tribute-rip'
@@ -1074,10 +1250,20 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                         }) 54%, rgba(0,0,0,${
                           (config.newsPoster.gradientOpacity ?? 1) * 0.52
                         }) 76%, transparent 100%)`
+                      : config.newsPoster.style === 'birthday-celebration'
+                      ? `linear-gradient(to top, rgba(0,0,0,${
+                          config.newsPoster.gradientOpacity ?? 0.96
+                        }) 0%, rgba(0,0,0,${
+                          config.newsPoster.gradientOpacity ?? 0.96
+                        }) 28%, rgba(0,0,0,${
+                          (config.newsPoster.gradientOpacity ?? 0.96) * 0.88
+                        }) 52%, rgba(0,0,0,${
+                          (config.newsPoster.gradientOpacity ?? 0.96) * 0.45
+                        }) 78%, transparent 100%)`
                       : `linear-gradient(to top, rgba(0,0,0,${
                           config.newsPoster.gradientOpacity ?? 0.94
                         }) 0%, rgba(0,0,0,${
-                          (config.newsPoster.gradientOpacity ?? 0.94) * 0.85
+                          config.newsPoster.gradientOpacity ?? 0.94
                         }) 42%, rgba(0,0,0,${
                           (config.newsPoster.gradientOpacity ?? 0.94) * 0.4
                         }) 75%, transparent 100%)`,
@@ -1167,6 +1353,125 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                         {renderMemorialSymbol(
                           config.newsPoster.bottomSymbol || 'ribbon',
                           config.newsPoster.bottomSymbolColor || '#FFFFFF',
+                          config.newsPoster.bottomSymbolSize ?? 36
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : config.newsPoster.style === 'birthday-celebration' ? (
+                  /* MẪU ẢNH SINH NHẬT: HAPPY BIRTHDAY */
+                  <div className="w-full max-w-[96%] flex flex-col items-center select-text cursor-text text-center">
+                    {/* Primary Big Festive Headline (HAPPY BIRTHDAY / CHÚC MỪNG SINH NHẬT) */}
+                    <div
+                      onMouseUp={checkTextSelection}
+                      onTouchEnd={checkTextSelection}
+                      className={`font-black uppercase text-white ${
+                        config.newsPoster.textOutline ?? true
+                          ? 'drop-shadow-[0_2px_4px_rgba(0,0,0,1)] [text-shadow:_0_1px_3px_#000,_0_2px_6px_#000]'
+                          : 'drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]'
+                      }`}
+                      style={{
+                        lineHeight: 1.08,
+                        fontFamily: config.newsPoster.fontFamily || "'Playfair Display', Georgia, serif",
+                      }}
+                    >
+                      {config.newsPoster.headline.includes('\n') ? (
+                        config.newsPoster.headline.split('\n').map((line, lIdx) => (
+                          <div
+                            key={lIdx}
+                            className={lIdx === 0 ? 'tracking-[0.08em]' : 'tracking-[0.05em]'}
+                            style={{
+                              marginTop: lIdx === 0 ? 0 : `${config.newsPoster?.headlineLineGap ?? 2}px`,
+                              fontSize: `${
+                                lIdx === 0
+                                  ? Math.round((config.newsPoster?.fontSize || 44) * 0.88)
+                                  : config.newsPoster?.fontSize || 44
+                              }px`,
+                              color:
+                                lIdx === 0
+                                  ? config.newsPoster?.headlineColor || '#ffffff'
+                                  : config.newsPoster?.highlightColor || '#facc15',
+                            }}
+                          >
+                            {line}
+                          </div>
+                        ))
+                      ) : (
+                        <div
+                          className="tracking-[0.06em]"
+                          style={{
+                            fontSize: `${config.newsPoster?.fontSize || 44}px`,
+                            color: config.newsPoster?.highlightColor || '#facc15',
+                          }}
+                        >
+                          {config.newsPoster.headline}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Sparkling Gold Divider between Headline and Subtitle */}
+                    {(config.newsPoster.showTitleDivider ?? true) && config.newsPoster.subtitle && (
+                      <div className="flex items-center justify-center gap-2 my-1.5 sm:my-2 w-full max-w-xs">
+                        <div
+                          className="h-[1.5px] flex-1 shadow-sm"
+                          style={{
+                            background: `linear-gradient(to right, transparent, ${
+                              config.newsPoster.highlightColor || '#facc15'
+                            })`,
+                          }}
+                        />
+                        <span
+                          className="text-[10px] leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]"
+                          style={{ color: config.newsPoster.highlightColor || '#facc15' }}
+                        >
+                          ★ ◆ ★
+                        </span>
+                        <div
+                          className="h-[1.5px] flex-1 shadow-sm"
+                          style={{
+                            background: `linear-gradient(to left, transparent, ${
+                              config.newsPoster.highlightColor || '#facc15'
+                            })`,
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Subtitle / Wishes (e.g. '1996 • WISHING YOU JOY, LOVE & SUCCESS!') */}
+                    {config.newsPoster.subtitle && (
+                      <div className="flex flex-col items-center mt-0.5 sm:mt-1 w-full max-w-[94%]">
+                        <span
+                          className="uppercase tracking-[0.12em] font-bold text-center drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)]"
+                          style={{
+                            fontSize: `${config.newsPoster.subtitleFontSize || 13}px`,
+                            color: config.newsPoster.subtitleColor || '#FDE047',
+                            fontFamily:
+                              config.newsPoster.subtitleFontFamily ||
+                              config.newsPoster.fontFamily ||
+                              "'Playfair Display', Georgia, serif",
+                          }}
+                        >
+                          {config.newsPoster.subtitle}
+                        </span>
+                        {(config.newsPoster.showSubtitleUnderline ?? true) && (
+                          <div
+                            className="h-[1.5px] w-48 sm:w-60 mt-1 shadow-sm"
+                            style={{
+                              background: `linear-gradient(to right, transparent, ${
+                                config.newsPoster.highlightColor || '#facc15'
+                              } 80%, transparent)`,
+                            }}
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Bottom Festive Symbol (Bánh sinh nhật 🎂 / Vương miện 👑 / Sâm banh 🍾) */}
+                    {(config.newsPoster.bottomSymbol ?? 'cake') !== 'none' && (
+                      <div className="mt-2.5 sm:mt-3 flex items-center justify-center">
+                        {renderMemorialSymbol(
+                          config.newsPoster.bottomSymbol || 'cake',
+                          config.newsPoster.bottomSymbolColor || '#FACC15',
                           config.newsPoster.bottomSymbolSize ?? 36
                         )}
                       </div>

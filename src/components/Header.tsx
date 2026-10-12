@@ -9,7 +9,12 @@ import {
   Share2,
   Check,
 } from 'lucide-react';
-import { AspectRatioType, CollageLayout } from '../types';
+import { AspectRatioType, CollageLayout, LayoutSlot } from '../types';
+import {
+  BIRTHDAY_ARRANGEMENTS,
+  generateBirthdaySlots,
+  detectBirthdayArrangement,
+} from '../utils/birthdayLayouts';
 
 interface HeaderProps {
   layout: CollageLayout;
@@ -24,6 +29,11 @@ interface HeaderProps {
   onSelectModel4?: () => void;
   onSelectModel5?: () => void;
   onSelectModelTribute?: () => void;
+  onSelectModelBirthday?: () => void;
+  onSelectModelBirthday3?: () => void;
+  onSelectModelBirthday4?: () => void;
+  onToggleBirthdaySmallCount?: (count: 3 | 4) => void;
+  onUpdateLayoutSlots?: (newSlots: LayoutSlot[], newPhotoCount?: number) => void;
   activePhotosCount: number;
   totalSlotsCount: number;
 }
@@ -41,6 +51,11 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectModel4,
   onSelectModel5,
   onSelectModelTribute,
+  onSelectModelBirthday,
+  onSelectModelBirthday3,
+  onSelectModelBirthday4,
+  onToggleBirthdaySmallCount,
+  onUpdateLayoutSlots,
   activePhotosCount,
   totalSlotsCount,
 }) => {
@@ -143,6 +158,102 @@ export const Header: React.FC<HeaderProps> = ({
           <span>🎗️</span>
           <span>Tưởng Niệm (RIP)</span>
         </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onSelectModelBirthday}
+            className={`px-2 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+              layout.isBirthdayPoster ||
+              layout.id.startsWith('layout-birthday')
+                ? 'bg-amber-500 text-neutral-950 font-bold shadow'
+                : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+            }`}
+            title="Mẫu Ảnh Sinh Nhật (HAPPY BIRTHDAY • 1 Ảnh Chính + 3 hoặc 4 Ảnh Nhỏ Kỷ Niệm)"
+          >
+            <span>🎂</span>
+            <span>Sinh Nhật (SN)</span>
+          </button>
+          {(layout.isBirthdayPoster ||
+            layout.id.startsWith('layout-birthday')) && (
+            <div className="flex items-center gap-1 bg-neutral-900 border border-amber-500/40 rounded-lg p-0.5">
+              {/* 3 vs 4 small photos */}
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onToggleBirthdaySmallCount) {
+                      onToggleBirthdaySmallCount(3);
+                    } else if (onSelectModelBirthday3) {
+                      onSelectModelBirthday3();
+                    } else if (onSelectModelBirthday) {
+                      onSelectModelBirthday();
+                    }
+                  }}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-all ${
+                    layout.slots.length <= 4
+                      ? 'bg-amber-400 text-neutral-950 shadow-sm'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                  title="Mẫu 1 ảnh chính + 3 ảnh nhỏ kỷ niệm"
+                >
+                  3 ảnh
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onToggleBirthdaySmallCount) {
+                      onToggleBirthdaySmallCount(4);
+                    } else if (onSelectModelBirthday4) {
+                      onSelectModelBirthday4();
+                    }
+                  }}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold transition-all ${
+                    layout.slots.length >= 5
+                      ? 'bg-amber-400 text-neutral-950 shadow-sm'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                  title="Mẫu 1 ảnh chính + 4 ảnh nhỏ kỷ niệm"
+                >
+                  4 ảnh
+                </button>
+              </div>
+
+              {/* Quick Position Selector in Header */}
+              {onUpdateLayoutSlots && (
+                <div className="hidden xl:flex items-center gap-0.5 pl-1 border-l border-neutral-800">
+                  {[
+                    { id: 'vertical-right' as const, label: 'Dọc phải', icon: '➡️' },
+                    { id: 'vertical-left' as const, label: 'Dọc trái', icon: '⬅️' },
+                    { id: 'horizontal-bottom' as const, label: 'Ngang', icon: '↔️' },
+                    { id: 'grid-2x2' as const, label: 'Lưới', icon: '⊞' },
+                  ].map((arr) => {
+                    const currentArr = detectBirthdayArrangement(layout.slots);
+                    const isCurrent = currentArr === arr.id;
+                    return (
+                      <button
+                        key={arr.id}
+                        type="button"
+                        onClick={() => {
+                          const smallCount = layout.slots.length > 4 ? 4 : 3;
+                          const newSlots = generateBirthdaySlots(smallCount, arr.id, layout.slots);
+                          onUpdateLayoutSlots(newSlots, smallCount + 1);
+                        }}
+                        className={`px-1.5 py-0.5 rounded text-[9.5px] font-medium flex items-center gap-0.5 transition-all ${
+                          isCurrent
+                            ? 'bg-amber-500/25 text-amber-300 font-bold border border-amber-400/50'
+                            : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+                        }`}
+                        title={`Đổi vị trí ảnh nhỏ sang: ${arr.label}`}
+                      >
+                        <span>{arr.icon}</span>
+                        <span>{arr.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Quick Actions */}

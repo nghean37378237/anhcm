@@ -36,6 +36,12 @@ import {
   STICKER_PRESETS,
 } from '../data/presets';
 import { HeadlineHighlightEditor } from './HeadlineHighlightEditor';
+import {
+  BIRTHDAY_ARRANGEMENTS,
+  generateBirthdaySlots,
+  detectBirthdayArrangement,
+  BirthdayArrangement,
+} from '../utils/birthdayLayouts';
 
 interface SidebarProps {
   currentLayout: CollageLayout;
@@ -62,6 +68,8 @@ interface SidebarProps {
   onUpdateLayoutSlot?: (slotIndex: number, updates: Partial<import('../types').LayoutSlot>) => void;
   onUpdateLayoutSlots?: (slots: import('../types').LayoutSlot[], newPhotoCount?: number) => void;
   onToggleCircleCount?: (count: number) => void;
+  onToggleBirthdaySmallCount?: (count: 3 | 4) => void;
+  onSelectSlot?: (index: number) => void;
 }
 
 type TabType = 'layout' | 'news' | 'photos' | 'canvas' | 'filters' | 'decor';
@@ -91,6 +99,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onUpdateLayoutSlot,
   onUpdateLayoutSlots,
   onToggleCircleCount,
+  onToggleBirthdaySmallCount,
+  onSelectSlot,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('layout');
   const [layoutFilter, setLayoutFilter] = useState<LayoutCategory>('all');
@@ -125,6 +135,389 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (!inputText.trim()) return;
     onAddText(inputText.trim(), selectedFont, textColor, textBgBox, inputFontSize);
     setInputText('');
+  };
+
+  const renderBirthdaySmallPhotosSection = () => {
+    const smallCount = currentLayout.slots.length > 4 ? 4 : 3;
+    const currentArr = detectBirthdayArrangement(currentLayout.slots);
+
+    return (
+      <div className="p-3 bg-neutral-900/90 rounded-xl border border-amber-500/35 space-y-3.5 shadow-md">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+            <span>📸</span>
+            <span>Bố cục & Vị trí ảnh nhỏ kỷ niệm:</span>
+          </label>
+          <span className="text-[10px] font-semibold text-amber-400/90 px-1.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30">
+            {smallCount === 4 ? '4 ảnh nhỏ' : '3 ảnh nhỏ'}
+          </span>
+        </div>
+
+        {/* 1. Số lượng ảnh nhỏ: 3 hoặc 4 */}
+        <div>
+          <span className="text-[10px] font-semibold text-neutral-400 block mb-1">
+            Số lượng ảnh nhỏ:
+          </span>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (onToggleBirthdaySmallCount) {
+                  onToggleBirthdaySmallCount(3);
+                } else if (onUpdateLayoutSlots) {
+                  const newSlots = generateBirthdaySlots(3, currentArr, currentLayout.slots);
+                  onUpdateLayoutSlots(newSlots, 4);
+                }
+              }}
+              className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                smallCount === 3
+                  ? 'border-amber-400 bg-amber-500/20 text-white ring-1 ring-amber-400/50 shadow-md'
+                  : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-neutral-200'
+              }`}
+            >
+              <span className="text-amber-400 text-sm">3️⃣</span>
+              <span>3 Ảnh nhỏ kỷ niệm</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (onToggleBirthdaySmallCount) {
+                  onToggleBirthdaySmallCount(4);
+                } else if (onUpdateLayoutSlots) {
+                  const newSlots = generateBirthdaySlots(4, currentArr, currentLayout.slots);
+                  onUpdateLayoutSlots(newSlots, 5);
+                }
+              }}
+              className={`py-1.5 px-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                smallCount === 4
+                  ? 'border-amber-400 bg-amber-500/20 text-white ring-1 ring-amber-400/50 shadow-md'
+                  : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-neutral-200'
+              }`}
+            >
+              <span className="text-amber-400 text-sm">4️⃣</span>
+              <span>4 Ảnh nhỏ kỷ niệm</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 2. Chọn Vị trí Bố cục (Dọc phải, Dọc trái, Ngang dưới, Ngang trên, Lưới 2x2, Chia 2 bên, So le) */}
+        <div className="pt-2 border-t border-neutral-800/80 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-neutral-200 flex items-center gap-1">
+              <span>📍</span>
+              <span>Chọn vị trí đặt ảnh nhỏ:</span>
+            </span>
+            <span className="text-[9.5px] text-amber-400 font-mono font-bold">
+              {BIRTHDAY_ARRANGEMENTS.find((a) => a.id === currentArr)?.name || 'Tùy chỉnh'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5">
+            {BIRTHDAY_ARRANGEMENTS.map((arr) => {
+              const isCurrent = currentArr === arr.id;
+              return (
+                <button
+                  key={arr.id}
+                  type="button"
+                  onClick={() => {
+                    const newSlots = generateBirthdaySlots(smallCount, arr.id, currentLayout.slots);
+                    onUpdateLayoutSlots?.(newSlots, smallCount + 1);
+                  }}
+                  className={`py-1.5 px-2 rounded-lg text-[10px] font-medium border text-left flex items-center gap-1.5 transition-all cursor-pointer ${
+                    isCurrent
+                      ? 'border-amber-400 bg-amber-500/20 text-white font-bold ring-1 ring-amber-400/60 shadow-sm'
+                      : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-neutral-200 hover:border-neutral-700'
+                  }`}
+                  title={arr.description}
+                >
+                  <span className="text-xs shrink-0">{arr.icon}</span>
+                  <span className="truncate">{arr.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 3. Tinh chỉnh Vị trí X (Ngang) & Vị trí Y (Dọc) & Kích thước */}
+        <div className="pt-2 border-t border-neutral-800/80 space-y-2">
+          <span className="text-[11px] font-semibold text-neutral-300 block">
+            Tinh chỉnh vị trí & kích thước:
+          </span>
+
+          {/* Slider Vị trí Y (Độ cao Lên / Xuống) */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] text-neutral-400 flex items-center gap-1">
+                <span>↕️</span>
+                <span>Độ cao Y (Lên / Xuống):</span>
+              </label>
+              <span className="text-[10px] font-mono text-amber-400 font-bold">
+                {Math.round(currentLayout.slots[1]?.y ?? 47)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="8"
+              max="72"
+              step="1"
+              value={Math.round(currentLayout.slots[1]?.y ?? 47)}
+              onChange={(e) => {
+                const newFirstY = parseInt(e.target.value, 10);
+                const oldFirstY = currentLayout.slots[1]?.y ?? 47;
+                const deltaY = newFirstY - oldFirstY;
+                const updatedSlots = currentLayout.slots.map((s, sIdx) => {
+                  if (sIdx === 0) return s;
+                  return {
+                    ...s,
+                    y: Math.max(2, Math.min(95 - s.h, Number((s.y + deltaY).toFixed(1)))),
+                  };
+                });
+                onUpdateLayoutSlots?.(updatedSlots);
+              }}
+              className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+            />
+          </div>
+
+          {/* Slider Vị trí X (Dịch Trái / Phải) */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] text-neutral-400 flex items-center gap-1">
+                <span>↔️</span>
+                <span>Vị trí X (Dạt Trái / Phải):</span>
+              </label>
+              <span className="text-[10px] font-mono text-amber-400 font-bold">
+                {Math.round(currentLayout.slots[1]?.x ?? 5)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="2"
+              max="78"
+              step="1"
+              value={Math.round(currentLayout.slots[1]?.x ?? 5)}
+              onChange={(e) => {
+                const newFirstX = parseInt(e.target.value, 10);
+                const oldFirstX = currentLayout.slots[1]?.x ?? 5;
+                const deltaX = newFirstX - oldFirstX;
+                const updatedSlots = currentLayout.slots.map((s, sIdx) => {
+                  if (sIdx === 0) return s;
+                  return {
+                    ...s,
+                    x: Math.max(1, Math.min(99 - s.w, Number((s.x + deltaX).toFixed(1)))),
+                  };
+                });
+                onUpdateLayoutSlots?.(updatedSlots);
+              }}
+              className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+            />
+          </div>
+
+          {/* Slider Kích thước ảnh nhỏ */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] text-neutral-400 flex items-center gap-1">
+                <span>🔍</span>
+                <span>Kích thước ảnh nhỏ:</span>
+              </label>
+              <span className="text-[10px] font-mono text-amber-400 font-bold">
+                {Math.round(currentLayout.slots[1]?.w ?? 22)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="14"
+              max="38"
+              step="1"
+              value={Math.round(currentLayout.slots[1]?.w ?? 22)}
+              onChange={(e) => {
+                const targetW = parseInt(e.target.value, 10);
+                const curW = currentLayout.slots[1]?.w || 22;
+                const ratio = targetW / curW;
+                const updatedSlots = currentLayout.slots.map((s, sIdx) => {
+                  if (sIdx === 0) return s;
+                  const newW = Math.max(10, Math.min(48, Number((s.w * ratio).toFixed(1))));
+                  const newH = Math.max(10, Math.min(48, Number((s.h * ratio).toFixed(1))));
+                  return {
+                    ...s,
+                    w: newW,
+                    h: newH,
+                    x: Math.min(s.x, 100 - newW - 1),
+                    y: Math.min(s.y, 100 - newH - 1),
+                  };
+                });
+                onUpdateLayoutSlots?.(updatedSlots);
+              }}
+              className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+            />
+          </div>
+        </div>
+
+        {/* 4. Kiểu khung & Bo góc */}
+        <div className="pt-2 border-t border-neutral-800/80 space-y-1.5">
+          <span className="text-[11px] font-semibold text-neutral-300 block">
+            Kiểu khung ảnh:
+          </span>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { id: 'rounded', label: 'Bo 8px', radius: 8, shape: 'rect' as const },
+              { id: 'polaroid', label: 'Bo 16px', radius: 16, shape: 'rect' as const },
+              { id: 'circle', label: 'Tròn', radius: 9999, shape: 'circle' as const },
+              { id: 'square', label: 'Vuông', radius: 0, shape: 'rect' as const },
+            ].map((shapeOpt) => {
+              const isCurrent =
+                shapeOpt.shape === 'circle'
+                  ? currentLayout.slots[1]?.shape === 'circle'
+                  : currentLayout.slots[1]?.shape !== 'circle' &&
+                    (currentLayout.slots[1]?.borderRadius || 8) === shapeOpt.radius;
+              return (
+                <button
+                  key={shapeOpt.id}
+                  type="button"
+                  onClick={() => {
+                    const updatedSlots = currentLayout.slots.map((s, sIdx) => {
+                      if (sIdx === 0) return s;
+                      return {
+                        ...s,
+                        shape: shapeOpt.shape,
+                        borderRadius: shapeOpt.radius,
+                      };
+                    });
+                    onUpdateLayoutSlots?.(updatedSlots);
+                  }}
+                  className={`py-1 px-1 rounded-lg text-[10px] font-medium border text-center transition-all cursor-pointer ${
+                    isCurrent
+                      ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                      : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:text-neutral-200'
+                  }`}
+                >
+                  {shapeOpt.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 5. Màu viền ảnh nhỏ & Độ dày viền */}
+        <div className="pt-2 border-t border-neutral-800/80 space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-neutral-300">
+              Màu viền & độ dày:
+            </span>
+            <span className="text-[9.5px] font-mono text-neutral-400">
+              {currentLayout.slots[1]?.borderWidth ?? 3.5}px
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            {[
+              { color: '#FFFFFF', label: 'Trắng' },
+              { color: '#FACC15', label: 'Vàng Kim' },
+              { color: '#F472B6', label: 'Hồng' },
+              { color: '#38BDF8', label: 'Xanh' },
+              { color: '#000000', label: 'Đen' },
+            ].map((col) => {
+              const isCurrent = (currentLayout.slots[1]?.borderColor || '#FFFFFF') === col.color;
+              return (
+                <button
+                  key={col.color}
+                  type="button"
+                  onClick={() => {
+                    const updatedSlots = currentLayout.slots.map((s, sIdx) => {
+                      if (sIdx === 0) return s;
+                      return {
+                        ...s,
+                        borderColor: col.color,
+                      };
+                    });
+                    onUpdateLayoutSlots?.(updatedSlots);
+                  }}
+                  className={`flex items-center gap-1 px-1.5 py-1 rounded-lg border text-[10px] transition-all cursor-pointer ${
+                    isCurrent
+                      ? 'border-amber-400 bg-neutral-800 text-white font-bold'
+                      : 'border-neutral-800 bg-neutral-950 text-neutral-400'
+                  }`}
+                >
+                  <span
+                    className="w-2.5 h-2.5 rounded-full border border-neutral-600"
+                    style={{ backgroundColor: col.color }}
+                  />
+                  <span>{col.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Slider độ dày viền */}
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-[9.5px] text-neutral-500">Độ dày:</span>
+            <input
+              type="range"
+              min="0"
+              max="6"
+              step="0.5"
+              value={currentLayout.slots[1]?.borderWidth ?? 3.5}
+              onChange={(e) => {
+                const newBorder = parseFloat(e.target.value);
+                const updatedSlots = currentLayout.slots.map((s, sIdx) => {
+                  if (sIdx === 0) return s;
+                  return { ...s, borderWidth: newBorder };
+                });
+                onUpdateLayoutSlots?.(updatedSlots);
+              }}
+              className="flex-1 h-1 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+            />
+            <span className="text-[9.5px] text-amber-400 font-mono">
+              {currentLayout.slots[1]?.borderWidth ?? 3.5}px
+            </span>
+          </div>
+        </div>
+
+        {/* 6. Danh sách các ô ảnh nhỏ để bấm chọn ảnh nhanh */}
+        <div className="pt-2 border-t border-neutral-800/80 space-y-1.5">
+          <span className="text-[11px] font-semibold text-neutral-300 block">
+            Chọn ảnh cho từng ô kỷ niệm:
+          </span>
+          <div className={`grid ${currentLayout.slots.length > 4 ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5`}>
+            {currentLayout.slots.slice(1).map((_, sIdx) => {
+              const actualSlotIdx = sIdx + 1;
+              const slotData = slots[actualSlotIdx];
+              const isSel = selectedSlotIndex === actualSlotIdx;
+              return (
+                <button
+                  key={actualSlotIdx}
+                  type="button"
+                  onClick={() => {
+                    onSelectSlot?.(actualSlotIdx);
+                  }}
+                  className={`p-1 rounded-lg border text-center transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                    isSel
+                      ? 'border-amber-400 bg-amber-500/20 text-amber-300 ring-1 ring-amber-400'
+                      : 'border-neutral-800 bg-neutral-950 text-neutral-400 hover:border-neutral-700 hover:text-white'
+                  }`}
+                >
+                  <div className="w-8 h-8 rounded bg-neutral-800 border border-neutral-700/80 overflow-hidden flex items-center justify-center relative">
+                    {slotData?.imageSrc ? (
+                      <img
+                        src={slotData.imageSrc}
+                        alt={`Ảnh nhỏ #${actualSlotIdx}`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-[10px] text-neutral-500 font-bold">
+                        #{actualSlotIdx}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[9.5px] font-semibold truncate w-full">
+                    Ảnh #{actualSlotIdx}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -240,6 +633,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   const isCircle = !!layoutItem.isCircleAccent;
                   const isComp = !!layoutItem.isComparison;
                   const isTribute = layoutItem.id === 'layout-tribute-rip' || layoutItem.newsPosterDefault?.style === 'tribute-rip';
+                  const isBirthday = layoutItem.id === 'layout-birthday-celebration' || layoutItem.newsPosterDefault?.style === 'birthday-celebration';
                   return (
                     <button
                       key={layoutItem.id}
@@ -302,6 +696,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               </div>
                             </div>
                           </>
+                        ) : isBirthday ? (
+                          <>
+                            {/* Birthday portrait representation */}
+                            <div className="absolute inset-0 bg-amber-500/35" />
+                            <div className="absolute top-1 right-1 text-[7px] leading-none">👑</div>
+                            {/* Small photos preview accurately positioned */}
+                            {layoutItem.slots.slice(1).map((s, sIdx) => (
+                              <div
+                                key={sIdx}
+                                className="absolute rounded-[1px] border border-white bg-amber-400/95 shadow-sm"
+                                style={{
+                                  left: `${s.x}%`,
+                                  top: `${s.y}%`,
+                                  width: `${s.w}%`,
+                                  height: `${s.h}%`,
+                                }}
+                              />
+                            ))}
+                            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black via-black/95 to-transparent flex flex-col items-center justify-end pb-0.5 px-0.5 z-20 pointer-events-none">
+                              <span className="text-[4.5px] font-black font-serif text-amber-300 leading-none tracking-wider mb-0.5">
+                                HAPPY BIRTHDAY
+                              </span>
+                              <span className="text-[6px] leading-none">🎂</span>
+                            </div>
+                          </>
                         ) : (
                           layoutItem.slots.map((s, sIdx) => (
                             <div
@@ -337,30 +756,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="text-[10px] font-bold text-amber-300 truncate">
-                          {idx === 0
+                          {layoutItem.id === 'layout-3-4-news'
                             ? 'Mẫu 1: 3 Ảnh'
-                            : idx === 1
+                            : layoutItem.id === 'layout-1-hero-3-4'
                             ? 'Mẫu 2: 1 Ảnh'
-                            : idx === 2
+                            : layoutItem.id === 'layout-3-4-news-blend'
                             ? 'Mẫu 3: Chồng Mờ'
-                            : idx === 3
+                            : layoutItem.id === 'layout-3-4-news-circle'
                             ? 'Mẫu 4: 1+Tròn'
-                            : idx === 4
+                            : layoutItem.id === 'layout-3-4-news-comparison'
                             ? 'Mẫu 5: Then&Now'
-                            : 'Mẫu 6: Tưởng Niệm'}
+                            : layoutItem.id === 'layout-tribute-rip'
+                            ? 'Mẫu 6: Tưởng Niệm'
+                            : layoutItem.id === 'layout-birthday-celebration'
+                            ? 'Mẫu SN: 3 Ảnh Ngang'
+                            : layoutItem.id === 'layout-birthday-4small'
+                            ? 'Mẫu SN: 4 Ảnh Ngang'
+                            : layoutItem.id === 'layout-birthday-vertical-right'
+                            ? 'Mẫu SN: Dọc Phải (3)'
+                            : layoutItem.id === 'layout-birthday-vertical-left'
+                            ? 'Mẫu SN: Dọc Trái (3)'
+                            : layoutItem.id === 'layout-birthday-vertical-right-4'
+                            ? 'Mẫu SN: Dọc Phải (4)'
+                            : layoutItem.id === 'layout-birthday-vertical-left-4'
+                            ? 'Mẫu SN: Dọc Trái (4)'
+                            : layoutItem.id === 'layout-birthday-grid'
+                            ? 'Mẫu SN: Lưới 2x2'
+                            : layoutItem.name}
                         </span>
                         <span className="text-[9px] text-neutral-400 truncate">
-                          {idx === 0
+                          {layoutItem.id === 'layout-3-4-news'
                             ? '2 Trái + 1 Phải'
-                            : idx === 1
+                            : layoutItem.id === 'layout-1-hero-3-4'
                             ? 'Toàn khung'
-                            : idx === 2
+                            : layoutItem.id === 'layout-3-4-news-blend'
                             ? '2 ảnh mờ mờ'
-                            : idx === 3
+                            : layoutItem.id === 'layout-3-4-news-circle'
                             ? 'Điểm nhấn tròn'
-                            : idx === 4
+                            : layoutItem.id === 'layout-3-4-news-comparison'
                             ? 'So sánh Trước Sau'
-                            : 'REST IN PEACE'}
+                            : layoutItem.id === 'layout-tribute-rip'
+                            ? 'REST IN PEACE'
+                            : layoutItem.id === 'layout-birthday-celebration'
+                            ? '1 chính + 3 nhỏ ngang'
+                            : layoutItem.id === 'layout-birthday-4small'
+                            ? '1 chính + 4 nhỏ ngang'
+                            : layoutItem.id === 'layout-birthday-vertical-right'
+                            ? 'Dọc 1 bên phải (3)'
+                            : layoutItem.id === 'layout-birthday-vertical-left'
+                            ? 'Dọc 1 bên trái (3)'
+                            : layoutItem.id === 'layout-birthday-vertical-right-4'
+                            ? 'Dọc 1 bên phải (4)'
+                            : layoutItem.id === 'layout-birthday-vertical-left-4'
+                            ? 'Dọc 1 bên trái (4)'
+                            : layoutItem.id === 'layout-birthday-grid'
+                            ? 'Lưới 2x2 góc phải'
+                            : `${layoutItem.photoCount} ô ảnh`}
                         </span>
                       </div>
                     </button>
@@ -1081,6 +1532,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             )}
 
+            {/* ⭐ BỘ ĐIỀU CHỈNH ẢNH NHỎ MẪU SINH NHẬT (1 ẢNH CHÍNH + 3 HOẶC 4 ẢNH NHỎ) */}
+            {(currentLayout.isBirthdayPoster || currentLayout.id.startsWith('layout-birthday')) &&
+              renderBirthdaySmallPhotosSection()}
+
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider">
@@ -1340,7 +1795,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <label className="text-xs font-semibold text-neutral-300 uppercase tracking-wider block mb-1.5">
                     Phong cách thiết kế
                   </label>
-                  <div className="grid grid-cols-3 gap-1.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     <button
                       type="button"
                       onClick={() =>
@@ -1400,7 +1855,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           : 'border-neutral-800 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
                       }`}
                     >
-                      Tưởng Niệm (RIP) 🎗
+                      Tưởng Niệm 🎗
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateConfig({
+                          newsPoster: {
+                            ...config.newsPoster!,
+                            style: 'birthday-celebration',
+                            headline:
+                              config.newsPoster?.headline?.includes('BIRTHDAY') ||
+                              config.newsPoster?.headline?.includes('SINH NHẬT')
+                                ? config.newsPoster?.headline
+                                : 'HAPPY BIRTHDAY\nJENNIE',
+                            highlightWords:
+                              config.newsPoster?.highlightWords || 'HAPPY BIRTHDAY, JENNIE',
+                            subtitle:
+                              config.newsPoster?.subtitle || '1996 • WISHING YOU JOY, LOVE & SUCCESS!',
+                            bottomSymbol:
+                              config.newsPoster?.bottomSymbol === 'ribbon'
+                                ? 'cake'
+                                : config.newsPoster?.bottomSymbol || 'cake',
+                            bottomSymbolColor: config.newsPoster?.bottomSymbolColor || '#FACC15',
+                            showTopEmblem: config.newsPoster?.showTopEmblem ?? true,
+                            topEmblemIcon: 'crown',
+                            topEmblemText: 'BIRTHDAY',
+                            showTitleDivider: true,
+                            showSubtitleUnderline: true,
+                            fontFamily:
+                              config.newsPoster?.fontFamily || "'Playfair Display', Georgia, serif",
+                            fontSize: config.newsPoster?.fontSize || 44,
+                          },
+                        })
+                      }
+                      className={`py-2 px-1 text-[11px] rounded-xl border font-bold text-center transition-all ${
+                        config.newsPoster.style === 'birthday-celebration'
+                          ? 'border-amber-400 bg-amber-500/20 text-white font-extrabold shadow-sm'
+                          : 'border-neutral-800 bg-neutral-900 text-neutral-300 hover:bg-neutral-800'
+                      }`}
+                    >
+                      Sinh Nhật (SN) 🎂
                     </button>
                   </div>
                 </div>
@@ -1948,6 +2443,339 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 </button>
                               ))}
                             </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : config.newsPoster.style === 'birthday-celebration' ? (
+                  /* ==================== CÁC TÙY CHỌN RIÊNG CHO MẪU SINH NHẬT ==================== */
+                  <div className="space-y-3.5">
+                    {renderBirthdaySmallPhotosSection()}
+                    {/* Headline for Birthday */}
+                    <div>
+                      <HeadlineHighlightEditor
+                        headline={config.newsPoster.headline}
+                        highlightWords={config.newsPoster.highlightWords}
+                        highlightColor={config.newsPoster.highlightColor || '#FACC15'}
+                        headlineColor={config.newsPoster.headlineColor || '#FFFFFF'}
+                        wordColorMap={config.newsPoster.wordColorMap}
+                        fontFamily={config.newsPoster.fontFamily}
+                        styleType="birthday-celebration"
+                        rows={2}
+                        placeholder="HAPPY BIRTHDAY&#10;JENNIE"
+                        onUpdateHeadline={(val) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              headline: val,
+                            },
+                          })
+                        }
+                        onUpdateHighlight={({ highlightWords: hw, highlightColor: hc, wordColorMap: wcm }) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              highlightWords: hw,
+                              highlightColor: hc,
+                              wordColorMap: wcm,
+                            },
+                          })
+                        }
+                        quickTemplates={[
+                          {
+                            label: 'HAPPY BIRTHDAY (English)',
+                            text: 'HAPPY BIRTHDAY\nJENNIE',
+                            highlightWords: 'HAPPY BIRTHDAY, JENNIE',
+                          },
+                          {
+                            label: 'CHÚC MỪNG SINH NHẬT (Fanpage)',
+                            text: 'CHÚC MỪNG SINH NHẬT\nHOÀNG NAM',
+                            highlightWords: 'CHÚC MỪNG SINH NHẬT, HOÀNG NAM',
+                          },
+                          {
+                            label: 'HAPPY 25TH BIRTHDAY',
+                            text: 'HAPPY 25TH BIRTHDAY\nMINH ANH',
+                            highlightWords: 'HAPPY 25TH BIRTHDAY, MINH ANH',
+                          },
+                          {
+                            label: 'CELEBRATING SPECIAL DAY',
+                            text: 'CELEBRATING\nTHE SPECIAL DAY',
+                            highlightWords: 'CELEBRATING, SPECIAL DAY',
+                          },
+                        ]}
+                      />
+                    </div>
+
+                    {/* Phông chữ & Cỡ chữ sinh nhật */}
+                    <div className="p-3 bg-neutral-900/90 rounded-xl border border-neutral-800 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-neutral-300">
+                          Cỡ chữ tiêu đề (Headline):
+                        </label>
+                        <span className="text-xs font-mono font-bold text-amber-400">
+                          {config.newsPoster.fontSize || 44}px
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="24"
+                        max="68"
+                        value={config.newsPoster.fontSize || 44}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              fontSize: parseInt(e.target.value, 10),
+                            },
+                          })
+                        }
+                        className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                      />
+
+                      {/* Khoảng cách 2 dòng tiêu đề */}
+                      <div className="pt-2 border-t border-neutral-800/80">
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] font-semibold text-neutral-300">
+                            Khoảng cách giữa 2 dòng tiêu đề:
+                          </label>
+                          <span className="text-xs font-mono font-bold text-amber-400">
+                            {config.newsPoster.headlineLineGap ?? 2}px
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="20"
+                          value={config.newsPoster.headlineLineGap ?? 2}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                headlineLineGap: parseInt(e.target.value, 10),
+                              },
+                            })
+                          }
+                          className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Subtitle / Lời chúc mừng & Năm sinh */}
+                    <div className="p-3 bg-neutral-900/90 rounded-xl border border-neutral-800 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-neutral-300">
+                          Lời chúc mừng sinh nhật / Năm sinh:
+                        </label>
+                      </div>
+                      <input
+                        type="text"
+                        value={config.newsPoster.subtitle || ''}
+                        placeholder="1996 • WISHING YOU JOY, LOVE & SUCCESS!"
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              subtitle: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full px-3 py-1.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-500"
+                      />
+
+                      {/* Mẫu gợi ý lời chúc nhanh */}
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {[
+                          '1996 • WISHING YOU JOY, LOVE & SUCCESS!',
+                          'CHÚC BẠN TUỔI MỚI RỰC RỠ & THÀNH CÔNG!',
+                          'HAPPY 25TH BIRTHDAY • FOREVER YOUNG!',
+                          'TUỔI MỚI VẠN SỰ NHƯ Ý & HẠNH PHÚC!',
+                        ].map((sample) => (
+                          <button
+                            key={sample}
+                            type="button"
+                            onClick={() =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  subtitle: sample,
+                                },
+                              })
+                            }
+                            className="text-[10px] px-2 py-0.5 rounded border border-neutral-800 bg-neutral-950 text-neutral-300 hover:text-amber-300 hover:border-amber-400/50 truncate max-w-full"
+                          >
+                            {sample}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-neutral-800/80">
+                        <label className="text-[11px] text-neutral-400">
+                          Cỡ chữ dòng lời chúc:
+                        </label>
+                        <span className="text-xs font-mono font-bold text-amber-400">
+                          {config.newsPoster.subtitleFontSize || 13}px
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="10"
+                        max="24"
+                        value={config.newsPoster.subtitleFontSize || 13}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              subtitleFontSize: parseInt(e.target.value, 10),
+                            },
+                          })
+                        }
+                        className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                      />
+                    </div>
+
+                    {/* Biểu tượng sinh nhật đáy (Cake, Crown, Champagne, Balloons, etc.) */}
+                    <div className="p-3 bg-neutral-900/90 rounded-xl border border-neutral-800 space-y-2.5">
+                      <label className="text-[11px] font-semibold text-neutral-300 block mb-1">
+                        Biểu tượng sinh nhật đáy ảnh:
+                      </label>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {[
+                          { id: 'cake', label: '🎂 Bánh kem' },
+                          { id: 'crown', label: '👑 Vương miện' },
+                          { id: 'champagne', label: '🍾 Sâm banh' },
+                          { id: 'balloons', label: '🎈 Bóng bay' },
+                          { id: 'party', label: '🎉 Pháo hoa' },
+                          { id: 'gift', label: '🎁 Hộp quà' },
+                          { id: 'heart', label: '💖 Trái tim' },
+                          { id: 'star', label: '⭐ Ngôi sao' },
+                        ].map((sym) => (
+                          <button
+                            key={sym.id}
+                            type="button"
+                            onClick={() =>
+                              onUpdateConfig({
+                                newsPoster: {
+                                  ...config.newsPoster!,
+                                  bottomSymbol: sym.id as any,
+                                },
+                              })
+                            }
+                            className={`py-1.5 px-1 rounded-lg text-[10px] font-medium border text-center transition-all cursor-pointer ${
+                              (config.newsPoster?.bottomSymbol || 'cake') === sym.id
+                                ? 'border-amber-400 bg-amber-500/20 text-white font-bold shadow-sm'
+                                : 'border-neutral-800 bg-neutral-900/80 text-neutral-400 hover:text-neutral-200'
+                            }`}
+                          >
+                            {sym.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Kích thước biểu tượng đáy */}
+                      <div className="flex items-center justify-between pt-2 border-t border-neutral-800/80">
+                        <label className="text-[11px] text-neutral-400">
+                          Kích thước biểu tượng:
+                        </label>
+                        <span className="text-xs font-mono font-bold text-amber-400">
+                          {config.newsPoster.bottomSymbolSize || 36}px
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="20"
+                        max="64"
+                        value={config.newsPoster.bottomSymbolSize || 36}
+                        onChange={(e) =>
+                          onUpdateConfig({
+                            newsPoster: {
+                              ...config.newsPoster!,
+                              bottomSymbolSize: parseInt(e.target.value, 10),
+                            },
+                          })
+                        }
+                        className="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                      />
+                    </div>
+
+                    {/* Top Emblem: Vương miện góc trên */}
+                    <div className="p-3 bg-neutral-900/90 rounded-xl border border-neutral-800 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-neutral-300">
+                          Huy hiệu vương miện góc trên:
+                        </label>
+                        <input
+                          type="checkbox"
+                          checked={config.newsPoster.showTopEmblem ?? true}
+                          onChange={(e) =>
+                            onUpdateConfig({
+                              newsPoster: {
+                                ...config.newsPoster!,
+                                showTopEmblem: e.target.checked,
+                              },
+                            })
+                          }
+                          className="accent-amber-500 w-4 h-4 rounded cursor-pointer"
+                        />
+                      </div>
+
+                      {config.newsPoster.showTopEmblem && (
+                        <div className="pt-2 space-y-2 border-t border-neutral-800">
+                          <div className="grid grid-cols-4 gap-1">
+                            {[
+                              { id: 'crown', label: '👑 Vương miện' },
+                              { id: 'cake', label: '🎂 Bánh kem' },
+                              { id: 'party', label: '🎉 Pháo hoa' },
+                              { id: 'heart', label: '💖 Trái tim' },
+                            ].map((em) => (
+                              <button
+                                key={em.id}
+                                type="button"
+                                onClick={() =>
+                                  onUpdateConfig({
+                                    newsPoster: {
+                                      ...config.newsPoster!,
+                                      topEmblemIcon: em.id as any,
+                                    },
+                                  })
+                                }
+                                className={`py-1.5 px-1 rounded-lg text-[10px] font-medium border text-center transition-all cursor-pointer ${
+                                  (config.newsPoster?.topEmblemIcon || 'crown') === em.id
+                                    ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                    : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:text-neutral-200'
+                                }`}
+                              >
+                                {em.label}
+                              </button>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center gap-1.5 pt-1">
+                            <span className="text-[10px] text-neutral-400">Vị trí:</span>
+                            {[
+                              { id: 'top-right', label: 'Phải' },
+                              { id: 'top-left', label: 'Trái' },
+                            ].map((pos) => (
+                              <button
+                                key={pos.id}
+                                type="button"
+                                onClick={() =>
+                                  onUpdateConfig({
+                                    newsPoster: {
+                                      ...config.newsPoster!,
+                                      topEmblemPosition: pos.id as any,
+                                    },
+                                  })
+                                }
+                                className={`py-0.5 px-2 rounded text-[10px] border transition-all ${
+                                  (config.newsPoster?.topEmblemPosition || 'top-right') === pos.id
+                                    ? 'border-amber-400 bg-amber-500/20 text-amber-300 font-bold'
+                                    : 'border-neutral-800 bg-neutral-900 text-neutral-400'
+                                }`}
+                              >
+                                {pos.label}
+                              </button>
+                            ))}
                           </div>
                         </div>
                       )}

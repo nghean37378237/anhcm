@@ -12,6 +12,10 @@ import {
 } from './types';
 import { COLLAGE_LAYOUTS } from './data/presets';
 import { Eye, Edit3, Sparkles } from 'lucide-react';
+import {
+  detectBirthdayArrangement,
+  generateBirthdaySlots,
+} from './utils/birthdayLayouts';
 
 export default function App() {
   // 1. Core State - Default to the prioritized 3:4 basic template requested by user
@@ -26,6 +30,10 @@ export default function App() {
     COLLAGE_LAYOUTS.find((l) => l.id === 'layout-3-4-news-circle-accent') || COLLAGE_LAYOUTS[0];
   const model5Layout =
     COLLAGE_LAYOUTS.find((l) => l.id === 'layout-3-4-news-comparison') || COLLAGE_LAYOUTS[0];
+  const birthdayLayout =
+    COLLAGE_LAYOUTS.find((l) => l.id === 'layout-birthday-celebration') || COLLAGE_LAYOUTS[0];
+  const birthday4Layout =
+    COLLAGE_LAYOUTS.find((l) => l.id === 'layout-birthday-4small') || birthdayLayout;
 
   const initialLayout = model1Layout;
   const [currentLayout, setCurrentLayout] = useState<CollageLayout>(initialLayout);
@@ -471,6 +479,30 @@ export default function App() {
     }
   };
 
+  const handleSelectModelBirthday = () => {
+    if (birthdayLayout) {
+      handleSelectLayout(birthdayLayout);
+    }
+  };
+
+  const handleSelectModelBirthday3 = () => {
+    if (birthdayLayout) {
+      handleSelectLayout(birthdayLayout);
+    }
+  };
+
+  const handleSelectModelBirthday4 = () => {
+    if (birthday4Layout) {
+      handleSelectLayout(birthday4Layout);
+    }
+  };
+
+  const handleToggleBirthdaySmallCount = (targetCount: 3 | 4) => {
+    const currentArr = detectBirthdayArrangement(currentLayout.slots);
+    const newSlots = generateBirthdaySlots(targetCount, currentArr, currentLayout.slots);
+    handleUpdateLayoutSlots(newSlots, targetCount + 1);
+  };
+
   const handleUpdateLayoutSlot = (slotIndex: number, updates: Partial<import('./types').LayoutSlot>) => {
     setCurrentLayout((prev) => {
       const nextSlots = [...prev.slots];
@@ -621,6 +653,11 @@ export default function App() {
         onSelectModel4={handleSelectModel4}
         onSelectModel5={handleSelectModel5}
         onSelectModelTribute={handleSelectModelTribute}
+        onSelectModelBirthday={handleSelectModelBirthday}
+        onSelectModelBirthday3={handleSelectModelBirthday3}
+        onSelectModelBirthday4={handleSelectModelBirthday4}
+        onToggleBirthdaySmallCount={handleToggleBirthdaySmallCount}
+        onUpdateLayoutSlots={handleUpdateLayoutSlots}
         activePhotosCount={activePhotosCount}
         totalSlotsCount={currentLayout.slots.length}
       />
@@ -658,6 +695,8 @@ export default function App() {
             onUpdateLayoutSlot={handleUpdateLayoutSlot}
             onUpdateLayoutSlots={handleUpdateLayoutSlots}
             onToggleCircleCount={handleToggleCircleCount}
+            onToggleBirthdaySmallCount={handleToggleBirthdaySmallCount}
+            onSelectSlot={setSelectedSlotIndex}
           />
         </div>
 
@@ -687,6 +726,8 @@ export default function App() {
             onRemoveSticker={handleRemoveSticker}
             onContainerResize={(w, h) => setPreviewSize({ width: w, height: h })}
             onToggleCircleCount={handleToggleCircleCount}
+            onToggleBirthdaySmallCount={handleToggleBirthdaySmallCount}
+            onUpdateLayoutSlots={handleUpdateLayoutSlots}
           />
         </main>
       </div>
