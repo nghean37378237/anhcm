@@ -31,9 +31,13 @@ export default function App() {
   const model5Layout =
     COLLAGE_LAYOUTS.find((l) => l.id === 'layout-3-4-news-comparison') || COLLAGE_LAYOUTS[0];
   const birthdayLayout =
-    COLLAGE_LAYOUTS.find((l) => l.id === 'layout-birthday-celebration') || COLLAGE_LAYOUTS[0];
+    COLLAGE_LAYOUTS.find((l) => l.id === 'layout-birthday-vertical-right') ||
+    COLLAGE_LAYOUTS.find((l) => l.id === 'layout-birthday-celebration') ||
+    COLLAGE_LAYOUTS[0];
   const birthday4Layout =
-    COLLAGE_LAYOUTS.find((l) => l.id === 'layout-birthday-4small') || birthdayLayout;
+    COLLAGE_LAYOUTS.find((l) => l.id === 'layout-birthday-vertical-right-4') ||
+    COLLAGE_LAYOUTS.find((l) => l.id === 'layout-birthday-4small') ||
+    birthdayLayout;
 
   const initialLayout = model1Layout;
   const [currentLayout, setCurrentLayout] = useState<CollageLayout>(initialLayout);
@@ -137,39 +141,44 @@ export default function App() {
           }
         : prev.comparison ? { ...prev.comparison, enabled: false } : undefined,
       newsPoster: newLayout.newsPosterDefault
-        ? {
-            ...newLayout.newsPosterDefault,
-            enabled: true,
-            style: newLayout.newsPosterDefault.style || prev.newsPoster?.style || 'bold-headline',
-            headline: newLayout.newsPosterDefault.headline ?? prev.newsPoster?.headline ?? '',
-            highlightWords: newLayout.newsPosterDefault.highlightWords ?? prev.newsPoster?.highlightWords ?? '',
-            headlineColor: newLayout.newsPosterDefault.headlineColor ?? prev.newsPoster?.headlineColor ?? '#FFFFFF',
-            highlightColor: newLayout.newsPosterDefault.highlightColor ?? prev.newsPoster?.highlightColor ?? '#FACC15',
-            fontSize: prev.newsPoster?.fontSize ?? newLayout.newsPosterDefault.fontSize ?? 34,
-            headlineLineGap: prev.newsPoster?.headlineLineGap ?? newLayout.newsPosterDefault.headlineLineGap ?? 2,
-            fontFamily: prev.newsPoster?.fontFamily || newLayout.newsPosterDefault.fontFamily,
-            gradientHeight: newLayout.newsPosterDefault.gradientHeight ?? prev.newsPoster?.gradientHeight ?? 38,
-            gradientOpacity: newLayout.newsPosterDefault.gradientOpacity ?? prev.newsPoster?.gradientOpacity ?? 0.94,
-            // Tất cả mẫu ảnh đều giữ chung logo & nút follow đã chọn
-            showTopBadge: prev.newsPoster?.showTopBadge ?? true,
-            topBadgeText: prev.newsPoster?.topBadgeText || newLayout.newsPosterDefault.topBadgeText || 'HM MEDIA',
-            showFollowButton: prev.newsPoster?.showFollowButton ?? true,
-            followButtonText: prev.newsPoster?.followButtonText || newLayout.newsPosterDefault.followButtonText || 'FOLLOW US',
-            showDiamondDivider: newLayout.newsPosterDefault.showDiamondDivider ?? prev.newsPoster?.showDiamondDivider ?? false,
-            dividerPosition: newLayout.newsPosterDefault.dividerPosition ?? prev.newsPoster?.dividerPosition ?? 'top',
-            subtitle: newLayout.newsPosterDefault.subtitle ?? prev.newsPoster?.subtitle ?? '',
-            subtitleFontSize: prev.newsPoster?.subtitleFontSize ?? newLayout.newsPosterDefault.subtitleFontSize ?? 13,
-            subtitleFontFamily: prev.newsPoster?.subtitleFontFamily || newLayout.newsPosterDefault.subtitleFontFamily,
-            subtitleColor: newLayout.newsPosterDefault.subtitleColor ?? prev.newsPoster?.subtitleColor ?? '#FFFFFF',
-            showTitleDivider: prev.newsPoster?.showTitleDivider ?? newLayout.newsPosterDefault.showTitleDivider ?? true,
-            showSubtitleUnderline: prev.newsPoster?.showSubtitleUnderline ?? newLayout.newsPosterDefault.showSubtitleUnderline ?? true,
-            bottomSymbol: newLayout.newsPosterDefault.bottomSymbol ?? prev.newsPoster?.bottomSymbol ?? 'ribbon',
-            bottomSymbolSize: newLayout.newsPosterDefault.bottomSymbolSize ?? prev.newsPoster?.bottomSymbolSize ?? 36,
-            bottomSymbolColor: newLayout.newsPosterDefault.bottomSymbolColor ?? prev.newsPoster?.bottomSymbolColor ?? '#FFFFFF',
-            showTopEmblem: newLayout.newsPosterDefault.showTopEmblem ?? prev.newsPoster?.showTopEmblem ?? false,
-            topEmblemPosition: newLayout.newsPosterDefault.topEmblemPosition ?? prev.newsPoster?.topEmblemPosition ?? 'top-right',
-            topEmblemIcon: newLayout.newsPosterDefault.topEmblemIcon ?? prev.newsPoster?.topEmblemIcon ?? 'ship',
-          }
+        ? (() => {
+            const isStyleChanged = prev.newsPoster?.style !== newLayout.newsPosterDefault.style;
+            return {
+              ...newLayout.newsPosterDefault,
+              enabled: true,
+              style: newLayout.newsPosterDefault.style || 'bold-headline',
+              headline:
+                (!isStyleChanged && prev.newsPoster?.headline
+                  ? prev.newsPoster.headline
+                  : newLayout.newsPosterDefault.headline) || '',
+              highlightWords: !isStyleChanged && prev.newsPoster?.highlightWords ? prev.newsPoster.highlightWords : (newLayout.newsPosterDefault.highlightWords ?? ''),
+              headlineColor: newLayout.newsPosterDefault.headlineColor ?? '#FFFFFF',
+              highlightColor: newLayout.newsPosterDefault.highlightColor ?? '#FACC15',
+              fontSize: !isStyleChanged && prev.newsPoster?.fontSize ? prev.newsPoster.fontSize : (newLayout.newsPosterDefault.fontSize ?? 44),
+              headlineLineGap: newLayout.newsPosterDefault.headlineLineGap ?? 2,
+              fontFamily: !isStyleChanged && prev.newsPoster?.fontFamily ? prev.newsPoster.fontFamily : newLayout.newsPosterDefault.fontFamily,
+              gradientHeight: newLayout.newsPosterDefault.gradientHeight ?? 38,
+              gradientOpacity: newLayout.newsPosterDefault.gradientOpacity ?? 0.96,
+              showTopBadge: prev.newsPoster?.showTopBadge ?? true,
+              topBadgeText: prev.newsPoster?.topBadgeText || newLayout.newsPosterDefault.topBadgeText || 'HM MEDIA',
+              showFollowButton: prev.newsPoster?.showFollowButton ?? true,
+              followButtonText: prev.newsPoster?.followButtonText || newLayout.newsPosterDefault.followButtonText || 'FOLLOW US',
+              showDiamondDivider: newLayout.newsPosterDefault.showDiamondDivider ?? false,
+              dividerPosition: newLayout.newsPosterDefault.dividerPosition ?? 'top',
+              subtitle: !isStyleChanged && prev.newsPoster?.subtitle ? prev.newsPoster.subtitle : (newLayout.newsPosterDefault.subtitle ?? ''),
+              subtitleFontSize: newLayout.newsPosterDefault.subtitleFontSize ?? 13,
+              subtitleFontFamily: newLayout.newsPosterDefault.subtitleFontFamily,
+              subtitleColor: newLayout.newsPosterDefault.subtitleColor ?? '#FFFFFF',
+              showTitleDivider: newLayout.newsPosterDefault.showTitleDivider ?? true,
+              showSubtitleUnderline: newLayout.newsPosterDefault.showSubtitleUnderline ?? true,
+              bottomSymbol: newLayout.newsPosterDefault.bottomSymbol ?? 'cake',
+              bottomSymbolSize: newLayout.newsPosterDefault.bottomSymbolSize ?? 36,
+              bottomSymbolColor: newLayout.newsPosterDefault.bottomSymbolColor ?? '#FFFFFF',
+              showTopEmblem: newLayout.newsPosterDefault.showTopEmblem ?? false,
+              topEmblemPosition: newLayout.newsPosterDefault.topEmblemPosition ?? 'top-right',
+              topEmblemIcon: newLayout.newsPosterDefault.topEmblemIcon ?? 'crown',
+            };
+          })()
         : {
             ...(prev.newsPoster || {
               enabled: true,
@@ -517,6 +526,18 @@ export default function App() {
     newSlots: import('./types').LayoutSlot[],
     newPhotoCount?: number
   ) => {
+    const isBday = currentLayout.isBirthdayPoster || currentLayout.id.startsWith('layout-birthday');
+    if (isBday) {
+      const arr = detectBirthdayArrangement(newSlots);
+      const emblemPos = arr === 'vertical-right' || arr === 'grid-2x2' ? 'top-left' : 'top-right';
+      setConfig((prev) => ({
+        ...prev,
+        newsPoster: prev.newsPoster
+          ? { ...prev.newsPoster, topEmblemPosition: emblemPos }
+          : prev.newsPoster,
+      }));
+    }
+
     setCurrentLayout((prev) => ({
       ...prev,
       photoCount: newPhotoCount ?? newSlots.length,

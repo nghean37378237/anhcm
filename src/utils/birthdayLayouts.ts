@@ -168,19 +168,19 @@ export function generateBirthdaySlots(
       }
       case 'staggered': {
         const w = 26 * scale;
-        const h = 21.5 * scale;
+        const h = 18.5 * scale;
         smallDefs = [
-          { x: 5.5 + offX, y: 47 + offY, w, h },
-          { x: 36.5 + offX, y: 43.5 + offY, w, h },
-          { x: 67.5 + offX, y: 48 + offY, w, h },
+          { x: 5.5 + offX, y: 38 + offY, w, h },
+          { x: 36.5 + offX, y: 35 + offY, w, h },
+          { x: 67.5 + offX, y: 39 + offY, w, h },
         ];
         break;
       }
       case 'horizontal-bottom':
       default: {
         const w = 27 * scale;
-        const h = 22.5 * scale;
-        const y = 47 + offY;
+        const h = 19 * scale;
+        const y = 38 + offY;
         smallDefs = [
           { x: 5.5 + offX, y, w, h },
           { x: 36.5 + offX, y, w, h },
@@ -256,20 +256,20 @@ export function generateBirthdaySlots(
       }
       case 'staggered': {
         const w = 20.6 * scale;
-        const h = 20.6 * scale;
+        const h = 18 * scale;
         smallDefs = [
-          { x: 4.5 + offX, y: 48 + offY, w, h },
-          { x: 27.9 + offX, y: 44.5 + offY, w, h },
-          { x: 51.3 + offX, y: 48 + offY, w, h },
-          { x: 74.7 + offX, y: 44.5 + offY, w, h },
+          { x: 4.5 + offX, y: 39 + offY, w, h },
+          { x: 27.9 + offX, y: 36 + offY, w, h },
+          { x: 51.3 + offX, y: 39 + offY, w, h },
+          { x: 74.7 + offX, y: 36 + offY, w, h },
         ];
         break;
       }
       case 'horizontal-bottom':
       default: {
         const w = 20.6 * scale;
-        const h = 20.6 * scale;
-        const y = 48 + offY;
+        const h = 18 * scale;
+        const y = 39 + offY;
         smallDefs = [
           { x: 4.5 + offX, y, w, h },
           { x: 27.9 + offX, y, w, h },

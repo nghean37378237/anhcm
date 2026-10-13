@@ -219,12 +219,13 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* Quick Position Selector in Header */}
               {onUpdateLayoutSlots && (
-                <div className="hidden xl:flex items-center gap-0.5 pl-1 border-l border-neutral-800">
+                <div className="hidden lg:flex items-center gap-0.5 pl-1 border-l border-neutral-800">
                   {[
                     { id: 'vertical-right' as const, label: 'Dọc phải', icon: '➡️' },
                     { id: 'vertical-left' as const, label: 'Dọc trái', icon: '⬅️' },
                     { id: 'horizontal-bottom' as const, label: 'Ngang', icon: '↔️' },
                     { id: 'grid-2x2' as const, label: 'Lưới', icon: '⊞' },
+                    { id: 'split-sides' as const, label: '2 bên', icon: '🔲' },
                   ].map((arr) => {
                     const currentArr = detectBirthdayArrangement(layout.slots);
                     const isCurrent = currentArr === arr.id;

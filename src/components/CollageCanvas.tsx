@@ -490,7 +490,7 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
     if (!np.showTopEmblem) return null;
     const isLeft = np.topEmblemPosition === 'top-left';
     const hasTopBadges = np.showTopBadge || np.showFollowButton;
-    const topPosition = hasTopBadges ? 'top-13 sm:top-14' : 'top-3.5';
+    const topPosition = hasTopBadges ? 'top-[52px]' : 'top-3.5';
     const isBirthday = np.style === 'birthday-celebration';
     return (
       <div
@@ -542,13 +542,13 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
 
   return (
     <div
-      className="flex-1 h-full w-full overflow-auto flex items-center justify-center p-4 sm:p-8 bg-neutral-950/70 relative select-none"
+      className="flex-1 h-full w-full overflow-y-auto flex flex-col items-center justify-start sm:justify-center p-3 sm:p-6 bg-neutral-950/70 relative select-none"
       onClick={() => onSelectSlot(null)}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
     >
       {/* Outer container sizing constraint */}
-      <div className="relative w-full max-w-xl max-h-[82vh] flex items-center justify-center">
+      <div className="relative w-full max-w-md sm:max-w-lg lg:max-w-[490px] xl:max-w-[530px] flex flex-col items-center justify-center my-auto">
         {/* Slot selector for blended overlay layouts */}
         {layout.isBlendedOverlap && (
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 px-3 py-1 rounded-full bg-neutral-900/95 backdrop-blur-md border border-neutral-700 shadow-xl text-xs">
@@ -694,17 +694,16 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
         {(layout.isBirthdayPoster || layout.id.startsWith('layout-birthday')) && onUpdateLayoutSlots && (
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl mx-auto mb-2.5 p-2 rounded-2xl bg-neutral-900/95 border border-amber-500/40 shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-2 z-20 text-xs"
+            className="w-full mb-3 p-2.5 rounded-2xl bg-neutral-900/95 border border-amber-500/40 shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-2 z-20 text-xs shrink-0"
           >
             {/* Vị trí ảnh nhỏ (Dọc phải, Dọc trái, Ngang dưới, Ngang trên, Lưới 2x2, Chia 2 bên, So le) */}
             <div className="flex items-center gap-1.5 flex-wrap min-w-0">
               <span className="text-amber-400 font-bold flex items-center gap-1 text-[11px] shrink-0">
                 <span>🎂</span>
-                <span className="hidden sm:inline">Vị trí ảnh nhỏ:</span>
-                <span className="sm:hidden">Vị trí:</span>
+                <span>Vị trí ảnh nhỏ:</span>
               </span>
 
-              <div className="flex items-center gap-1 bg-neutral-950/80 p-0.5 rounded-xl border border-neutral-800/80 overflow-x-auto max-w-full">
+              <div className="flex items-center flex-wrap gap-1 bg-neutral-950/90 p-1 rounded-xl border border-neutral-800/80">
                 {BIRTHDAY_ARRANGEMENTS.map((arr) => {
                   const currentArr = detectBirthdayArrangement(layout.slots);
                   const isArrActive = currentArr === arr.id;
@@ -721,7 +720,7 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
                       className={`px-2 py-1 rounded-lg text-[10.5px] font-medium flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap ${
                         isArrActive
                           ? 'bg-amber-400 text-neutral-950 font-bold shadow-sm'
-                          : 'text-neutral-400 hover:text-white hover:bg-neutral-850'
+                          : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
                       }`}
                       title={arr.description}
                     >
@@ -736,7 +735,7 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
             {/* Toggle 3 ảnh vs 4 ảnh */}
             <div className="flex items-center gap-1.5 shrink-0 pl-1 border-l border-neutral-800">
               <span className="text-neutral-400 text-[10px]">Số lượng:</span>
-              <div className="flex items-center bg-neutral-950/80 p-0.5 rounded-lg border border-neutral-800">
+              <div className="flex items-center bg-neutral-950/90 p-0.5 rounded-lg border border-neutral-800">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -790,7 +789,7 @@ export const CollageCanvas: React.FC<CollageCanvasProps> = ({
           onClick={(e) => e.stopPropagation()}
           className={`w-full ${getAspectRatioClass(
             config.aspectRatio
-          )} shadow-2xl rounded-2xl relative flex flex-col transition-all duration-200 overflow-hidden border border-white/10`}
+          )} shadow-2xl rounded-2xl relative flex flex-col transition-all duration-200 overflow-hidden border border-white/10 shrink-0`}
           style={{
             ...getBackgroundStyle(),
             padding: `${config.padding ?? 0}px`,
